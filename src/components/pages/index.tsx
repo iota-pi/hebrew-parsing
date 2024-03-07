@@ -1,69 +1,31 @@
 import { ReactNode, useEffect, useMemo, useState } from 'react'
 import { Route, Routes } from 'react-router-dom'
-import { DataIcon, GroupsIcon, CheckIcon, MuiIconType } from '../Icons'
-import GroupsPage from './Groups'
-import DataPage from './Data'
-import FinishPage from './Finish'
-import LoginPage from './Login'
+import MainPage from './Main'
 import { useAppSelector } from '../../store'
-import sync from '../../sync/sync'
 
 export type PageId = (
-  'data' |
-  'groups' |
-  'finish'
+  | 'main'
 )
 
 export interface Page {
   id: PageId,
   name: string,
-  icon: MuiIconType,
   path: string,
   page: ReactNode,
 }
 
 export const pages: Page[] = [
   {
-    id: 'data',
+    id: 'main',
     path: '/',
-    name: 'Data',
-    icon: DataIcon,
-    page: <DataPage />,
-  },
-  {
-    id: 'groups',
-    path: '/groups',
-    name: 'Groups',
-    icon: GroupsIcon,
-    page: <GroupsPage />,
-  },
-  {
-    id: 'finish',
-    path: '/finish',
-    name: 'Finish',
-    icon: CheckIcon,
-    page: <FinishPage />,
+    name: 'Main',
+    page: <MainPage />,
   },
 ]
 
 const allPages = pages.slice().reverse()
 
 function PageView() {
-  const loggedIn = useAppSelector(state => !!state.ui.apiPassword)
-  const [connected, setConnected] = useState(false)
-  useEffect(
-    () => {
-      const interval = window.setInterval(
-        () => {
-          setConnected(sync.connected)
-        },
-        200,
-      )
-      return () => window.clearInterval(interval)
-    },
-    [],
-  )
-
   const pageRoutes = useMemo(
     () => allPages.map(page => (
       <Route
@@ -77,13 +39,6 @@ function PageView() {
 
   return (
     <Routes>
-      {!loggedIn && (
-        <Route path="/" element={<LoginPage />} />
-      )}
-      {!connected && (
-        <Route path="/" element={<DataPage />} />
-      )}
-
       {pageRoutes}
     </Routes>
   )

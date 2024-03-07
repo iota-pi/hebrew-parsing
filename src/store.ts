@@ -1,11 +1,5 @@
 import { configureStore } from '@reduxjs/toolkit'
 import { type TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux'
-import campuses from './state/campuses'
-import editPerson from './state/editPerson'
-import faculties from './state/faculty'
-import groups from './state/groups'
-import groupType from './state/groupType'
-import people from './state/people'
 import ui from './state/ui'
 
 export function setupStore() {
@@ -17,12 +11,6 @@ export function setupStore() {
       })
     ),
     reducer: {
-      campuses,
-      editPerson,
-      faculties,
-      groups,
-      groupType,
-      people,
       ui,
     },
   })

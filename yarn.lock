@@ -3029,10 +3029,57 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@tanstack/query-core@npm:5.25.0":
+  version: 5.25.0
+  resolution: "@tanstack/query-core@npm:5.25.0"
+  checksum: 2a0f48b45a9ff8add40d559197b7328a2b340976b3f7a6689cc5851fadf4f788f598e7f29769ebccb4477fc269eecb5c63d9bac4a508411577c0a1994236d501
+  languageName: node
+  linkType: hard
+
+"@tanstack/react-query@npm:^5.25.0":
+  version: 5.25.0
+  resolution: "@tanstack/react-query@npm:5.25.0"
+  dependencies:
+    "@tanstack/query-core": "npm:5.25.0"
+  peerDependencies:
+    react: ^18.0.0
+  checksum: 6b6e8114bebd1e5dfdc72c6a80a2cad2e93cec6583308df07a943eec551ae04eaba57101330a918051ddf826702951905a711c34e4509dad8606f70dd7b08272
+  languageName: node
+  linkType: hard
+
 "@tootallnate/once@npm:2":
   version: 2.0.0
   resolution: "@tootallnate/once@npm:2.0.0"
   checksum: 073bfa548026b1ebaf1659eb8961e526be22fa77139b10d60e712f46d2f0f05f4e6c8bec62a087d41088ee9e29faa7f54838568e475ab2f776171003c3920858
+  languageName: node
+  linkType: hard
+
+"@trpc/client@npm:^11.0.0-next-beta.311":
+  version: 11.0.0-next-beta.311
+  resolution: "@trpc/client@npm:11.0.0-next-beta.311"
+  peerDependencies:
+    "@trpc/server": 11.0.0-next-beta.311+0a4f0a114
+  checksum: e0540bd4572244912d42b6e1229200b68fd71ea8142d16f615e36c20732e6a4f66e99ae6b6cd8c650703bed824677fc2f1e5c2b6481680abf1b55b456c17d16a
+  languageName: node
+  linkType: hard
+
+"@trpc/react-query@npm:^11.0.0-next-beta.316":
+  version: 11.0.0-next-beta.316
+  resolution: "@trpc/react-query@npm:11.0.0-next-beta.316"
+  peerDependencies:
+    "@tanstack/react-query": ^5.25.0
+    "@trpc/client": 11.0.0-next-beta.316+dcae8bd89
+    "@trpc/server": 11.0.0-next-beta.316+dcae8bd89
+    react: ">=18.2.0"
+    react-dom: ">=18.2.0"
+  checksum: a5f2772b7c9e2a7d7f471cb17fa19ec4b5f7fca7431b609ccc711c5688ffd7ea650be5bc92b9d55881ace0a0bf8a956234a7a59a4ca9d1594e4f265e059cb1ed
+  languageName: node
+  linkType: hard
+
+"@trpc/server@npm:^11.0.0-next-beta.311":
+  version: 11.0.0-next-beta.311
+  resolution: "@trpc/server@npm:11.0.0-next-beta.311"
+  checksum: 32b85699e0fa33f2efa9579676d2025a21b375d3704eba08a799e8bd70344852e959f40c6ab34a18a30f6fc99db8a5ca71e2f864c2f007ad2f399dd72adfc6ea
   languageName: node
   linkType: hard
 
@@ -3081,6 +3128,15 @@ __metadata:
   dependencies:
     "@babel/types": "npm:^7.20.7"
   checksum: 033abcb2f4c084ad33e30c3efaad82161240f351e3c71b6154ed289946b33b363696c0fbd42502b68e4582a87413c418321f40eb1ea863e34fe525641345e05b
+  languageName: node
+  linkType: hard
+
+"@types/cors@npm:^2.8.17":
+  version: 2.8.17
+  resolution: "@types/cors@npm:2.8.17"
+  dependencies:
+    "@types/node": "npm:*"
+  checksum: 457364c28c89f3d9ed34800e1de5c6eaaf344d1bb39af122f013322a50bc606eb2aa6f63de4e41a7a08ba7ef454473926c94a830636723da45bf786df032696d
   languageName: node
   linkType: hard
 
@@ -3197,7 +3253,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/node@npm:*, @types/node@npm:^20.11.5":
+"@types/node@npm:*, @types/node@npm:^20.11.25":
   version: 20.11.25
   resolution: "@types/node@npm:20.11.25"
   dependencies:
@@ -4275,6 +4331,16 @@ __metadata:
   version: 2.0.0
   resolution: "convert-source-map@npm:2.0.0"
   checksum: 8f2f7a27a1a011cc6cc88cc4da2d7d0cfa5ee0369508baae3d98c260bb3ac520691464e5bbe4ae7cdf09860c1d69ecc6f70c63c6e7c7f7e3f18ec08484dc7d9b
+  languageName: node
+  linkType: hard
+
+"cors@npm:^2.8.5":
+  version: 2.8.5
+  resolution: "cors@npm:2.8.5"
+  dependencies:
+    object-assign: "npm:^4"
+    vary: "npm:^1"
+  checksum: 373702b7999409922da80de4a61938aabba6929aea5b6fd9096fefb9e8342f626c0ebd7507b0e8b0b311380744cc985f27edebc0a26e0ddb784b54e1085de761
   languageName: node
   linkType: hard
 
@@ -5778,11 +5844,16 @@ __metadata:
     "@stylistic/eslint-plugin": "npm:^1.5.3"
     "@swc/core": "npm:^1.3.102"
     "@swc/jest": "npm:^0.2.29"
+    "@tanstack/react-query": "npm:^5.25.0"
+    "@trpc/client": "npm:^11.0.0-next-beta.311"
+    "@trpc/react-query": "npm:^11.0.0-next-beta.316"
+    "@trpc/server": "npm:^11.0.0-next-beta.311"
     "@types/aws-lambda": "npm:^8.10.130"
+    "@types/cors": "npm:^2.8.17"
     "@types/jest": "npm:^29.4.0"
     "@types/jsdom": "npm:^16.2.13"
     "@types/loadable__component": "npm:^5.13.4"
-    "@types/node": "npm:^20.11.5"
+    "@types/node": "npm:^20.11.25"
     "@types/react": "npm:^18.2.46"
     "@types/react-dom": "npm:^18.2.18"
     "@types/react-router": "npm:^5.1.20"
@@ -5791,6 +5862,7 @@ __metadata:
     "@typescript-eslint/parser": "npm:^6.19.0"
     "@vitejs/plugin-react": "npm:^4.2.1"
     axios: "npm:^1.6.7"
+    cors: "npm:^2.8.5"
     cross-env: "npm:^7.0.3"
     esbuild: "npm:^0.20.1"
     eslint: "npm:^8.56.0"
@@ -5809,6 +5881,7 @@ __metadata:
     tsx: "npm:^4.7.0"
     typescript: "npm:^5.4.2"
     vite: "npm:^5.0.10"
+    zod: "npm:^3.22.4"
   languageName: unknown
   linkType: soft
 
@@ -7501,7 +7574,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"object-assign@npm:^4.1.1":
+"object-assign@npm:^4, object-assign@npm:^4.1.1":
   version: 4.1.1
   resolution: "object-assign@npm:4.1.1"
   checksum: 1f4df9945120325d041ccf7b86f31e8bcc14e73d29171e37a7903050e96b81323784ec59f93f102ec635bcf6fa8034ba3ea0a8c7e69fa202b87ae3b6cec5a414
@@ -9039,6 +9112,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"vary@npm:^1":
+  version: 1.1.2
+  resolution: "vary@npm:1.1.2"
+  checksum: f15d588d79f3675135ba783c91a4083dcd290a2a5be9fcb6514220a1634e23df116847b1cc51f66bfb0644cf9353b2abb7815ae499bab06e46dd33c1a6bf1f4f
+  languageName: node
+  linkType: hard
+
 "vite@npm:^5.0.10":
   version: 5.1.5
   resolution: "vite@npm:5.1.5"
@@ -9332,5 +9412,12 @@ __metadata:
   version: 0.1.0
   resolution: "yocto-queue@npm:0.1.0"
   checksum: dceb44c28578b31641e13695d200d34ec4ab3966a5729814d5445b194933c096b7ced71494ce53a0e8820685d1d010df8b2422e5bf2cdea7e469d97ffbea306f
+  languageName: node
+  linkType: hard
+
+"zod@npm:^3.22.4":
+  version: 3.22.4
+  resolution: "zod@npm:3.22.4"
+  checksum: 7578ab283dac0eee66a0ad0fc4a7f28c43e6745aadb3a529f59a4b851aa10872b3890398b3160f257f4b6817b4ce643debdda4fb21a2c040adda7862cab0a587
   languageName: node
   linkType: hard

@@ -5,9 +5,9 @@ import { StyledEngineProvider, ThemeProvider } from '@mui/material'
 import App from './App'
 import store from './store'
 import theme from './theme'
-import persistor from './persistor'
+// import persistor from './persistor'
 
-persistor.load()
+// persistor.load()
 
 const container = document.querySelector('#root')
 const root = createRoot(container!)

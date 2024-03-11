@@ -9,13 +9,6 @@ from tf.app import use
 MIN_LEX_FREQ = 50
 
 STEMS = {
-    # 'qal':  'Qal',
-    # 'hif':  'Hiphil',
-    # 'piel': 'Piel',
-    # 'nif':  'Niphal',
-    # 'hit':  'Hitpael',
-    # 'pual': 'Pual',
-    # 'hof':  'Hophal',
     'qal':  'qal',
     'hif':  'hif',
     'piel': 'piel',
@@ -26,14 +19,6 @@ STEMS = {
 }
 
 TENSES = {
-    # 'perf': 'qatal',
-    # 'impf': 'yiqtol',
-    # 'wayq': 'wayyiqtol',
-    # 'ptca': 'act part',
-    # 'infc': 'inf const',
-    # 'impv': 'imp',
-    # 'ptcp': 'pass part',
-    # 'infa': 'inf abs',
     'perf': 'perf',
     'impf': 'impf',
     'wayq': 'wayq',

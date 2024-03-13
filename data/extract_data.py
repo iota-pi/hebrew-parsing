@@ -78,7 +78,10 @@ class Verb:
             verse = api.L.u(clause, otype='verse')[0]
         except IndexError:
             verse = api.L.u(clause, otype='sentence')[0]
-        return (api.T.text(clause), api.T.text(verse), self.reference)
+        clause_text = api.T.text(clause)
+        verse_text = api.T.text(verse)
+        verse_text = verse_text.replace(clause_text, '$')
+        return (clause_text, verse_text, self.reference)
 
     def __eq__(self, other):
         return (
@@ -167,7 +170,7 @@ def main():
         except (KeyError, ValueError):
             pass
 
-    with open('etcbc-verbs.json', 'w', encoding='utf-8') as verbsFile:
+    with open('verbs.json', 'w', encoding='utf-8') as verbsFile:
         json.dump(
             [
                 verb.to_simple_obj()
@@ -179,7 +182,7 @@ def main():
             check_circular=False,
         )
 
-    with open('etcbc-roots.json', 'w', encoding='utf-8') as rootsFile:
+    with open('roots.json', 'w', encoding='utf-8') as rootsFile:
         json.dump(
             [root.to_simple_obj() for root in data.roots],
             rootsFile,

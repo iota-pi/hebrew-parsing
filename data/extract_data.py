@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 
 import json
-import re
 from typing import Set
 from tf.advanced.app import App
 from tf.app import use
 
 MIN_LEX_FREQ = 50
+MAX_VERSE_LENGTH = 15
 
 STEMS = {
     'qal':  'qal',
@@ -33,7 +33,7 @@ PERSONS = {'p1': 1, 'p2': 2, 'p3': 3, 'unknown': None}
 GENDERS = {'m': 'm', 'f': 'f', 'unkown': None}
 NUMBERS = {'sg': 's', 'pl': 'p', 'unknown': None}
 
-app: App = use('ETCBC/bhsa')
+app: App = use('ETCBC/bhsa', silent=True)
 api = app.api
 
 class Root:
@@ -58,9 +58,7 @@ class Verb:
             raise ValueError('not a verb')
         if node is None or '\u05c3' in node or '\u05be' in node:
             raise ValueError('no text, sof pasuq or maqaf')
-        # strip accents
-        self.verb = re.sub(r'[^\u05b0-\u05bc\u05c1\u05c2\u05c7-\u05ea]', '', node)
-        self.unpointed_word = re.sub(r'[^\u05d0-\u05ea]', '', self.verb)
+        self.verb = node
         self.root = api.F.lex_utf8.v(n)
         self.stem = STEMS[api.F.vs.v(n)]
         self.tense = TENSES[api.F.vt.v(n)]
@@ -72,20 +70,30 @@ class Verb:
         self.pronom_number = NUMBERS.get(api.F.prs_nu.v(n))
         self.reference = api.T.sectionFromNode(n)
 
+        if self.tense == 'wayq':
+            p = api.L.p(n, otype='word')[-1]
+            if api.F.sp.v(p) == 'conj':
+                self.verb = api.F.g_word_utf8.v(p) + self.verb
+
     def get_context(self):
         clause = api.L.u(self.n, otype='clause')[0]
         try:
             verse = api.L.u(clause, otype='verse')[0]
+            if len(api.T.text(verse).split()) > MAX_VERSE_LENGTH:
+                verse = api.L.u(clause, otype='half_verse')[0]
         except IndexError:
             verse = api.L.u(clause, otype='sentence')[0]
         clause_text = api.T.text(clause)
         verse_text = api.T.text(verse)
+
         verse_text = verse_text.replace(clause_text, '$')
+        clause_text = clause_text.replace(self.verb, '$')
+
         return (clause_text, verse_text, self.reference)
 
     def __eq__(self, other):
         return (
-            self.unpointed_word == other.unpointed_word and
+            self.verb == other.verb and
             self.root == other.root and
             self.stem == other.stem and
             self.tense == other.tense and
@@ -102,7 +110,7 @@ class Verb:
     def __hash__(self):
         return hash(
             (
-                self.unpointed_word,
+                self.verb,
                 self.root,
                 self.stem,
                 self.tense,
@@ -142,12 +150,16 @@ class Databank:
     def __init__(self):
         self.verbs: Set[Verb] = set()
         self.roots: Set[Root] = set()
+        self.stem_stats = { key: 0 for key in STEMS.keys() }
+        self.tense_stats = { key: 0 for key in TENSES.keys() }
 
     def add_root(self, root):
         self.roots.add(root)
 
     def add_verb(self, verb):
         self.verbs.add(verb)
+        self.stem_stats[verb.stem] += 1
+        self.tense_stats[verb.tense] += 1
 
 def handle(n, data):
     if api.F.language.v(n) != 'Hebrew':
@@ -170,6 +182,13 @@ def main():
         except (KeyError, ValueError):
             pass
 
+    print('Verbs:', len(data.verbs))
+    print('Roots:', len(data.roots))
+    print('Stats:')
+    print(json.dumps(data.stem_stats, indent=2))
+    print()
+    print(json.dumps(data.tense_stats, indent=2))
+
     with open('verbs.json', 'w', encoding='utf-8') as verbsFile:
         json.dump(
             [
@@ -190,9 +209,6 @@ def main():
             ensure_ascii=False,
             check_circular=False,
         )
-
-    print('Verbs:', len(data.verbs))
-    print('Roots:', len(data.roots))
 
 
 if __name__ == '__main__':

@@ -15,6 +15,9 @@ export const appRouter = router({
         const validVerbs = (await verbs).filter(filter)
         const verb = validVerbs[Math.floor(Math.random() * validVerbs.length)]
         const root = (await roots).find(root => root.root === verb.root)
+        if (!root) {
+          throw new Error(`Root not found: ${verb.root}`)
+        }
         return { verb, root }
       })
   ),

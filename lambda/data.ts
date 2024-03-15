@@ -1,8 +1,9 @@
 import { readFile } from 'node:fs/promises'
 
-type DataWordContext = [string, number, number]
+type DataWordReference = [string, number, number]
+type DataWordContext = [string, string, DataWordReference]
 export type Person = 1 | 2 | 3
-export type Gender = 'm' | 'f' | null
+export type Gender = 'm' | 'f' | 'c' | null
 export type VerbNumber = 's' | 'p' | null
 type DataParsing = [Person, Gender, VerbNumber]
 export type Stem = (

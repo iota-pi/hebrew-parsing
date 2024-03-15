@@ -1,15 +1,12 @@
 import {
   Box,
-  Button,
-  Stack,
-  ToggleButton,
-  ToggleButtonGroup,
   Typography,
 } from '@mui/material'
 import { useAppDispatch, useAppSelector } from '../../store'
-import { ALL_PARTS, PART_MAPPING, getPartName } from './util'
 import { trpc } from '../../trpc'
 import type { FilterCondition } from '../../../lambda/filter'
+import VerbParsing from './VerbParsing'
+import { useCallback } from 'react'
 
 function MainPage() {
   const dispatch = useAppDispatch()
@@ -30,6 +27,26 @@ function MainPage() {
   }
 
   const currentWord = trpc.getWord.useQuery({ filterConditions })
+  console.log(currentWord)
+
+  const handleAnswer = useCallback(
+    (correct: boolean) => {
+      if (correct) {
+        console.log("Correct answer!")
+        // Perform any other actions for correct answer
+      } else {
+        console.log("Incorrect answer!")
+        // Perform any other actions for incorrect answer
+      }
+    },
+    [],
+  )
+  const handleNext = useCallback(
+    () => {
+      currentWord.refetch()
+    },
+    [],
+  )
 
   return (
     <Box
@@ -37,48 +54,25 @@ function MainPage() {
       justifyContent="center"
       display="flex"
     >
-      <Stack spacing={2} maxWidth={800}>
-        <Typography
-          variant="h2"
-          textAlign="center"
-          fontFamily={"'Ezra SIL', Roboto, David, sans-serif"}
-          py={2}
-        >
-          {currentWord.data?.verb.verb || null}
-        </Typography>
-
-        {/* {ALL_PARTS.map(part => (
-          <ToggleButtonGroup
-            key={part}
-            onChange={handleTogglePart(part)}
-            exclusive
-            value={parsingInfo[part]}
-            disabled={!applicableParts.includes(part)}
+      <Box maxWidth={800}>
+        {currentWord.data ? (
+          <VerbParsing
+            verb={currentWord.data.verb}
+            root={currentWord.data.root}
+            onAnswer={handleAnswer}
+            onNext={handleNext}
+          />
+        ) : (
+          <Typography
+            variant="h2"
+            textAlign="center"
+            fontFamily={"'Ezra SIL', Roboto, David, sans-serif"}
+            py={2}
           >
-            {PART_MAPPING[part].map(value => (
-              <ToggleButton
-                key={value}
-                value={value}
-                selected={applicableParts.includes(part) && parsingInfo[part] === value}
-              >
-                {getPartName(part, value)}
-              </ToggleButton>
-            ))}
-          </ToggleButtonGroup>
-        ))}
-
-        <Button
-          onClick={handleClickCheck}
-          color="primary"
-          variant="contained"
-          disabled={(
-            applicableParts.findIndex(part => parsingInfo[part] === null) >= 0
-            && isValidParsing(parsingInfo)
-          )}
-        >
-          Check
-        </Button> */}
-      </Stack>
+            Loading...
+          </Typography>
+        )}
+      </Box>
     </Box>
   )
 }

@@ -1,11 +1,6 @@
 import { readFile } from 'node:fs/promises'
 
-type DataWordReference = [string, number, number]
-type DataWordContext = [string, string, DataWordReference]
-export type Person = 1 | 2 | 3
-export type Gender = 'm' | 'f' | 'c' | null
-export type VerbNumber = 's' | 'p' | null
-type DataParsing = [Person, Gender, VerbNumber]
+export type NA = 'N/A'
 export type Stem = (
   | 'Qal'
   | 'Hiphil'
@@ -25,6 +20,18 @@ export type Tense = (
   | 'Passive participle'
   | 'Infinitive absolute'
 )
+export type Person = 1 | 2 | 3 | NA
+export type Gender = 'm' | 'f' | 'c' | NA
+export type VerbNumber = 's' | 'p' | NA
+export type PGN = {
+  person: Person,
+  gender: Gender,
+  number: VerbNumber,
+}
+
+type DataWordReference = [string, number, number]
+type DataWordContext = [string, string, DataWordReference]
+type DataParsing = [Person | null, Gender | null, VerbNumber | null]
 type DataVerb = [
   string,
   string,
@@ -98,15 +105,12 @@ export function getTense(code: string) {
   throw new Error(`Unknown tense code "${code}"`)
 }
 
-export function getParsing(input: DataParsing | null | undefined) {
-  if (!input) {
-    return null
-  }
-  const [person, gender, number] = input
+export function getParsing(input: DataParsing | null | undefined): PGN {
+  const [person = null, gender = null, number = null] = input || []
   return {
-    person,
-    gender,
-    number,
+    person: person === null ? 'N/A' : person,
+    gender: gender === null ? 'N/A' : gender,
+    number: number === null ? 'N/A' : number,
   }
 }
 

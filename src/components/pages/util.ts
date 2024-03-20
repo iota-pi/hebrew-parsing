@@ -1,4 +1,13 @@
-import type { Gender, Person, Stem, Tense, Verb, VerbNumber } from '../../../lambda/data'
+import type {
+  Gender,
+  NA,
+  PGN,
+  Person,
+  Stem,
+  Tense,
+  Verb,
+  VerbNumber,
+} from '../../../lambda/data'
 
 export const CONTEXT_REPLACEMENT_CODE = '$'
 
@@ -21,48 +30,44 @@ export const ALL_TENSES: Tense[] = [
   'Infinitive construct',
   'Infinitive absolute',
 ]
-export const ALL_PERSONS: Person[] = [1, 2, 3]
+export const ALL_PERSONS: Person[] = [3, 2, 1]
 export const ALL_GENDERS: Gender[] = ['m', 'f', 'c']
 export const ALL_NUMBERS: VerbNumber[] = ['s', 'p']
 
 export const PART_MAPPING = {
   stem: ALL_STEMS,
   tense: ALL_TENSES,
-  person: ALL_PERSONS,
-  gender: ALL_GENDERS,
-  number: ALL_NUMBERS,
-  suffix_person: ALL_PERSONS,
-  suffix_gender: ALL_GENDERS,
-  suffix_number: ALL_NUMBERS,
+  pgn: {
+    person: ALL_PERSONS,
+    gender: ALL_GENDERS,
+    number: ALL_NUMBERS,
+  },
+  suffix: {
+    person: ALL_PERSONS,
+    gender: ALL_GENDERS,
+    number: ALL_NUMBERS,
+  },
 }
-export type ParsingPart = keyof typeof PART_MAPPING
-type NameMappingFunc<K extends ParsingPart> = (
-  (value: typeof PART_MAPPING[K][number]) => string
-)
-export const PART_NAME_MAPPING: {
-  [K in ParsingPart]: NameMappingFunc<K>
-} = {
-  stem: s => s,
-  tense: getTenseName,
-  person: getPersonName,
-  gender: getGenderName,
-  number: getNumberName,
-  suffix_person: getPersonName,
-  suffix_gender: getGenderName,
-  suffix_number: getNumberName,
-}
+export type SimpleParsingPartKey = 'stem' | 'tense'
+export type SimpleParsingPart = Stem | Tense
 export type Parsing = {
-  [K in ParsingPart]: typeof PART_MAPPING[K][number] | null;
+  stem: Stem | 'N/A',
+  tense: Tense | 'N/A',
+  pgn: PGN,
+  suffix: PGN,
 }
-export const ALL_PARTS: ParsingPart[] = [
+export type ParsingKey = keyof Parsing
+export type ApplicableParts = {
+  stem: Record<Exclude<Stem, NA>, boolean> | false,
+  tense: Record<Exclude<Tense, NA>, boolean> | false,
+  pgn: { [K in keyof PGN]: Record<Exclude<PGN[K], NA>, boolean> | false },
+  suffix: { [K in keyof PGN]: Record<Exclude<PGN[K], NA>, boolean> | false },
+}
+export const ALL_PARTS: ParsingKey[] = [
   'stem',
   'tense',
-  'person',
-  'gender',
-  'number',
-  'suffix_person',
-  'suffix_gender',
-  'suffix_number',
+  'pgn',
+  'suffix',
 ]
 
 export function getPersonName(p: Person) {
@@ -74,6 +79,19 @@ export function getGenderName(g: Gender) {
 export function getNumberName(n: VerbNumber) {
   return n === 's' ? 'Singular' : 'Plural'
 }
+export function getPGNName<K extends keyof PGN>(key: K, value: PGN[K]) {
+  if (key === 'person') {
+    return getPersonName(value as Person)
+  }
+  if (key === 'gender') {
+    return getGenderName(value as Gender)
+  }
+  return getNumberName(value as VerbNumber)
+}
+
+export function getStemName(s: Stem) {
+  return s
+}
 
 export function getTenseName(t: Tense) {
   return (
@@ -83,8 +101,17 @@ export function getTenseName(t: Tense) {
   )
 }
 
-export function getPartName(part: ParsingPart, value: typeof PART_MAPPING[ParsingPart][number]) {
-  return (PART_NAME_MAPPING[part] as NameMappingFunc<typeof part>)(value)
+export function getSimplePartName<P extends SimpleParsingPartKey>(
+  part: P,
+  value: Parsing[P],
+) {
+  if (part === 'stem') {
+    return getStemName(value as Stem)
+  }
+  if (part === 'tense') {
+    return getTenseName(value as Tense)
+  }
+  return value?.toString() || ''
 }
 
 export function referenceToString(reference: [string, number, number]) {
@@ -96,31 +123,52 @@ export function stripAccents(s: string) {
   return s.replace(/[^\u05b0-\u05bc\u05c1\u05c2\u05c7-\u05ea]/g, '')
 }
 
-export function checkPart<T extends ParsingPart>(part: T, attempt: Parsing[T], correct?: Parsing[T]) {
-  if (part === 'gender' || part === 'suffix_gender') {
-    return checkGender(attempt as Gender, correct as Gender)
-  }
+export function checkSimplePart<T extends SimpleParsingPartKey>(attempt: Parsing[T], correct: Parsing[T]) {
   return attempt === correct
+}
+
+export function checkPGN(attempt: PGN, correct: PGN) {
+  return {
+    person: correct.person === 'N/A' || attempt.person === correct.person,
+    gender: correct.gender === 'N/A' || checkGender(attempt.gender, correct.gender),
+    number: correct.number === 'N/A' || attempt.number === correct.number,
+  }
+}
+
+export function checkPart<T extends ParsingKey>(part: T, attempt: Parsing[T], correct?: Parsing[T]) {
+  if (isSimplePart(part)) {
+    return checkSimplePart(
+      attempt as SimpleParsingPart,
+      correct as SimpleParsingPart,
+    )
+  }
+  return checkPGN(
+    attempt as PGN,
+    correct as PGN,
+  )
+}
+
+export function isSimplePart(part: ParsingKey): part is SimpleParsingPartKey {
+  return part === 'stem' || part === 'tense';
 }
 
 export function checkGender(attempt: Gender, correct?: Gender) {
   if (attempt === correct) {
     return true
   }
-  if (attempt === 'c' && correct === null) {
+  if (attempt === 'c' && correct === 'N/A') {
     return true
   }
   return false
 }
 
-export function getPartFromVerb(part: ParsingPart, verb: Verb): Parsing[ParsingPart] {
-  if (part === 'stem' || part === 'tense') {
-    return verb[part]
+export function getPartFromVerb<P extends ParsingKey>(part: P, verb: Verb): Parsing[P] {
+  if (isSimplePart(part)) {
+    return verb[part] as Parsing[P]
   }
-  if (part === 'person' || part === 'gender' || part === 'number') {
-    return verb.parsing?.[part] as Parsing[typeof part]
+  if (part === 'pgn') {
+    return verb.parsing as Parsing[P]
   } else {
-    const suffixPart = part.replace('suffix_', '') as 'person' | 'gender' | 'number'
-    return verb.suffixParsing?.[suffixPart] as Parsing[typeof part]
+    return verb.suffixParsing as Parsing[P]
   }
 }

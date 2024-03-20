@@ -5,7 +5,7 @@ import {
 import { useAppDispatch, useAppSelector } from '../../store'
 import { trpc } from '../../trpc'
 import type { FilterCondition } from '../../../lambda/filter'
-import VerbParsing from './VerbParsing'
+import VerbParsing from '../../VerbParsing'
 import { useCallback } from 'react'
 
 function MainPage() {

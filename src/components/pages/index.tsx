@@ -1,7 +1,6 @@
-import { ReactNode, useEffect, useMemo, useState } from 'react'
+import { ReactNode, useMemo } from 'react'
 import { Route, Routes } from 'react-router-dom'
 import MainPage from './Main'
-import { useAppSelector } from '../../store'
 
 export type PageId = (
   | 'main'

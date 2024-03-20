@@ -13,5 +13,5 @@ const server = createHTTPServer({
 
 server.listen(LOCAL_PORT)
 server.on('listening', () => {
-  console.log(`🚀 Server ready at http://localhost:${LOCAL_PORT}`)
+  console.info(`🚀 Server ready at http://localhost:${LOCAL_PORT}`)
 })

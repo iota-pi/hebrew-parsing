@@ -26,12 +26,10 @@ function ParsingControlGroup<P extends ParsingKey, V extends Parsing[P]>({
   const handleToggle = useCallback(
     (key?: keyof PGN) => (
       (event: React.MouseEvent<HTMLElement>, newData: V) => {
-        console.log('aaa', newData)
         if (newData) {
           if (isSimplePart(part)) {
             onChange(newData)
           } else if (key) {
-            console.log('newData', newData)
             onChange({
               ...(value as PGN),
               [key]: newData,

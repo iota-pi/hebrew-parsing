@@ -40,7 +40,7 @@ const HighlightedSpan = styled('span')({
 
 function VerbParsing({
   verb,
-  root,
+  // root,
   onAnswer,
   onNext,
 }: {
@@ -55,7 +55,7 @@ function VerbParsing({
 
   const applicableParts = useMemo(
     () => {
-      let parts: ApplicableParts = getInitialApplicableParts()
+      const parts: ApplicableParts = getInitialApplicableParts()
 
       if (
         (parsing.tense === 'Active participle' || parsing.tense === 'Passive participle')
@@ -99,7 +99,7 @@ function VerbParsing({
       return parts
     },
     [parsing, suffix],
-  );
+  )
 
   const isValid = useMemo(
     () => {
@@ -329,7 +329,7 @@ function VerbParsing({
             showAnswer
             && suffix === 'suffix'
               ? (
-                !!verb.suffixParsing ? 'success' : 'error'
+                verb.suffixParsing ? 'success' : 'error'
               )
               : undefined
           )}

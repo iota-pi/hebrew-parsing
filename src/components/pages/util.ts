@@ -149,7 +149,7 @@ export function checkPart<T extends ParsingKey>(part: T, attempt: Parsing[T], co
 }
 
 export function isSimplePart(part: ParsingKey): part is SimpleParsingPartKey {
-  return part === 'stem' || part === 'tense';
+  return part === 'stem' || part === 'tense'
 }
 
 export function checkGender(attempt: Gender, correct?: Gender) {

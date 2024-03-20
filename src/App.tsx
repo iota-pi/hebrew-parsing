@@ -5,7 +5,7 @@ import { httpBatchLink } from '@trpc/client'
 import { BrowserRouter as Router } from 'react-router-dom'
 import Notice from './components/layout/Notice'
 import PageView from './components/pages'
-import { trpc } from './trpc';
+import { trpc } from './trpc'
 import { LOCAL_PORT } from '../lambda/constants'
 
 const Root = styled(Box)({

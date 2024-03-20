@@ -24,6 +24,7 @@ export function getFilterFromConditions(
     if (!condition) return true
 
     // TODO: implement filter conditions
+    if (!verb.tense) return false
     return true
   }
 }

@@ -25,10 +25,12 @@ import {
   checkPart,
   isSimplePart,
   isValidPGN,
-} from './components/pages/util'
+  isValidSuffix,
+} from './util'
 import type { Verb, Root, PGN } from '../lambda/data'
 import ParsingControlGroup from './ParsingControlGroup'
 import PGNGroup from './PGNGroup'
+import SuffixSelection, { Suffix } from './SuffixSelection'
 
 const MAIN_PARTS = ALL_PARTS.filter(part => part !== 'suffix')
 
@@ -51,7 +53,7 @@ function VerbParsing({
   onNext: () => void,
 }) {
   const [parsing, setParsing] = useState(getInitialParsing())
-  const [suffix, setSuffix] = useState<'suffix' | 'no-suffix'>('no-suffix')
+  const [suffix, setSuffix] = useState<Suffix>('no-suffix')
   const [showAnswer, setShowAnswer] = useState(false)
 
   const applicableParts = useMemo(
@@ -68,9 +70,7 @@ function VerbParsing({
       }
 
       if (suffix === 'no-suffix') {
-        parts.suffix.person = false
-        parts.suffix.gender = false
-        parts.suffix.number = false
+        parts.suffix = false
       }
 
       if (parsing.stem && parsing.stem !== 'Qal' && parts.tense) {
@@ -91,34 +91,35 @@ function VerbParsing({
 
         if (isSimplePart(part)) {
           if (parsing[part] === 'N/A') {
+            console.log(`Invalid parsing on ${part}`)
             return false
           }
         } else {
-          for (const key of Object.keys(parsing[part])) {
-            if (!applicableParts[part][key as keyof PGN]) {
-              continue
+          if (part === 'pgn') {
+            if (!isValidPGN(parsing[part], parsing)) {
+              console.log(`Invalid parsing on ${part}`)
+              return false
             }
-
-            if (parsing[part][key as keyof PGN] === 'N/A') {
+          } else {
+            if (!isValidSuffix(parsing[part])) {
+              console.log(`Invalid parsing on ${part}`)
               return false
             }
           }
         }
       }
 
-      return isValidPGN(parsing.pgn, parsing)
+      return true
     },
     [parsing, applicableParts],
   )
 
   const handleChange = useCallback(
-    <T extends ParsingKey>(part: T) => {
-      if (showAnswer) {
-        return () => {}
-      }
-
-      return (newData: Parsing[T]) => {
-        console.log('newData', newData, part)
+    <T extends ParsingKey>(part: T) => (
+      (newData: Parsing[T]) => {
+        if (showAnswer) {
+          return
+        }
 
         if (newData) {
           setParsing(prev => ({
@@ -127,14 +128,13 @@ function VerbParsing({
           }))
         }
       }
-    },
+    ),
     [showAnswer],
   )
 
   const handleToggleSuffix = useCallback(
-    (event: React.MouseEvent<HTMLElement>, newData: 'suffix' | 'no-suffix') => {
-      console.log('hello!')
-      setSuffix(newData)
+    (suffix: Suffix) => {
+      setSuffix(suffix)
     },
     [],
   )
@@ -267,41 +267,12 @@ function VerbParsing({
           )
         ))}
 
-        <ToggleButtonGroup
-          exclusive
-          orientation="vertical"
+        <SuffixSelection
           onChange={handleToggleSuffix}
-          value={suffix}
-        >
-          <ToggleButton
-            value="no-suffix"
-            selected={suffix === 'no-suffix'}
-            color={(
-              showAnswer
-              && suffix === 'no-suffix'
-                ? (
-                  !verb.suffixParsing ? 'success' : 'error'
-                )
-                : undefined
-            )}
-          >
-            No Suffix
-          </ToggleButton>
-          <ToggleButton
-            value="suffix"
-            selected={suffix === 'suffix'}
-            color={(
-              showAnswer
-              && suffix === 'suffix'
-                ? (
-                  verb.suffixParsing ? 'success' : 'error'
-                )
-                : undefined
-            )}
-          >
-            Suffix
-          </ToggleButton>
-        </ToggleButtonGroup>
+          showAnswer={showAnswer}
+          suffix={suffix}
+          verb={verb}
+        />
 
         <PGNGroup
           applicable={applicableParts.suffix}

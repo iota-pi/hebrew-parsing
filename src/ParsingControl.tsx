@@ -1,7 +1,7 @@
 import {
   ToggleButton,
 } from '@mui/material'
-import { getPGNKey } from './components/pages/util'
+import { getPGNKey } from './util'
 import { PGN } from '../lambda/data'
 
 
@@ -45,7 +45,7 @@ function ParsingControl<T extends string | number | PGN>({
         showAnswer
           ? (
             isCorrect
-              ? value === option ? 'success' : 'info'
+              ? selected ? 'success' : 'info'
               : 'error'
           )
           : undefined

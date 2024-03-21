@@ -1,7 +1,7 @@
 import {
   ToggleButtonGroup,
 } from '@mui/material'
-import { Parsing, PART_MAPPING, checkSimplePart, getPartFromVerb, ApplicableParts, getSimplePartName, SimpleParsingPartKey } from './components/pages/util'
+import { Parsing, PART_MAPPING, checkSimplePart, getPartFromVerb, ApplicableParts, getSimplePartName, SimpleParsingPartKey } from './util'
 import type { Stem, Tense, Verb } from '../lambda/data'
 import { useCallback, useMemo } from 'react'
 import ParsingControl from './ParsingControl'
@@ -47,7 +47,7 @@ function ParsingControlGroup<P extends SimpleParsingPartKey, V extends Parsing[P
     <ToggleButtonGroup
       onChange={handleToggle}
       orientation='vertical'
-      exclusive={!showAnswer}  // TODO: remove this and use selected prop on ToggleButton
+      exclusive
       value={value}
       disabled={
         !applicable

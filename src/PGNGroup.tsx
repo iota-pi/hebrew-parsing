@@ -2,8 +2,20 @@ import {
   Stack,
   ToggleButtonGroup,
 } from '@mui/material'
-import { Parsing, PART_MAPPING, ParsingKey, checkSimplePart, getPartFromVerb, ApplicableParts, getSimplePartName, SimpleParsingPartKey, checkPGN, getPGNName, isSimplePart, ALL_PERSONS, ALL_NUMBERS, ALL_GENDERS, getPGNKey, isValidPGN } from './components/pages/util'
-import type { Gender, NA, PGN, Person, Stem, Tense, Verb, VerbNumber } from '../lambda/data'
+import {
+  Parsing,
+  ParsingKey,
+  getPartFromVerb,
+  ApplicableParts,
+  checkPGN,
+  ALL_PERSONS,
+  ALL_NUMBERS,
+  ALL_GENDERS,
+  getPGNKey,
+  isValidPGN,
+  isValidSuffix,
+} from './util'
+import type { NA, PGN, Verb } from '../lambda/data'
 import { useCallback, useMemo } from 'react'
 import ParsingControl from './ParsingControl'
 
@@ -28,15 +40,21 @@ function PGNGroup<P extends ParsingKey & ('pgn' | 'suffix')>({
   const handleChange = useCallback(
     (event: React.MouseEvent<HTMLElement>, newData: PGN) => {
       if (newData) {
-        console.log('handleChange PGNGroup', newData)
         onChange(newData)
       }
     },
     [part, value],
   )
 
+  const isValid = part === 'pgn' ? isValidPGN : isValidSuffix
+
   const pgnOptions: [PGN[], PGN[]] = useMemo(
     () => {
+      const result: [PGN[], PGN[]] = [[], []]
+      if (!applicable) {
+        return result
+      }
+
       const hasPerson = !(
         parsing.tense === 'Imperative'
         || parsing.tense === 'Active participle'
@@ -57,7 +75,6 @@ function PGNGroup<P extends ParsingKey & ('pgn' | 'suffix')>({
           ? ['N/A' as NA]
           : ALL_NUMBERS.filter(x => applicable.number && applicable.number[x])
       )
-      const result: [PGN[], PGN[]] = [[], []]
       for (let i = 0; i < possibleNumbers.length; i++) {
         const number = possibleNumbers[i]
         for (const person of possiblePersons) {
@@ -67,7 +84,7 @@ function PGNGroup<P extends ParsingKey & ('pgn' | 'suffix')>({
               gender,
               number,
             }
-            if (isValidPGN(pgn, parsing)) {
+            if (isValid(pgn, parsing)) {
               result[i].push(pgn)
             }
           }
@@ -75,7 +92,7 @@ function PGNGroup<P extends ParsingKey & ('pgn' | 'suffix')>({
       }
       return result
     },
-    [applicable, parsing],
+    [applicable, isValid, parsing],
   )
   const correctAnswer = useMemo(
     () => getPartFromVerb(part, verb) as PGN,
@@ -87,7 +104,7 @@ function PGNGroup<P extends ParsingKey & ('pgn' | 'suffix')>({
   )
   const isApplicableOption = useCallback(
     (option: PGN) => {
-      return (
+      return applicable && (
         option.person === 'N/A'
         || (applicable.person && applicable.person[option.person])
       ) && (

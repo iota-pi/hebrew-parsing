@@ -24,12 +24,13 @@ import {
   ApplicableParts,
   checkPart,
   isSimplePart,
+  isValidPGN,
 } from './components/pages/util'
 import type { Verb, Root, PGN } from '../lambda/data'
 import ParsingControlGroup from './ParsingControlGroup'
+import PGNGroup from './PGNGroup'
 
 const MAIN_PARTS = ALL_PARTS.filter(part => part !== 'suffix')
-const SUFFIX_PARTS: typeof MAIN_PARTS = ['suffix']
 
 const FadedSpan = styled('span')({
   color: grey[600],
@@ -50,20 +51,12 @@ function VerbParsing({
   onNext: () => void,
 }) {
   const [parsing, setParsing] = useState(getInitialParsing())
-  const [suffix, setSuffix] = useState<'suffix' | 'no-suffix'>('suffix')
+  const [suffix, setSuffix] = useState<'suffix' | 'no-suffix'>('no-suffix')
   const [showAnswer, setShowAnswer] = useState(false)
 
   const applicableParts = useMemo(
     () => {
       const parts: ApplicableParts = getInitialApplicableParts()
-
-      if (
-        (parsing.tense === 'Active participle' || parsing.tense === 'Passive participle')
-        && parts.pgn.gender
-      ) {
-        parts.pgn.person = false
-        parts.pgn.gender.c = false
-      }
 
       if (
         parsing.tense === 'Infinitive construct'
@@ -82,18 +75,6 @@ function VerbParsing({
 
       if (parsing.stem && parsing.stem !== 'Qal' && parts.tense) {
         parts.tense['Passive participle'] = false
-      }
-      if (parsing.tense === 'Imperative' && parts.pgn.person) {
-        parts.pgn.person[1] = false
-        parts.pgn.person[3] = false
-      }
-      if (parsing.pgn?.person === 1 && parts.pgn.person && parts.pgn.gender) {
-        parts.pgn.gender.m = false
-        parts.pgn.gender.f = false
-      }
-      if (parsing.suffix?.person === 1 && parts.suffix.person && parts.suffix.gender) {
-        parts.suffix.gender.m = false
-        parts.suffix.gender.f = false
       }
 
       return parts
@@ -125,7 +106,7 @@ function VerbParsing({
         }
       }
 
-      return true
+      return isValidPGN(parsing.pgn, parsing)
     },
     [parsing, applicableParts],
   )
@@ -137,49 +118,12 @@ function VerbParsing({
       }
 
       return (newData: Parsing[T]) => {
+        console.log('newData', newData, part)
+
         if (newData) {
           setParsing(prev => ({
             ...prev,
             [part]: newData,
-          }))
-        }
-        if (part === 'tense' && newData === 'Imperative') {
-          setParsing(prev => ({
-            ...prev,
-            pgn: {
-              ...prev.pgn,
-              person: 2,
-            },
-          }))
-        }
-        if (
-          part === 'tense'
-          && (newData === 'Active participle' || newData === 'Passive participle')
-        ) {
-          setParsing(prev => ({
-            ...prev,
-            pgn: {
-              ...prev.pgn,
-              person: 'N/A',
-            },
-          }))
-        }
-        if (part === 'pgn' && (newData as PGN).person === 1) {
-          setParsing(prev => ({
-            ...prev,
-            pgn: {
-              ...prev.pgn,
-              gender: 'c',
-            },
-          }))
-        }
-        if (part === 'suffix' && (newData as PGN).person === 1) {
-          setParsing(prev => ({
-            ...prev,
-            suffix: {
-              ...prev.pgn,
-              gender: 'c',
-            },
           }))
         }
       }
@@ -189,6 +133,7 @@ function VerbParsing({
 
   const handleToggleSuffix = useCallback(
     (event: React.MouseEvent<HTMLElement>, newData: 'suffix' | 'no-suffix') => {
+      console.log('hello!')
       setSuffix(newData)
     },
     [],
@@ -298,86 +243,75 @@ function VerbParsing({
 
       <Stack direction="row" spacing={2}>
         {MAIN_PARTS.map(part => (
-          <ParsingControlGroup
-            key={part}
-            part={part}
-            verb={verb}
-            applicable={applicableParts[part]}
-            value={parsing[part]}
-            showAnswer={showAnswer}
-            onChange={handleChange(part)}
-          />
+          isSimplePart(part) ? (
+            <ParsingControlGroup
+              key={part}
+              part={part}
+              verb={verb}
+              applicable={applicableParts[part]}
+              value={parsing[part]}
+              showAnswer={showAnswer}
+              onChange={handleChange(part)}
+            />
+          ) : (
+            <PGNGroup
+              applicable={applicableParts[part]}
+              key={part}
+              onChange={handleChange(part)}
+              parsing={parsing}
+              part={part}
+              showAnswer={showAnswer}
+              value={parsing[part]}
+              verb={verb}
+            />
+          )
         ))}
-      </Stack>
 
-      <Typography
-        variant="h6"
-        pt={2}
-      >
-        Pronominal Suffix
-      </Typography>
-
-      <ToggleButtonGroup
-        exclusive
-        onChange={handleToggleSuffix}
-        value={suffix}
-      >
-        <ToggleButton
-          value="suffix"
-          selected={suffix === 'suffix'}
-          color={(
-            showAnswer
-            && suffix === 'suffix'
-              ? (
-                verb.suffixParsing ? 'success' : 'error'
-              )
-              : undefined
-          )}
-          sx={{
-            color: (
+        <ToggleButtonGroup
+          exclusive
+          orientation="vertical"
+          onChange={handleToggleSuffix}
+          value={suffix}
+        >
+          <ToggleButton
+            value="no-suffix"
+            selected={suffix === 'no-suffix'}
+            color={(
               showAnswer
               && suffix === 'no-suffix'
-              && !!verb.suffixParsing
-            ) ? 'success.main' : undefined
-          }}
-        >
-          Suffix
-        </ToggleButton>
-        <ToggleButton
-          value="no-suffix"
-          selected={suffix === 'no-suffix'}
-          color={(
-            showAnswer
-            && suffix === 'no-suffix'
-              ? (
-                !verb.suffixParsing ? 'success' : 'error'
-              )
-              : undefined
-          )}
-          sx={{
-            color: (
+                ? (
+                  !verb.suffixParsing ? 'success' : 'error'
+                )
+                : undefined
+            )}
+          >
+            No Suffix
+          </ToggleButton>
+          <ToggleButton
+            value="suffix"
+            selected={suffix === 'suffix'}
+            color={(
               showAnswer
               && suffix === 'suffix'
-              && !verb.suffixParsing
-            ) ? 'success.main' : undefined
-          }}
-        >
-          No Suffix
-        </ToggleButton>
-      </ToggleButtonGroup>
+                ? (
+                  verb.suffixParsing ? 'success' : 'error'
+                )
+                : undefined
+            )}
+          >
+            Suffix
+          </ToggleButton>
+        </ToggleButtonGroup>
 
-      <Stack direction="row" spacing={2}>
-        {SUFFIX_PARTS.map(part => (
-          <ParsingControlGroup
-            key={part}
-            part={part}
-            verb={verb}
-            applicable={applicableParts[part]}
-            value={parsing[part]}
-            showAnswer={showAnswer}
-            onChange={handleChange(part)}
-          />
-        ))}
+        <PGNGroup
+          applicable={applicableParts.suffix}
+          onChange={handleChange('suffix')}
+          parsing={parsing}
+          part="suffix"
+          showAnswer={showAnswer}
+          value={parsing.suffix}
+          verb={verb}
+        />
       </Stack>
 
       <Button
@@ -423,15 +357,18 @@ function getInitialApplicableParts(): ApplicableParts {
         1: true,
         2: true,
         3: true,
+        'N/A': false,
       },
       gender: {
         m: true,
         f: true,
         c: true,
+        'N/A': false,
       },
       number: {
         s: true,
         p: true,
+        'N/A': false,
       },
     },
     suffix: {
@@ -439,15 +376,18 @@ function getInitialApplicableParts(): ApplicableParts {
         1: true,
         2: true,
         3: true,
+        'N/A': false,
       },
       gender: {
         m: true,
         f: true,
         c: true,
+        'N/A': false,
       },
       number: {
         s: true,
         p: true,
+        'N/A': false,
       },
     },
   }

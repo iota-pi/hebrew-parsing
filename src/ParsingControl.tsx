@@ -1,34 +1,45 @@
 import {
   ToggleButton,
 } from '@mui/material'
+import { getPGNKey } from './components/pages/util'
+import { PGN } from '../lambda/data'
 
 
-function ParsingControl<T extends string | number>({
-  applicable,
+function ParsingControl<T extends string | number | PGN>({
+  disabled,
+  doubleHeight,
   isCorrect,
+  isFirst,
+  isLast,
   option,
   value,
   label,
   showAnswer,
 }: {
-  applicable: Record<T, boolean> | false,
+  disabled: boolean,
+  doubleHeight?: boolean,
   isCorrect: boolean,
-  option: T | null,
-  value: T | null,
+  isFirst?: boolean,
+  isLast?: boolean,
+  option: T,
+  value: T,
   label: string,
   showAnswer: boolean,
 }) {
   if (option === null) {
     return null
   }
+  const selected = (
+    typeof value === 'object' && typeof option === 'object'
+      ? getPGNKey(value) === getPGNKey(option)
+      : value === option
+  )
   return (
     <ToggleButton
-      key={option}
       value={option}
       selected={
-        applicable
-        && (value === option || (showAnswer && isCorrect))
-        && (applicable as Record<typeof option, boolean>)[option]
+        !disabled
+        && (selected || (showAnswer && isCorrect))
       }
       color={(
         showAnswer
@@ -39,15 +50,17 @@ function ParsingControl<T extends string | number>({
           )
           : undefined
       )}
-      // sx={{
-      //   color: (
-      //     showAnswer
-      //     && isCorrect
-      //     && value !== option
-      //   ) ? 'success.main' : undefined
-      // }}
+      sx={{
+        marginTop: isFirst === false ? '-1px' : undefined,
+        borderTopColor: isFirst === false ? 'transparent' : undefined,
+        borderBottomLeftRadius: isLast === false ? 0 : undefined,
+        borderBottomRightRadius: isLast === false ? 0 : undefined,
+        borderTopLeftRadius: isFirst === false ? 0 : undefined,
+        borderTopRightRadius: isFirst === false ? 0 : undefined,
+        height: doubleHeight ? `${48.1 * 2 - 1}px` : undefined,
+      }}
       disabled={
-        !applicable || applicable[option as unknown as keyof typeof applicable] === false
+        disabled
         && !showAnswer
       }
     >

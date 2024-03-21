@@ -1,14 +1,13 @@
 import {
-  Stack,
   ToggleButtonGroup,
 } from '@mui/material'
-import { Parsing, PART_MAPPING, ParsingKey, checkSimplePart, getPartFromVerb, ApplicableParts, getSimplePartName, SimpleParsingPartKey, checkPGN, getPGNName, isSimplePart } from './components/pages/util'
-import type { PGN, Stem, Tense, Verb } from '../lambda/data'
+import { Parsing, PART_MAPPING, checkSimplePart, getPartFromVerb, ApplicableParts, getSimplePartName, SimpleParsingPartKey } from './components/pages/util'
+import type { Stem, Tense, Verb } from '../lambda/data'
 import { useCallback, useMemo } from 'react'
 import ParsingControl from './ParsingControl'
 
 
-function ParsingControlGroup<P extends ParsingKey, V extends Parsing[P]>({
+function ParsingControlGroup<P extends SimpleParsingPartKey, V extends Parsing[P]>({
   verb,
   part,
   value,
@@ -24,95 +23,48 @@ function ParsingControlGroup<P extends ParsingKey, V extends Parsing[P]>({
   onChange: (newValue: V) => void,
 }) {
   const handleToggle = useCallback(
-    (key?: keyof PGN) => (
-      (event: React.MouseEvent<HTMLElement>, newData: V) => {
-        if (newData) {
-          if (isSimplePart(part)) {
-            onChange(newData)
-          } else if (key) {
-            onChange({
-              ...(value as PGN),
-              [key]: newData,
-            } as V)
-          }
-        }
+    (event: React.MouseEvent<HTMLElement>, newData: V) => {
+      if (newData) {
+        onChange(newData)
       }
-    ),
+    },
     [part, value],
   )
 
-  const mapping = PART_MAPPING[part]
+  const mapping = PART_MAPPING[part] as V[]
   const correctAnswer = useMemo(
     () => getPartFromVerb(part, verb) as V,
     [part, verb],
   )
   const isCorrectSimpleOption = useCallback(
-    (option: Stem | Tense) => {
+    (option: Stem | Tense | 'N/A') => {
       return checkSimplePart(option, correctAnswer as typeof option)
     },
     [correctAnswer],
   )
-  const isCorrectPGNOption = useCallback(
-    (key: keyof PGN) => {
-      return checkPGN(value as PGN, correctAnswer as PGN)[key]
-    },
-    [value],
-  )
 
   return (
-    Array.isArray(mapping) ? (
-      <ToggleButtonGroup
-        onChange={handleToggle()}
-        orientation='vertical'
-        exclusive={!showAnswer}
-        value={value}
-        disabled={
-          !applicable
-        }
-      >
-        {mapping.map(option => option && (
-          <ParsingControl
-            key={option}
-            applicable={applicable as Record<typeof option, boolean> | false}
-            isCorrect={isCorrectSimpleOption(option) || false}
-            option={option}
-            value={value as typeof option}
-            label={getSimplePartName(part as SimpleParsingPartKey, option)}
-            showAnswer={showAnswer}
-          />
-        ))}
-      </ToggleButtonGroup>
-    ) : (
-      <Stack direction="row" spacing={2}>
-        {(['person', 'gender', 'number'] as (keyof PGN)[]).map((key => (
-          <ToggleButtonGroup
-            key={key}
-            onChange={handleToggle(key)}
-            orientation='vertical'
-            exclusive={!showAnswer}
-            value={(value as PGN)[key]}
-            disabled={
-              !applicable
-              && (!showAnswer || (part === 'suffix' && !verb.suffixParsing?.person))
-            }
-          >
-            {mapping[key].map(option => option && (
-              <ParsingControl
-                key={option}
-                applicable={(
-                  applicable && (applicable as Record<keyof PGN, Record<typeof option, boolean> | false>)[key]
-                )}
-                isCorrect={isCorrectPGNOption('person') || false}
-                option={option}
-                value={(value as PGN)[key]}
-                label={getPGNName(key, option)}
-                showAnswer={showAnswer}
-              />
-            ))}
-          </ToggleButtonGroup>
-        )))}
-      </Stack>
-    )
+    <ToggleButtonGroup
+      onChange={handleToggle}
+      orientation='vertical'
+      exclusive={!showAnswer}  // TODO: remove this and use selected prop on ToggleButton
+      value={value}
+      disabled={
+        !applicable
+      }
+    >
+      {mapping.map(option => option && (
+        <ParsingControl
+          key={option}
+          disabled={!applicable || !(applicable as Record<typeof option, boolean>)[option]}
+          isCorrect={isCorrectSimpleOption(option) || false}
+          option={option}
+          value={value}
+          label={getSimplePartName(part as SimpleParsingPartKey, option)}
+          showAnswer={showAnswer}
+        />
+      ))}
+    </ToggleButtonGroup>
   )
 }
 

@@ -48,20 +48,20 @@ export const PART_MAPPING = {
     number: ALL_NUMBERS,
   },
 }
-export type SimpleParsingPartKey = 'stem' | 'tense'
-export type SimpleParsingPart = Stem | Tense
 export type Parsing = {
   stem: Stem | 'N/A',
   tense: Tense | 'N/A',
   pgn: PGN,
   suffix: PGN,
 }
+export type SimpleParsingPartKey = 'stem' | 'tense'
+export type SimpleParsingPart = Stem | Tense
 export type ParsingKey = keyof Parsing
 export type ApplicableParts = {
   stem: Record<Exclude<Stem, NA>, boolean> | false,
   tense: Record<Exclude<Tense, NA>, boolean> | false,
-  pgn: { [K in keyof PGN]: Record<Exclude<PGN[K], NA>, boolean> | false },
-  suffix: { [K in keyof PGN]: Record<Exclude<PGN[K], NA>, boolean> | false },
+  pgn: { [K in keyof PGN]: Record<PGN[K], boolean> | false },
+  suffix: { [K in keyof PGN]: Record<PGN[K], boolean> | false },
 }
 export const ALL_PARTS: ParsingKey[] = [
   'stem',
@@ -87,6 +87,12 @@ export function getPGNName<K extends keyof PGN>(key: K, value: PGN[K]) {
     return getGenderName(value as Gender)
   }
   return getNumberName(value as VerbNumber)
+}
+export function getPGNKey(pgn: PGN) {
+  const p = pgn.person === 'N/A' ? '' : pgn.person.toString()
+  const g = pgn.gender === 'N/A' ? '' : pgn.gender
+  const n = pgn.number === 'N/A' ? '' : pgn.number
+  return p + g + n
 }
 
 export function getStemName(s: Stem) {
@@ -149,7 +155,7 @@ export function checkPart<T extends ParsingKey>(part: T, attempt: Parsing[T], co
 }
 
 export function isSimplePart(part: ParsingKey): part is SimpleParsingPartKey {
-  return part === 'stem' || part === 'tense'
+  return part === 'stem' || part === 'tense';
 }
 
 export function checkGender(attempt: Gender, correct?: Gender) {
@@ -171,4 +177,29 @@ export function getPartFromVerb<P extends ParsingKey>(part: P, verb: Verb): Pars
   } else {
     return verb.suffixParsing as Parsing[P]
   }
+}
+
+export function isValidPGN(pgn: PGN, parsing: Parsing) {
+  if (
+    pgn.person === 'N/A'
+    && pgn.gender === 'N/A'
+    && pgn.number === 'N/A'
+  ) {
+    return false
+  }
+  if (pgn.person === 1 && pgn.gender !== 'c') {
+    return false
+  }
+  const has3cp = parsing.tense === 'Qatal'
+  if (
+    pgn.gender === 'c'
+    && pgn.person !== 1
+    && !(has3cp && pgn.person === 3 && pgn.number === 'p')
+  ) {
+    return false
+  }
+  if (has3cp && pgn.person === 3 && pgn.number === 'p' && pgn.gender !== 'c') {
+    return false
+  }
+  return true
 }

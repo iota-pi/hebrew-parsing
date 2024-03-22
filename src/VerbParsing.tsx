@@ -27,12 +27,13 @@ import {
   isValidPGN,
   isValidSuffix,
 } from './util'
-import type { Verb, Root, PGN } from '../lambda/data'
+import type { Verb, Root } from '../lambda/data'
 import ParsingControlGroup from './ParsingControlGroup'
 import PGNGroup from './PGNGroup'
 import SuffixSelection, { Suffix } from './SuffixSelection'
 
 const MAIN_PARTS = ALL_PARTS.filter(part => part !== 'suffix')
+const DEFAULT_SUFFIX: Suffix = 'no-suffix'
 
 const FadedSpan = styled('span')({
   color: grey[600],
@@ -40,10 +41,13 @@ const FadedSpan = styled('span')({
 const HighlightedSpan = styled('span')({
   color: 'blue',
 })
+const HebrewSpan = styled('span')({
+  fontFamily: "'Ezra SIL', Roboto, David, sans-serif",
+})
 
 function VerbParsing({
   verb,
-  // root,
+  root,
   onAnswer,
   onNext,
 }: {
@@ -53,7 +57,7 @@ function VerbParsing({
   onNext: () => void,
 }) {
   const [parsing, setParsing] = useState(getInitialParsing())
-  const [suffix, setSuffix] = useState<Suffix>('no-suffix')
+  const [suffix, setSuffix] = useState<Suffix>(DEFAULT_SUFFIX)
   const [showAnswer, setShowAnswer] = useState(false)
 
   const applicableParts = useMemo(
@@ -91,18 +95,15 @@ function VerbParsing({
 
         if (isSimplePart(part)) {
           if (parsing[part] === 'N/A') {
-            console.log(`Invalid parsing on ${part}`)
             return false
           }
         } else {
           if (part === 'pgn') {
             if (!isValidPGN(parsing[part], parsing)) {
-              console.log(`Invalid parsing on ${part}`)
               return false
             }
           } else {
             if (!isValidSuffix(parsing[part])) {
-              console.log(`Invalid parsing on ${part}`)
               return false
             }
           }
@@ -153,7 +154,7 @@ function VerbParsing({
           break
         }
       }
-      if (!applicableParts.suffix && !!verb.suffixParsing) {
+      if (!applicableParts.suffix && isValidSuffix(verb.suffixParsing)) {
         if (correct) {
           console.warn('I guess this is needed after all')
         }
@@ -169,7 +170,7 @@ function VerbParsing({
   const handleNext = useCallback(
     () => {
       setParsing(getInitialParsing())
-      setSuffix('suffix')
+      setSuffix(DEFAULT_SUFFIX)
       setShowAnswer(false)
       onNext()
     },
@@ -296,6 +297,20 @@ function VerbParsing({
       >
         {showAnswer ? 'Next' : 'Check'}
       </Button>
+
+      {showAnswer && (
+        <>
+          <Typography
+            variant="h6"
+            color='grey.600'
+          >
+            <FadedSpan>{'Root: '}</FadedSpan>
+            <HebrewSpan>{root.root}</HebrewSpan>
+            {' '}
+            <FadedSpan>(to {root.gloss}; {root.count} occurrences)</FadedSpan>
+          </Typography>
+        </>
+      )}
     </Stack>
   )
 }

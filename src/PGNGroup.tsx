@@ -14,6 +14,7 @@ import {
   getPGNKey,
   isValidPGN,
   isValidSuffix,
+  hasSetPGN,
 } from './util'
 import type { NA, PGN, Verb } from '../lambda/data'
 import { useCallback, useMemo } from 'react'
@@ -84,7 +85,7 @@ function PGNGroup<P extends ParsingKey & ('pgn' | 'suffix')>({
               gender,
               number,
             }
-            if (isValid(pgn, parsing)) {
+            if (isValid(pgn, parsing) && hasSetPGN(pgn)) {
               result[i].push(pgn)
             }
           }

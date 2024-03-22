@@ -2,7 +2,8 @@ import {
   Box,
   Typography,
 } from '@mui/material'
-import { useAppDispatch, useAppSelector } from '../../store'
+import { useLocalStorage } from 'usehooks-ts'
+import { useAppDispatch } from '../../store'
 import { trpc } from '../../trpc'
 import type { FilterCondition } from '../../../lambda/filter'
 import VerbParsing from '../../VerbParsing'
@@ -26,17 +27,23 @@ function MainPage() {
     minFrequency: 0,
   }
 
-  const currentWord = trpc.getWord.useQuery({ filterConditions })
-  console.log(currentWord)
+  const currentWord = trpc.getWord.useQuery(
+    { filterConditions },
+    { refetchOnWindowFocus: false },
+  )
+
+  const [streak, setStreak] = useLocalStorage('currentStreak', 0)
+  const [bestStreak, setBestStreak] = useLocalStorage('bestStreak', 0)
 
   const handleAnswer = useCallback(
     (correct: boolean) => {
       if (correct) {
-        console.log("Correct answer!")
-        // Perform any other actions for correct answer
+        setStreak(s => s + 1)
+        if (streak + 1 > bestStreak) {
+          setBestStreak(streak + 1)
+        }
       } else {
-        console.log("Incorrect answer!")
-        // Perform any other actions for incorrect answer
+        setStreak(0)
       }
     },
     [],
@@ -72,6 +79,31 @@ function MainPage() {
             Loading...
           </Typography>
         )}
+
+        <Typography
+          variant="h6"
+          textAlign="center"
+          fontWeight={400}
+          py={2}
+        >
+          {'Current streak: '}
+          <Typography
+            variant="inherit"
+            color={streak > 0 ? 'success' : 'inherit'}
+            component="span"
+          >
+            {streak}
+          </Typography>
+          <br />
+          {'Best streak: '}
+          <Typography
+            variant="inherit"
+            color={streak === bestStreak ? 'success' : 'inherit'}
+            component="span"
+          >
+            {bestStreak}
+          </Typography>
+        </Typography>
       </Box>
     </Box>
   )

@@ -6,6 +6,7 @@ import {
   useCallback,
 } from 'react'
 import type { Verb } from '../lambda/data'
+import { hasSetPGN } from './util'
 
 
 export type Suffix = 'suffix' | 'no-suffix'
@@ -27,7 +28,7 @@ function SuffixSelection({
     },
     [],
   )
-  const hasSuffix = Object.values(verb.suffixParsing).every(x => x !== 'N/A')
+  const hasSuffix = hasSetPGN(verb.suffixParsing)
 
   return (
     <ToggleButtonGroup

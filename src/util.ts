@@ -181,11 +181,19 @@ export function getPartFromVerb<P extends ParsingKey>(part: P, verb: Verb): Pars
   }
 }
 
+export function hasSetPGN(pgn: PGN) {
+  return (
+    pgn.person !== 'N/A'
+    || pgn.gender !== 'N/A'
+    || pgn.number !== 'N/A'
+  )
+}
+
 export function isValidPGN(pgn: PGN, parsing?: Parsing, suffix = false) {
   if (
-    pgn.person === 'N/A'
-    && pgn.gender === 'N/A'
-    && pgn.number === 'N/A'
+    parsing?.tense !== 'Infinitive construct'
+    && parsing?.tense !== 'Infinitive absolute'
+    && !hasSetPGN(pgn)
   ) {
     return false
   }

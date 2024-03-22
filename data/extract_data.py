@@ -5,7 +5,7 @@ from typing import Set
 from tf.advanced.app import App
 from tf.app import use
 
-MIN_LEX_FREQ = 50
+MIN_LEX_FREQ = 0
 MAX_VERSE_LENGTH = 15
 
 STEMS = {
@@ -40,6 +40,7 @@ class Root:
     def __init__(self, n):
         self.lex = api.F.lex_utf8.v(n)
         self.freq_lex = api.F.freq_lex.v(n)
+        self.gloss = api.F.gloss.v(n)
 
     def __eq__(self, other):
         return self.lex == other.lex
@@ -48,7 +49,7 @@ class Root:
         return hash(self.lex)
 
     def to_simple_obj(self):
-        return [self.lex, self.freq_lex]
+        return [self.lex, self.freq_lex, self.gloss]
 
 class Verb:
     def __init__(self, n):

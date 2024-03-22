@@ -41,7 +41,7 @@ type DataVerb = [
   DataParsing | null,
   DataParsing | undefined,
 ]
-type DataRoot = [string, number]
+type DataRoot = [string, number, string]
 
 const stemMapping: Record<string, Stem> = {
   qal: 'Qal',
@@ -64,7 +64,7 @@ const tenseMapping: Record<string, Tense> = {
 }
 
 export function processRoots(roots: DataRoot[]) {
-  return roots.map(([root, count]) => ({ root, count }))
+  return roots.map(([root, count, gloss]) => ({ root, count, gloss }))
 }
 export type Root = ReturnType<typeof processRoots>[number]
 

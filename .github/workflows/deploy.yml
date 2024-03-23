@@ -23,11 +23,6 @@ jobs:
     - name: Install dependencies
       run: yarn install --immutable
 
-    - name: Initialise database for testing
-      run: yarn initdb
-      env:
-        NODE_ENV: test
-
     - name: Run unit tests
       run: yarn test
 

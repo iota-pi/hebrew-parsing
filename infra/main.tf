@@ -1,16 +1,16 @@
 locals {
-  application = "bgf"
+  application = "hebrew-parsing"
   standard_tags = {
     Environment = var.environment
     Application = local.application
   }
-  force_api_redeploy = 1
+  force_api_redeploy = 0
 }
 
 
 # Lambda
-resource "aws_lambda_function" "broadcaster" {
-  function_name = "bgf-broadcaster"
+resource "aws_lambda_function" "hebrew_lambda" {
+  function_name = "hebrew-parsing"
 
   handler     = "lambda.handler"
   runtime     = "nodejs20.x"
@@ -18,26 +18,14 @@ resource "aws_lambda_function" "broadcaster" {
   timeout     = 120
 
   s3_bucket        = var.code_bucket
-  s3_key           = "bgf/lambda.zip"
+  s3_key           = "hebrew-parsing/lambda.zip"
   source_code_hash = filebase64sha256("../lambda/build/lambda.zip")
 
-  environment {
-    variables = {
-      CONNECTION_TABLE_NAME = aws_dynamodb_table.bgf_connections.name
-      STATE_TABLE_NAME      = aws_dynamodb_table.bgf_state.name
-      CACHE_TABLE_NAME      = aws_dynamodb_table.bgf_cache.name
-      CCB_USERNAME          = var.ccb_username
-      CCB_PASSWORD          = var.ccb_password
-      BGF_PASSWORD_SALT     = var.bgf_password_salt
-      BGF_PASSWORD_HASH     = var.bgf_password_hash
-    }
-  }
-
-  role = aws_iam_role.broadcaster_role.arn
+  role = aws_iam_role.hebrew_lambda_role.arn
   tags = local.standard_tags
 }
 
-resource "aws_iam_role" "broadcaster_role" {
+resource "aws_iam_role" "hebrew_lambda_role" {
   assume_role_policy = <<EOF
 {
   "Version": "2012-10-17",
@@ -55,7 +43,7 @@ resource "aws_iam_role" "broadcaster_role" {
 EOF
 }
 
-resource "aws_iam_policy" "broadcaster_policy" {
+resource "aws_iam_policy" "hebrew_lambda_policy" {
   description = "Lambda policy to allow logging"
 
   policy = <<EOF
@@ -71,109 +59,22 @@ resource "aws_iam_policy" "broadcaster_policy" {
         "logs:PutLogEvents"
       ],
       "Resource": ["arn:aws:logs:*:*:*"]
-    },
-    {
-      "Sid": "ReadWriteCreateTable",
-      "Effect": "Allow",
-      "Action": [
-          "dynamodb:BatchGetItem",
-          "dynamodb:GetItem",
-          "dynamodb:Query",
-          "dynamodb:Scan",
-          "dynamodb:BatchWriteItem",
-          "dynamodb:PutItem",
-          "dynamodb:UpdateItem",
-          "dynamodb:DeleteItem",
-          "dynamodb:CreateTable"
-      ],
-      "Resource": [
-        "arn:aws:dynamodb:*:*:table/${aws_dynamodb_table.bgf_connections.name}",
-        "arn:aws:dynamodb:*:*:table/${aws_dynamodb_table.bgf_state.name}",
-        "arn:aws:dynamodb:*:*:table/${aws_dynamodb_table.bgf_cache.name}"
-      ]
-    },
-    {
-      "Sid": "ManageConnections",
-      "Effect": "Allow",
-      "Action": [
-        "execute-api:ManageConnections"
-      ],
-      "Resource": [
-        "${aws_apigatewayv2_api.broadcaster.execution_arn}/*"
-      ]
     }
   ]
 }
 EOF
 }
 
-resource "aws_iam_role_policy_attachment" "broadcaster_policy_attach" {
-  role       = aws_iam_role.broadcaster_role.name
-  policy_arn = aws_iam_policy.broadcaster_policy.arn
-}
-
-
-# DynamoDB
-resource "aws_dynamodb_table" "bgf_connections" {
-  name         = "BGFConnections_${var.environment}"
-  billing_mode = "PAY_PER_REQUEST"
-  hash_key     = "session"
-
-  attribute {
-    name = "session"
-    type = "S"
-  }
-
-  ttl {
-    attribute_name = "ttl"
-    enabled        = true
-  }
-
-  tags = local.standard_tags
-}
-
-resource "aws_dynamodb_table" "bgf_state" {
-  name         = "BGFState_${var.environment}"
-  billing_mode = "PAY_PER_REQUEST"
-  hash_key     = "session"
-
-  attribute {
-    name = "session"
-    type = "S"
-  }
-
-  ttl {
-    attribute_name = "ttl"
-    enabled        = true
-  }
-
-  tags = local.standard_tags
-}
-
-resource "aws_dynamodb_table" "bgf_cache" {
-  name         = "BGFCache_${var.environment}"
-  billing_mode = "PAY_PER_REQUEST"
-  hash_key     = "cacheKey"
-
-  attribute {
-    name = "cacheKey"
-    type = "S"
-  }
-
-  ttl {
-    attribute_name = "ttl"
-    enabled        = true
-  }
-
-  tags = local.standard_tags
+resource "aws_iam_role_policy_attachment" "hebrew_lambda_policy_attach" {
+  role       = aws_iam_role.hebrew_lambda_role.name
+  policy_arn = aws_iam_policy.hebrew_lambda_policy.arn
 }
 
 
 # API Gateway
-resource "aws_apigatewayv2_api" "broadcaster" {
-  name                       = "broadcaster"
-  protocol_type              = "WEBSOCKET"
-  route_selection_expression = "$request.body.action"
+resource "aws_apigatewayv2_api" "hebrew_lambda" {
+  name                       = "hebrew_lambda"
+  protocol_type              = "HTTP"
 
   tags = local.standard_tags
 }
@@ -181,22 +82,23 @@ resource "aws_apigatewayv2_api" "broadcaster" {
 resource "aws_lambda_permission" "apigw" {
   statement_id  = "AllowAPIGatewayInvoke"
   action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_function.broadcaster.function_name
+  function_name = aws_lambda_function.hebrew_lambda.function_name
   principal     = "apigateway.amazonaws.com"
 
   # The "/*/*" portion grants access from any method on any resource
   # within the API Gateway REST API.
-  source_arn = "${aws_apigatewayv2_api.broadcaster.execution_arn}/*/*"
+  source_arn = "${aws_apigatewayv2_api.hebrew_lambda.execution_arn}/*/*"
 }
 
-resource "aws_apigatewayv2_integration" "broadcaster" {
-  api_id           = aws_apigatewayv2_api.broadcaster.id
+resource "aws_apigatewayv2_integration" "hebrew_lambda" {
+  api_id           = aws_apigatewayv2_api.hebrew_lambda.id
   integration_type = "AWS_PROXY"
 
+  connection_type           = "INTERNET"
   content_handling_strategy = "CONVERT_TO_TEXT"
-  description               = "Broadcaster lambda integration"
-  integration_method        = "POST"
-  integration_uri           = aws_lambda_function.broadcaster.invoke_arn
+  description               = "hebrew_lambda lambda integration"
+  integration_method        = "ANY"
+  integration_uri           = aws_lambda_function.hebrew_lambda.invoke_arn
   passthrough_behavior      = "WHEN_NO_MATCH"
 
   lifecycle {
@@ -204,21 +106,21 @@ resource "aws_apigatewayv2_integration" "broadcaster" {
   }
 }
 
-resource "aws_apigatewayv2_route" "broadcaster_default" {
-  api_id    = aws_apigatewayv2_api.broadcaster.id
-  route_key = "$default"
+resource "aws_apigatewayv2_route" "hebrew_lambda_default" {
+  api_id    = aws_apigatewayv2_api.hebrew_lambda.id
+  route_key = "ANY /{proxy+}"
 
-  target = "integrations/${aws_apigatewayv2_integration.broadcaster.id}"
+  target = "integrations/${aws_apigatewayv2_integration.hebrew_lambda.id}"
 }
 
-resource "aws_apigatewayv2_deployment" "broadcaster" {
-  api_id      = aws_apigatewayv2_api.broadcaster.id
-  description = "Deployment for broadcaster"
+resource "aws_apigatewayv2_deployment" "hebrew_lambda" {
+  api_id      = aws_apigatewayv2_api.hebrew_lambda.id
+  description = "Deployment for hebrew_lambda"
 
   triggers = {
     redeployment = sha1(join(",", [
-      jsonencode(aws_apigatewayv2_integration.broadcaster),
-      jsonencode(aws_apigatewayv2_route.broadcaster_default),
+      jsonencode(aws_apigatewayv2_integration.hebrew_lambda),
+      jsonencode(aws_apigatewayv2_route.hebrew_lambda_default),
       local.force_api_redeploy,
     ]))
   }
@@ -228,11 +130,11 @@ resource "aws_apigatewayv2_deployment" "broadcaster" {
   }
 }
 
-resource "aws_apigatewayv2_stage" "broadcaster_production" {
-  api_id = aws_apigatewayv2_api.broadcaster.id
+resource "aws_apigatewayv2_stage" "hebrew_lambda_production" {
+  api_id = aws_apigatewayv2_api.hebrew_lambda.id
   name   = "production"
 
-  deployment_id = aws_apigatewayv2_deployment.broadcaster.id
+  deployment_id = aws_apigatewayv2_deployment.hebrew_lambda.id
 
   default_route_settings {
     throttling_burst_limit = 5000
@@ -241,5 +143,5 @@ resource "aws_apigatewayv2_stage" "broadcaster_production" {
 }
 
 output "invoke_url" {
-  value = aws_apigatewayv2_api.broadcaster.api_endpoint
+  value = aws_apigatewayv2_api.hebrew_lambda.api_endpoint
 }

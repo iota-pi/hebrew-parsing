@@ -1,8 +1,8 @@
 locals {
-  bucket_name = "bgf-app-${var.environment}"
+  bucket_name = "hebrew-parsing-app-${var.environment}"
   compress    = true
   origin_id   = "app_s3_origin"
-  domain      = "bgf.campusbiblestudy.org"
+  domain      = "hebrew.cross-code.org"
 
   min_ttl     = 0
   default_ttl = 0

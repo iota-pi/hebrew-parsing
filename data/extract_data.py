@@ -9,31 +9,34 @@ MIN_LEX_FREQ = 0
 MAX_VERSE_LENGTH = 15
 
 STEMS = {
-    'qal':  'qal',
-    'hif':  'hif',
-    'piel': 'piel',
-    'nif':  'nif',
-    'hit':  'hit',
-    'pual': 'pual',
-    'hof':  'hof',
+    "qal":  "qal",
+    "hif":  "hif",
+    "piel": "piel",
+    "nif":  "nif",
+    "hit":  "hit",
+    "pual": "pual",
+    "hof":  "hof",
 }
 
 TENSES = {
-    'perf': 'perf',
-    'impf': 'impf',
-    'wayq': 'wayq',
-    'ptca': 'ptca',
-    'infc': 'infc',
-    'impv': 'impv',
-    'ptcp': 'ptcp',
-    'infa': 'infa',
+    "perf": "perf",
+    "impf": "impf",
+    "wayq": "wayq",
+    "ptca": "ptca",
+    "infc": "infc",
+    "impv": "impv",
+    "ptcp": "ptcp",
+    "infa": "infa",
 }
 
-PERSONS = {'p1': 1, 'p2': 2, 'p3': 3, 'unknown': None}
-GENDERS = {'m': 'm', 'f': 'f', 'unkown': None}
-NUMBERS = {'sg': 's', 'pl': 'p', 'unknown': None}
+class UnknownStemOrTenseError(KeyError):
+    pass
 
-app: App = use('ETCBC/bhsa', silent=True)
+PERSONS = {"p1": 1, "p2": 2, "p3": 3, "unknown": None}
+GENDERS = {"m": "m", "f": "f", "unkown": None}
+NUMBERS = {"sg": "s", "pl": "p", "unknown": None}
+
+app: App = use("ETCBC/bhsa", silent=True)
 api = app.api
 
 class Root:
@@ -54,15 +57,13 @@ class Root:
 class Verb:
     def __init__(self, n):
         self.n = n
-        node = api.F.g_word_utf8.v(n)
-        if api.F.sp.v(n) != 'verb':
-            raise ValueError('not a verb')
-        if node is None or '\u05c3' in node or '\u05be' in node:
-            raise ValueError('no text, sof pasuq or maqaf')
-        self.verb = node
+        self.verb = api.F.g_word_utf8.v(n)
         self.root = api.F.lex_utf8.v(n)
-        self.stem = STEMS[api.F.vs.v(n)]
-        self.tense = TENSES[api.F.vt.v(n)]
+        try:
+            self.stem = STEMS[api.F.vs.v(n)]
+            self.tense = TENSES[api.F.vt.v(n)]
+        except KeyError:
+            raise UnknownStemOrTenseError()
         self.person = PERSONS.get(api.F.ps.v(n))
         self.gender = GENDERS.get(api.F.gn.v(n))
         self.number = NUMBERS.get(api.F.nu.v(n))
@@ -71,42 +72,29 @@ class Verb:
         self.pronom_number = NUMBERS.get(api.F.prs_nu.v(n))
         self.reference = api.T.sectionFromNode(n)
 
-        if self.tense == 'wayq':
-            p = api.L.p(n, otype='word')[-1]
-            if api.F.sp.v(p) == 'conj':
+        if self.tense == "wayq":
+            p = api.L.p(n, otype="word")[-1]
+            if api.F.sp.v(p) == "conj":
                 self.verb = api.F.g_word_utf8.v(p) + self.verb
 
     def get_context(self):
-        clause = api.L.u(self.n, otype='clause')[0]
+        clause = api.L.u(self.n, otype="clause")[0]
         try:
-            verse = api.L.u(clause, otype='verse')[0]
+            verse = api.L.u(clause, otype="verse")[0]
             if len(api.T.text(verse).split()) > MAX_VERSE_LENGTH:
-                verse = api.L.u(clause, otype='half_verse')[0]
+                verse = api.L.u(clause, otype="half_verse")[0]
         except IndexError:
-            verse = api.L.u(clause, otype='sentence')[0]
+            verse = api.L.u(clause, otype="sentence")[0]
         clause_text = api.T.text(clause)
         verse_text = api.T.text(verse)
 
-        verse_text = verse_text.replace(clause_text, '$')
-        clause_text = clause_text.replace(self.verb, '$')
+        verse_text = verse_text.replace(clause_text, "$")
+        clause_text = clause_text.replace(self.verb, "$")
 
         return (clause_text, verse_text, self.reference)
 
     def __eq__(self, other):
-        return (
-            self.verb == other.verb and
-            self.root == other.root and
-            self.stem == other.stem and
-            self.tense == other.tense and
-            self.person == other.person and
-            self.gender == other.gender and
-            self.number == other.number and
-            self.pronom_person == other.pronom_person and
-            self.pronom_gender == other.pronom_gender and
-            self.pronom_number == other.pronom_number and
-            self.reference == other.reference and
-            True
-        )
+        return self.__hash__() == other.__hash__()
 
     def __hash__(self):
         return hash(
@@ -147,70 +135,96 @@ class Verb:
         return result
 
 
-class Databank:
+class DataProcessor:
     def __init__(self):
         self.verbs: Set[Verb] = set()
         self.roots: Set[Root] = set()
         self.stem_stats = { key: 0 for key in STEMS.keys() }
         self.tense_stats = { key: 0 for key in TENSES.keys() }
+        self.suffixes = 0
 
-    def add_root(self, root):
+    def add_root(self, n):
+        root = Root(n)
         self.roots.add(root)
 
-    def add_verb(self, verb):
+    def add_verb(self, n):
+        verb = Verb(n)
         self.verbs.add(verb)
         self.stem_stats[verb.stem] += 1
         self.tense_stats[verb.tense] += 1
+        if verb.pronom_person:
+            self.suffixes += 1
 
-def handle(n, data):
-    if api.F.language.v(n) != 'Hebrew':
-        return
-    if api.F.freq_lex.v(n) < MIN_LEX_FREQ:
-        return
-    verb = Verb(n)
-    root = Root(n)
-    data.add_verb(verb)
-    data.add_root(root)
+    def checkNode(self, n):
+        if api.F.language.v(n) != "Hebrew":
+            return False
+        if api.F.freq_lex.v(n) < MIN_LEX_FREQ:
+            return False
+        if api.F.sp.v(n) != "verb":
+            return False
+        word = api.F.g_word_utf8.v(n)
+        if word is None or "\u05c3" in word or "\u05be" in word:
+            # No text or contains sof pasuq or maqef
+            return False
+
+        return True
+
+    def process(self, n):
+        if not self.checkNode(n):
+            return
+        try:
+            self.add_verb(n)
+        except UnknownStemOrTenseError:
+            return
+        self.add_root(n)
+
+    def get_stats(self):
+        return {
+            "verbs": len(self.verbs),
+            "roots": len(self.roots),
+            "stems": self.stem_stats,
+            "tenses": self.tense_stats,
+            "suffixes": self.suffixes,
+        }
 
 def main():
-    data = Databank()
+    data = DataProcessor()
 
     for n in api.N.walk():
-        if api.F.otype.v(n) != 'word':
+        if api.F.otype.v(n) != "word":
             continue
-        try:
-            handle(n, data)
-        except (KeyError, ValueError):
-            pass
+        data.process(n)
 
-    print('Verbs:', len(data.verbs))
-    print('Roots:', len(data.roots))
-    print('Stats:')
-    print(json.dumps(data.stem_stats, indent=2))
-    print()
-    print(json.dumps(data.tense_stats, indent=2))
-
-    with open('verbs.json', 'w', encoding='utf-8') as verbsFile:
+    with open("verbs.json", "w", encoding="utf-8") as verbsFile:
         json.dump(
             [
                 verb.to_simple_obj()
                 for verb in data.verbs
             ],
             verbsFile,
-            separators=(',', ':'),
+            separators=(",", ":"),
             ensure_ascii=False,
             check_circular=False,
         )
 
-    with open('roots.json', 'w', encoding='utf-8') as rootsFile:
+    with open("roots.json", "w", encoding="utf-8") as rootsFile:
         json.dump(
             [root.to_simple_obj() for root in data.roots],
             rootsFile,
-            separators=(',', ':'),
+            separators=(",", ":"),
+            ensure_ascii=False,
+            check_circular=False,
+        )
+
+    with open("stats.json", "w", encoding="utf-8") as statsFile:
+        json.dump(
+            data.get_stats(),
+            statsFile,
+            separators=(",", ":"),
             ensure_ascii=False,
             check_circular=False,
         )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

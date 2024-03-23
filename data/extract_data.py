@@ -143,10 +143,6 @@ class DataProcessor:
         self.tense_stats = { key: 0 for key in TENSES.keys() }
         self.suffixes = 0
 
-    def add_root(self, n):
-        root = Root(n)
-        self.roots.add(root)
-
     def add_verb(self, n):
         verb = Verb(n)
         self.verbs.add(verb)
@@ -154,29 +150,29 @@ class DataProcessor:
         self.tense_stats[verb.tense] += 1
         if verb.pronom_person:
             self.suffixes += 1
+        self.roots.add(Root(n))
 
-    def checkNode(self, n):
+    def should_skip_node(self, n):
         if api.F.language.v(n) != "Hebrew":
-            return False
+            return True
         if api.F.freq_lex.v(n) < MIN_LEX_FREQ:
-            return False
+            return True
         if api.F.sp.v(n) != "verb":
-            return False
+            return True
         word = api.F.g_word_utf8.v(n)
         if "\u05be" in word:
             # Contains maqef
-            return False
+            return True
 
-        return True
+        return False
 
     def process(self, n):
-        if not self.checkNode(n):
+        if self.should_skip_node(n):
             return
         try:
             self.add_verb(n)
         except UnknownStemOrTenseError:
             return
-        self.add_root(n)
 
     def get_stats(self):
         return {

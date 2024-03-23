@@ -30,6 +30,7 @@ import type { Verb, Root } from '../../lambda/data'
 import ParsingControlGroup from './ParsingControlGroup'
 import PGNGroup from './PGNGroup'
 import SuffixSelection, { Suffix } from './SuffixSelection'
+import { FilterCondition } from '../../lambda/filter'
 
 const MAIN_PARTS = ALL_PARTS.filter(part => part !== 'suffix')
 const DEFAULT_SUFFIX: Suffix = 'no-suffix'
@@ -45,11 +46,13 @@ const HebrewSpan = styled('span')({
 })
 
 function VerbParsing({
+  filterOptions,
   verb: rawVerb,
   root: rawRoot,
   onAnswer,
   onNext,
 }: {
+  filterOptions: FilterCondition,
   verb: Verb,
   root: Root,
   onAnswer: (correct: boolean) => void,
@@ -69,6 +72,19 @@ function VerbParsing({
       }
     },
     [showAnswer, rawVerb, rawRoot],
+  )
+
+  const canHaveSuffixes = filterOptions.suffixes.include
+  const mustHaveSuffixes = filterOptions.suffixes.include && filterOptions.suffixes.exclusive
+  useEffect(
+    () => {
+      if (!canHaveSuffixes) {
+        setSuffix('no-suffix')
+      } else if (mustHaveSuffixes) {
+        setSuffix('suffix')
+      }
+    },
+    [filterOptions],
   )
 
   const applicableParts = useMemo(
@@ -279,22 +295,27 @@ function VerbParsing({
           )
         ))}
 
-        <SuffixSelection
-          onChange={handleToggleSuffix}
-          showAnswer={showAnswer}
-          suffix={suffix}
-          verb={verb}
-        />
+        {canHaveSuffixes && (
+          <>
+            <SuffixSelection
+              disabled={mustHaveSuffixes}
+              onChange={handleToggleSuffix}
+              showAnswer={showAnswer}
+              suffix={suffix}
+              verb={verb}
+            />
 
-        <PGNGroup
-          applicable={applicableParts.suffix}
-          onChange={handleChange('suffix')}
-          parsing={parsing}
-          part="suffix"
-          showAnswer={showAnswer}
-          value={parsing.suffix}
-          verb={verb}
-        />
+            <PGNGroup
+              applicable={applicableParts.suffix}
+              onChange={handleChange('suffix')}
+              parsing={parsing}
+              part="suffix"
+              showAnswer={showAnswer}
+              value={parsing.suffix}
+              verb={verb}
+            />
+          </>
+        )}
       </Stack>
 
       <Button

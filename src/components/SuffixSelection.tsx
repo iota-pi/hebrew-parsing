@@ -12,11 +12,13 @@ import { hasSetPGN } from '../util'
 export type Suffix = 'suffix' | 'no-suffix'
 
 function SuffixSelection({
+  disabled,
   onChange,
   showAnswer,
   suffix,
   verb,
 }: {
+  disabled: boolean,
   onChange: (suffix: Suffix) => void,
   showAnswer: boolean,
   suffix: Suffix,
@@ -32,6 +34,7 @@ function SuffixSelection({
 
   return (
     <ToggleButtonGroup
+      disabled={disabled}
       exclusive
       orientation="vertical"
       onChange={handleToggleSuffix}

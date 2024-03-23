@@ -126,6 +126,7 @@ function MainPage() {
         <Stack spacing={2}>
           {cachedWord && !error ? (
             <VerbParsing
+              filterOptions={filterConditions}
               verb={cachedWord.verb}
               root={cachedWord.root}
               onAnswer={handleAnswer}

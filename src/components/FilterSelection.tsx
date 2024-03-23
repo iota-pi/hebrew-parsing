@@ -222,7 +222,7 @@ function FilterSelection({
           onChange={handleChangeSuffixes}
           disabled={!filterConditions.suffixes.include}
         >
-          Only include words with suffixes
+          Always include suffixes
         </ToggleButton>
       </ToggleButtonGroup>
 

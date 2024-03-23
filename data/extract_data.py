@@ -163,8 +163,8 @@ class DataProcessor:
         if api.F.sp.v(n) != "verb":
             return False
         word = api.F.g_word_utf8.v(n)
-        if word is None or "\u05c3" in word or "\u05be" in word:
-            # No text or contains sof pasuq or maqef
+        if "\u05be" in word:
+            # Contains maqef
             return False
 
         return True

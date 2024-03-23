@@ -143,30 +143,6 @@ function MainPage() {
             </Typography>
           )}
 
-          <Typography
-            variant="h6"
-            textAlign="center"
-            fontWeight={400}
-          >
-            {'Current streak: '}
-            <Typography
-              variant="inherit"
-              color={streak > 0 ? 'success' : 'inherit'}
-              component="span"
-            >
-              {streak}
-            </Typography>
-            <br />
-            {'Best streak: '}
-            <Typography
-              variant="inherit"
-              color={streak === bestStreak ? 'success' : 'inherit'}
-              component="span"
-            >
-              {bestStreak}
-            </Typography>
-          </Typography>
-
           <Divider />
 
           <Typography

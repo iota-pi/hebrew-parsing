@@ -15,8 +15,8 @@ import {
   isValidPGN,
   isValidSuffix,
   hasSetPGN,
-} from './util'
-import type { NA, PGN, Verb } from '../lambda/data'
+} from '../util'
+import type { NA, PGN, Verb } from '../../lambda/data'
 import { useCallback, useMemo } from 'react'
 import ParsingControl from './ParsingControl'
 

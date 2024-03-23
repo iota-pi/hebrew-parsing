@@ -6,7 +6,7 @@ import { APIGatewayProxyEventV2 } from 'aws-lambda'
 import { appRouter } from './router'
 
 const createContext = (
-  {}: CreateAWSLambdaContextOptions<APIGatewayProxyEventV2>
+  context: CreateAWSLambdaContextOptions<APIGatewayProxyEventV2>
 ) => ({}) // no context
 export const handler = awsLambdaRequestHandler({
   router: appRouter,

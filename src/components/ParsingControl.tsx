@@ -1,8 +1,8 @@
 import {
   ToggleButton,
 } from '@mui/material'
-import { getPGNKey } from './util'
-import { PGN } from '../lambda/data'
+import { getPGNKey } from '../util'
+import { PGN } from '../../lambda/data'
 
 
 function ParsingControl<T extends string | number | PGN>({

@@ -116,7 +116,12 @@ export function getParsing(input: DataParsing | null | undefined): PGN {
 
 
 export const roots = readFile('../data/roots.json').then(
-  data => processRoots(JSON.parse(data.toString()) as DataRoot[])
+  data => (
+    Object.fromEntries(
+      processRoots(JSON.parse(data.toString()) as DataRoot[])
+        .map(r => [r.root, r])
+    ) as Record<string, Root>
+  )
 )
 export const verbs = readFile('../data/verbs.json').then(
   data => processVerbs(JSON.parse(data.toString()) as DataVerb[])

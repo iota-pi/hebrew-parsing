@@ -5,8 +5,8 @@ import {
 import {
   useCallback,
 } from 'react'
-import type { Verb } from '../lambda/data'
-import { hasSetPGN } from './util'
+import type { Verb } from '../../lambda/data'
+import { hasSetPGN } from '../util'
 
 
 export type Suffix = 'suffix' | 'no-suffix'

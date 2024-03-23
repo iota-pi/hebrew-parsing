@@ -1,13 +1,12 @@
 import {
   Button,
   Stack,
-  ToggleButton,
-  ToggleButtonGroup,
   Typography,
 } from '@mui/material'
 import {
   Fragment,
   useCallback,
+  useEffect,
   useMemo,
   useState,
 } from 'react'
@@ -26,8 +25,8 @@ import {
   isSimplePart,
   isValidPGN,
   isValidSuffix,
-} from './util'
-import type { Verb, Root } from '../lambda/data'
+} from '../util'
+import type { Verb, Root } from '../../lambda/data'
 import ParsingControlGroup from './ParsingControlGroup'
 import PGNGroup from './PGNGroup'
 import SuffixSelection, { Suffix } from './SuffixSelection'
@@ -46,8 +45,8 @@ const HebrewSpan = styled('span')({
 })
 
 function VerbParsing({
-  verb,
-  root,
+  verb: rawVerb,
+  root: rawRoot,
   onAnswer,
   onNext,
 }: {
@@ -59,6 +58,18 @@ function VerbParsing({
   const [parsing, setParsing] = useState(getInitialParsing())
   const [suffix, setSuffix] = useState<Suffix>(DEFAULT_SUFFIX)
   const [showAnswer, setShowAnswer] = useState(false)
+
+  const [verb, setVerb] = useState(rawVerb)
+  const [root, setRoot] = useState(rawRoot)
+  useEffect(
+    () => {
+      if (!showAnswer) {
+        setVerb(rawVerb)
+        setRoot(rawRoot)
+      }
+    },
+    [showAnswer, rawVerb, rawRoot],
+  )
 
   const applicableParts = useMemo(
     () => {

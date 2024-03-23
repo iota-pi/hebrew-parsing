@@ -1,3 +1,4 @@
+// eslint-disable-next-line import/no-unresolved
 import {
   awsLambdaRequestHandler,
   CreateAWSLambdaContextOptions,
@@ -6,7 +7,7 @@ import { APIGatewayProxyEventV2 } from 'aws-lambda'
 import { appRouter } from './router'
 
 const createContext = (
-  context: CreateAWSLambdaContextOptions<APIGatewayProxyEventV2>
+  _: CreateAWSLambdaContextOptions<APIGatewayProxyEventV2>
 ) => ({}) // no context
 export const handler = awsLambdaRequestHandler({
   router: appRouter,

@@ -66,7 +66,6 @@ function MainPage() {
       },
     },
   )
-  console.log('error', currentWord.error)
   const error = useMemo(
     () => (
       currentWord.error?.message.toLowerCase().includes('no valid verbs')

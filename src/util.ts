@@ -135,7 +135,14 @@ export function checkSimplePart<T extends SimpleParsingPartKey>(attempt: Parsing
   return attempt === correct
 }
 
-export function checkPGN(attempt: PGN, correct: PGN) {
+export function checkPGN(attempt: PGN, correct: PGN, fullParsingAttempt: Parsing) {
+  if (fullParsingAttempt.tense === 'Imperative') {
+    correct = {
+      ...correct,
+      person: 'N/A',
+    }
+  }
+
   return {
     person: correct.person === 'N/A' || attempt.person === correct.person,
     gender: correct.gender === 'N/A' || checkGender(attempt.gender, correct.gender),
@@ -143,16 +150,18 @@ export function checkPGN(attempt: PGN, correct: PGN) {
   }
 }
 
-export function checkPart<T extends ParsingKey>(part: T, attempt: Parsing[T], correct?: Parsing[T]) {
+export function checkPart<T extends ParsingKey>(part: T, attempt: Parsing, correct: Parsing[T]) {
   if (isSimplePart(part)) {
     return checkSimplePart(
-      attempt as SimpleParsingPart,
+      attempt[part] as SimpleParsingPart,
       correct as SimpleParsingPart,
     )
   }
+
   return checkPGN(
-    attempt as PGN,
+    attempt[part] as PGN,
     correct as PGN,
+    attempt,
   )
 }
 

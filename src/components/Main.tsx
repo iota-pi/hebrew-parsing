@@ -10,6 +10,7 @@ import type { FilterCondition } from '../../lambda/filter'
 import VerbParsing from './VerbParsing'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import FilterSelection from './FilterSelection'
+import { BiasOptions } from '../../lambda/bias'
 
 function MainPage() {
   const [filterConditions, setFilterConditions] = useLocalStorage<FilterCondition>(
@@ -53,9 +54,13 @@ function MainPage() {
       minFrequency: 0,
     },
   )
+  const [biasOptions, setBiasOptions] = useLocalStorage<BiasOptions>('biasOptions', {
+    biasStems: true,
+    biasTenses: true,
+  })
 
   const currentWord = trpc.getWord.useQuery(
-    { filterConditions },
+    { filterConditions, biasOptions },
     {
       refetchOnWindowFocus: false,
       retry(failureCount, error) {

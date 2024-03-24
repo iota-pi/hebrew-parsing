@@ -42,8 +42,35 @@ type DataVerb = [
   DataParsing | undefined,
 ]
 type DataRoot = [string, number, string]
+type DataStats = {
+  verbs: number,
+  roots: number,
+  stems: Record<StemAbbreviation, number>,
+  tenses: Record<TenseAbbreviation, number>,
+  suffixes: number,
+}
 
-const stemMapping: Record<string, Stem> = {
+export type StemAbbreviation = (
+  | 'qal'
+  | 'hif'
+  | 'piel'
+  | 'nif'
+  | 'hit'
+  | 'pual'
+  | 'hof'
+)
+export type TenseAbbreviation = (
+  | 'perf'
+  | 'impf'
+  | 'wayq'
+  | 'ptca'
+  | 'infc'
+  | 'impv'
+  | 'ptcp'
+  | 'infa'
+)
+
+const stemMapping: Record<StemAbbreviation, Stem> = {
   qal: 'Qal',
   hif: 'Hiphil',
   piel: 'Piel',
@@ -52,7 +79,7 @@ const stemMapping: Record<string, Stem> = {
   pual: 'Pual',
   hof: 'Hophal',
 }
-const tenseMapping: Record<string, Tense> = {
+const tenseMapping: Record<TenseAbbreviation, Tense> = {
   perf: 'Qatal',
   impf: 'Yiqtol',
   wayq: 'Wayyiqtol',
@@ -67,6 +94,7 @@ export function processRoots(roots: DataRoot[]) {
   return roots.map(([root, count, gloss]) => ({ root, count, gloss }))
 }
 export type Root = ReturnType<typeof processRoots>[number]
+export type RootMap = Record<string, Root>
 
 export function processVerbs(verbs: DataVerb[]) {
   return verbs.map(
@@ -90,6 +118,19 @@ export function processVerbs(verbs: DataVerb[]) {
   )
 }
 export type Verb = ReturnType<typeof processVerbs>[number]
+
+export function processStats(stats: DataStats) {
+  return {
+    ...stats,
+    stems: Object.fromEntries(
+      Object.entries(stats.stems).map(([key, value]) => [getStem(key), value])
+    ),
+    tenses: Object.fromEntries(
+      Object.entries(stats.tenses).map(([key, value]) => [getTense(key), value])
+    ),
+  }
+}
+export type Stats = ReturnType<typeof processStats>
 
 export function getStem(code: string) {
   if (code in stemMapping) {

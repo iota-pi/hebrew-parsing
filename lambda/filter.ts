@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import type { Root, Verb } from './data'
+import type { Root, RootMap, Verb } from './data'
 import { hasSetPGN } from '../src/util'
 
 export const filterConditions = z.object({
@@ -91,4 +91,12 @@ export function checkRoot(root: string, condition: FilterCondition['root']) {
     || (!condition.hollow && ('וי'.includes(root[1]) || root.length === 2))
     || (!condition.geminate && root[1] === root[2])
   )
+}
+
+export function getValidVerbs(
+  verbs: Verb[],
+  roots: RootMap,
+  filter: (verb: Verb, root: Root) => boolean,
+) {
+  return verbs.filter(v => filter(v, roots[v.root]))
 }

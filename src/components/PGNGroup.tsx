@@ -44,7 +44,7 @@ function PGNGroup<P extends ParsingKey & ('pgn' | 'suffix')>({
         onChange(newData)
       }
     },
-    [part, value],
+    [value],
   )
 
   const isValid = part === 'pgn' ? isValidPGN : isValidSuffix
@@ -69,13 +69,13 @@ function PGNGroup<P extends ParsingKey & ('pgn' | 'suffix')>({
         return result
       }
 
-      const hasPerson = !(
+      const hasNoPerson = part === 'pgn' && (
         parsing.tense === 'Imperative'
         || parsing.tense === 'Active participle'
         || parsing.tense === 'Passive participle'
       )
       const possiblePersons = (
-        applicable.person === false || !hasPerson
+        applicable.person === false || hasNoPerson
           ? ['N/A' as NA]
           : ALL_PERSONS.filter(x => x !== 'N/A')
       )

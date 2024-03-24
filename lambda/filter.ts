@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import type { Root, RootMap, Verb } from './data'
+import type { Root, RootMap, Tense, Verb } from './data'
 import { hasSetPGN } from '../src/util'
 
 export const filterConditions = z.object({
@@ -42,6 +42,21 @@ export const filterConditions = z.object({
 })
 export type FilterCondition = z.infer<typeof filterConditions>
 
+const TENSE_KEY_MAPPING: Record<Tense, keyof FilterCondition['tense']> = {
+  Qatal: 'qatal',
+  Yiqtol: 'yiqtol',
+  Wayyiqtol: 'wayyiqtol',
+  Imperative: 'imperative',
+  'Active participle': 'activeParticiple',
+  'Passive participle': 'passiveParticiple',
+  'Infinitive construct': 'infinitiveConstruct',
+  'Infinitive absolute': 'infinitiveAbsolute',
+}
+
+export function getTenseKey(tense: Tense) {
+  return TENSE_KEY_MAPPING[tense]
+}
+
 export function getFilterFromConditions(
   condition: FilterCondition | undefined,
 ): ((verb: Verb, root: Root) => boolean) {
@@ -59,7 +74,7 @@ export function getFilterFromConditions(
       return false
     }
 
-    if (!condition.tense[verb.tense.toLowerCase() as keyof FilterCondition['tense']]) {
+    if (!condition.tense[getTenseKey(verb.tense) as keyof FilterCondition['tense']]) {
       return false
     }
 

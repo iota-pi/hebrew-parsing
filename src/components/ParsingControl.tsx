@@ -16,7 +16,7 @@ function ParsingControl<T extends string | number | PGN>({
   label,
   showAnswer,
 }: {
-  disabled: boolean,
+  disabled?: boolean,
   doubleHeight?: boolean,
   isCorrect: boolean,
   isFirst?: boolean,
@@ -61,7 +61,7 @@ function ParsingControl<T extends string | number | PGN>({
       }}
       disabled={
         disabled
-        && !showAnswer
+        || (showAnswer && !selected)
       }
     >
       {label}

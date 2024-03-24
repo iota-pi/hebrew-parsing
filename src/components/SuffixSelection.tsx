@@ -7,6 +7,7 @@ import {
 } from 'react'
 import type { Verb } from '../../lambda/data'
 import { hasSetPGN } from '../util'
+import ParsingControl from './ParsingControl'
 
 
 export type Suffix = 'suffix' | 'no-suffix'
@@ -25,8 +26,10 @@ function SuffixSelection({
   verb: Verb,
 }) {
   const handleToggleSuffix = useCallback(
-    (event: React.MouseEvent<HTMLElement>, newData: 'suffix' | 'no-suffix') => {
-      onChange(newData)
+    (event: React.MouseEvent<HTMLElement>, newData: 'suffix' | 'no-suffix' | null) => {
+      if (newData) {
+        onChange(newData)
+      }
     },
     [],
   )
@@ -40,42 +43,20 @@ function SuffixSelection({
       onChange={handleToggleSuffix}
       value={suffix}
     >
-      <ToggleButton
-        value="no-suffix"
-        selected={(
-          suffix === 'no-suffix'
-          || (showAnswer && !hasSuffix)
-        )}
-        color={(
-          showAnswer
-            ? (
-              suffix === 'no-suffix'
-                ? !hasSuffix ? 'success' : 'error'
-                : !hasSuffix ? 'info' : undefined
-            )
-            : undefined
-        )}
-      >
-        No Suffix
-      </ToggleButton>
-      <ToggleButton
-        value="suffix"
-        selected={(
-          suffix === 'suffix'
-          || (showAnswer && hasSuffix)
-        )}
-        color={(
-          showAnswer
-            ? (
-              suffix === 'suffix'
-                ? hasSuffix ? 'success' : 'error'
-                : hasSuffix ? 'info' : undefined
-            )
-            : undefined
-        )}
-      >
-        Suffix
-      </ToggleButton>
+      <ParsingControl
+        isCorrect={!hasSuffix}
+        option="no-suffix"
+        value={suffix}
+        label="No Suffix"
+        showAnswer={showAnswer}
+      />
+      <ParsingControl
+        isCorrect={hasSuffix}
+        option="suffix"
+        value={suffix}
+        label="Suffix"
+        showAnswer={showAnswer}
+      />
     </ToggleButtonGroup>
   )
 }

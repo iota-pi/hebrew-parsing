@@ -61,7 +61,7 @@ function ParsingControl<T extends string | number | PGN>({
       }}
       disabled={
         disabled
-        || (showAnswer && !selected)
+        || showAnswer
       }
     >
       {label}

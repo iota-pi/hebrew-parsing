@@ -112,8 +112,8 @@ export function processVerbs(verbs: DataVerb[]) {
       stem: getStem(stemCode),
       tense: getTense(tenseCode),
       context,
-      parsing: getParsing(parsing),
-      suffixParsing: getParsing(suffixParsing),
+      pgn: getParsing(parsing),
+      suffix: getParsing(suffixParsing),
     })
   )
 }

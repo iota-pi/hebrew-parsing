@@ -30,7 +30,7 @@ function SuffixSelection({
     },
     [],
   )
-  const hasSuffix = hasSetPGN(verb.suffixParsing)
+  const hasSuffix = hasSetPGN(verb.suffix)
 
   return (
     <ToggleButtonGroup

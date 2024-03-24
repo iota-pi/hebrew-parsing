@@ -18,8 +18,6 @@ export const appRouter = router({
         const allVerbs = await verbs
         const allRoots = await roots
         const validVerbs = getValidVerbs(allVerbs, allRoots, filter)
-        console.log('allVerbs', allVerbs.length)
-        console.log('validVerbs', validVerbs.length)
         const biasedVerbs = getBiasedVerbs(biasOptions, validVerbs)
         return new Array(count).fill(0).map(() => getRandomValidVerb(biasedVerbs, allRoots))
       })

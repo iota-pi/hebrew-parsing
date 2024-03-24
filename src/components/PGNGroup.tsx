@@ -22,7 +22,7 @@ import ParsingControl from './ParsingControl'
 
 
 function PGNGroup<P extends ParsingKey & ('pgn' | 'suffix')>({
-  applicable,
+  applicable: rawApplicable,
   onChange,
   parsing,
   part,
@@ -48,6 +48,19 @@ function PGNGroup<P extends ParsingKey & ('pgn' | 'suffix')>({
   )
 
   const isValid = part === 'pgn' ? isValidPGN : isValidSuffix
+  const applicable: typeof rawApplicable = useMemo(
+    () => {
+      if (showAnswer && hasSetPGN(verb.suffix)) {
+        return {
+          person: { 1: true, 2: true, 3: true, 'N/A': false },
+          gender: { m: true, f: true, c: true, 'N/A': false },
+          number: { s: true, p: true, 'N/A': false },
+        }
+      }
+      return rawApplicable
+    },
+    [rawApplicable, showAnswer],
+  )
 
   const pgnOptions: [PGN[], PGN[]] = useMemo(
     () => {
@@ -126,7 +139,7 @@ function PGNGroup<P extends ParsingKey & ('pgn' | 'suffix')>({
       exclusive
       disabled={
         !applicable
-        && (!showAnswer || (part === 'suffix' && !verb.suffixParsing?.person))
+        && (!showAnswer || (part === 'suffix' && !verb.suffix?.person))
       }
     >
       {pgnOptions.map(numberOptions => (

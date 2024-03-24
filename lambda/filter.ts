@@ -63,10 +63,10 @@ export function getFilterFromConditions(
       return false
     }
 
-    if (!condition.suffixes.include && hasSetPGN(verb.suffixParsing)) {
+    if (!condition.suffixes.include && hasSetPGN(verb.suffix)) {
       return false
     }
-    if (condition.suffixes.exclusive && !hasSetPGN(verb.suffixParsing)) {
+    if (condition.suffixes.exclusive && !hasSetPGN(verb.suffix)) {
       return false
     }
 

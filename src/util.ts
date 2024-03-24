@@ -184,9 +184,9 @@ export function getPartFromVerb<P extends ParsingKey>(part: P, verb: Verb): Pars
     return verb[part] as Parsing[P]
   }
   if (part === 'pgn') {
-    return verb.parsing as Parsing[P]
+    return verb.pgn as Parsing[P]
   } else {
-    return verb.suffixParsing as Parsing[P]
+    return verb.suffix as Parsing[P]
   }
 }
 

@@ -176,12 +176,12 @@ function VerbParsing({
         }
 
         const answer = getPartFromVerb(part, verb)
-        if (!checkPart(part, parsing[part], answer as Parsing[typeof part])) {
+        if (!checkPart(part, parsing, answer as Parsing[typeof part])) {
           correct = false
           break
         }
       }
-      if (!applicableParts.suffix && isValidSuffix(verb.suffixParsing)) {
+      if (!applicableParts.suffix && isValidSuffix(verb.suffix)) {
         correct = false
       }
 

@@ -113,7 +113,12 @@ function PGNGroup<P extends ParsingKey & ('pgn' | 'suffix')>({
     [part, verb],
   )
   const isCorrectOption = useCallback(
-    (option: PGN) => Object.values(checkPGN(option, correctAnswer, parsing)).every(Boolean),
+    (option: PGN) => {
+      if (part === 'suffix' && !hasSetPGN(verb.suffix)) {
+        return false
+      }
+      return Object.values(checkPGN(option, correctAnswer, parsing)).every(Boolean)
+    },
     [correctAnswer, parsing],
   )
   const isApplicableOption = useCallback(

@@ -118,19 +118,7 @@ export function processVerbs(verbs: DataVerb[]) {
   )
 }
 export type Verb = ReturnType<typeof processVerbs>[number]
-
-export function processStats(stats: DataStats) {
-  return {
-    ...stats,
-    stems: Object.fromEntries(
-      Object.entries(stats.stems).map(([key, value]) => [getStem(key), value])
-    ),
-    tenses: Object.fromEntries(
-      Object.entries(stats.tenses).map(([key, value]) => [getTense(key), value])
-    ),
-  }
-}
-export type Stats = ReturnType<typeof processStats>
+export type VerbAndRoot = { verb: Verb, root: Root }
 
 export function getStem(code: string) {
   if (code in stemMapping) {

@@ -1,24 +1,27 @@
 import { z } from 'zod'
 import { biasOptions, getBiasedVerbs, getRandomValidVerb } from './bias'
-import { roots, verbs } from './data'
+import { VerbAndRoot, roots, verbs } from './data'
 import { filterConditions, getFilterFromConditions, getValidVerbs } from './filter'
 import { publicProcedure, router } from './trpc'
 
 export const appRouter = router({
-  getWord: (
+  getWords: (
     publicProcedure
       .input(z.object({
-        filterConditions,
         biasOptions,
+        count: z.number().default(10),
+        filterConditions,
       }))
-      .query(async ({ input }) => {
-        const { filterConditions, biasOptions } = input
+      .query(async ({ input }): Promise<VerbAndRoot[]> => {
+        const { biasOptions, count, filterConditions } = input
         const filter = getFilterFromConditions(filterConditions)
         const allVerbs = await verbs
         const allRoots = await roots
         const validVerbs = getValidVerbs(allVerbs, allRoots, filter)
+        console.log('allVerbs', allVerbs.length)
+        console.log('validVerbs', validVerbs.length)
         const biasedVerbs = getBiasedVerbs(biasOptions, validVerbs)
-        return getRandomValidVerb(biasedVerbs, allRoots)
+        return new Array(count).fill(0).map(() => getRandomValidVerb(biasedVerbs, allRoots))
       })
   ),
 })

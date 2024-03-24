@@ -8,11 +8,16 @@ import { useLocalStorage } from 'usehooks-ts'
 import { trpc } from '../trpc'
 import type { FilterCondition } from '../../lambda/filter'
 import VerbParsing from './VerbParsing'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import FilterSelection from './FilterSelection'
 import { BiasOptions } from '../../lambda/bias'
+import { TRPCClientError } from '@trpc/client'
+import { AppRouter } from '../../lambda/router'
+import { VerbAndRoot } from '../../lambda/data'
 
 function MainPage() {
+  const utils = trpc.useUtils()
+
   const [filterConditions, setFilterConditions] = useLocalStorage<FilterCondition>(
     'filterConditions',
     {
@@ -59,38 +64,30 @@ function MainPage() {
     biasTenses: true,
   })
 
-  const currentWord = trpc.getWord.useQuery(
-    { filterConditions, biasOptions },
-    {
-      refetchOnWindowFocus: false,
-      retry(failureCount, error) {
-        if (error.message.toLowerCase().includes('no valid verbs')) {
-          return false
-        }
-        return failureCount < 3
-      },
-    },
-  )
-  const error = useMemo(
-    () => (
-      currentWord.error?.message.toLowerCase().includes('no valid verbs')
-        ? currentWord.error?.message
-        : ''
-    ),
-    [currentWord.error],
-  )
-  const [cachedWord, setCachedWord] = useState(currentWord.data)
-  useEffect(
-    () => {
-      if (currentWord.data) {
-        setCachedWord(currentWord.data)
-      }
-    },
-    [currentWord.data],
-  )
+  const [error, setError] = useState<string>('')
+  const [verbs, setVerbs] = useState<VerbAndRoot[]>()
+  const [currentVerb, setCurrentVerb] = useState<VerbAndRoot>()
 
   const [streak, setStreak] = useLocalStorage('currentStreak', 0)
   const [bestStreak, setBestStreak] = useLocalStorage('bestStreak', 0)
+
+  const fetchNewWords = useCallback(
+    () => {
+      utils.getWords.fetch({
+        biasOptions,
+        filterConditions,
+      })
+        .then(newWords => setVerbs(
+          words => [...(words ?? []), ...newWords]
+        ))
+        .catch((e: TRPCClientError<AppRouter>) => {
+          if (e.message?.toLowerCase().includes('no valid verbs')) {
+            setError(e.message)
+          }
+        })
+    },
+    [filterConditions, biasOptions, utils],
+  )
 
   const handleAnswer = useCallback(
     (correct: boolean) => {
@@ -107,15 +104,40 @@ function MainPage() {
   )
   const handleNext = useCallback(
     () => {
-      currentWord.refetch()
+      if (!verbs || verbs.length <= 2) {
+        fetchNewWords()
+      }
+      if (!verbs) {
+        return
+      }
+
+      const newWords = [...verbs]
+      newWords.shift()
+      setVerbs(newWords)
     },
-    [],
+    [verbs, fetchNewWords],
+  )
+  useEffect(
+    () => {
+      if (!verbs) {
+        handleNext()
+      }
+    },
+    [verbs],
+  )
+  useEffect(
+    () => {
+      if (verbs?.[0]) {
+        setCurrentVerb(verbs[0])
+      }
+    },
+    [verbs],
   )
 
   const onChangeFilter = useCallback(
     (newFilterConditions: FilterCondition) => {
       setFilterConditions(newFilterConditions)
-      currentWord.refetch()
+      setVerbs(undefined)
     },
     [],
   )
@@ -129,11 +151,11 @@ function MainPage() {
     >
       <Box maxWidth={1200} flexGrow={1}>
         <Stack spacing={2}>
-          {cachedWord && !error ? (
+          {currentVerb && !error ? (
             <VerbParsing
               filterOptions={filterConditions}
-              verb={cachedWord.verb}
-              root={cachedWord.root}
+              verb={currentVerb.verb}
+              root={currentVerb.root}
               onAnswer={handleAnswer}
               onNext={handleNext}
             />

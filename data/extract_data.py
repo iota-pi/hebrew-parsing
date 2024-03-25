@@ -29,7 +29,7 @@ TENSES = {
     "infa": "infa",
 }
 
-class UnknownStemOrTenseError(KeyError):
+class UnhandledStemError(KeyError):
     pass
 
 PERSONS = {"p1": 1, "p2": 2, "p3": 3, "unknown": None}
@@ -61,9 +61,9 @@ class Verb:
         self.root = api.F.lex_utf8.v(n)
         try:
             self.stem = STEMS[api.F.vs.v(n)]
-            self.tense = TENSES[api.F.vt.v(n)]
         except KeyError:
-            raise UnknownStemOrTenseError()
+            raise UnhandledStemError()
+        self.tense = TENSES[api.F.vt.v(n)]
         self.person = PERSONS.get(api.F.ps.v(n))
         self.gender = GENDERS.get(api.F.gn.v(n))
         self.number = NUMBERS.get(api.F.nu.v(n))
@@ -171,7 +171,7 @@ class DataProcessor:
             return
         try:
             self.add_verb(n)
-        except UnknownStemOrTenseError:
+        except UnhandledStemError:
             return
 
     def get_stats(self):

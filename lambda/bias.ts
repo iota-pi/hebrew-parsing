@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import type { RootMap, Verb } from './data'
+import { TRPCError } from '@trpc/server'
 
 export const biasOptions = z.object({
   biasStems: z.boolean(),
@@ -13,7 +14,10 @@ export function getRandomValidVerb(
   roots: RootMap,
 ) {
   if (validVerbs.length === 0) {
-    throw new Error('No valid verbs found')
+    throw new TRPCError({
+      code: 'NOT_FOUND',
+      message: 'No valid verbs found',
+    })
   }
   const verb = validVerbs[Math.floor(Math.random() * validVerbs.length)]
   const root = roots[verb.root]

@@ -73,16 +73,20 @@ function MainPage() {
 
   const fetchNewWords = useCallback(
     () => {
-      utils.getWords.fetch({
-        biasOptions,
-        filterConditions,
-      })
+      setError('')
+      utils.getWords.fetch(
+        {
+          biasOptions,
+          filterConditions,
+        }
+      )
         .then(newWords => setVerbs(
           words => [...(words ?? []), ...newWords]
         ))
         .catch((e: TRPCClientError<AppRouter>) => {
           if (e.message?.toLowerCase().includes('no valid verbs')) {
             setError(e.message)
+            setCurrentVerb(undefined)
           }
         })
     },
@@ -119,11 +123,11 @@ function MainPage() {
   )
   useEffect(
     () => {
-      if (!verbs) {
+      if ((!verbs || verbs.length === 0) && !error) {
         handleNext()
       }
     },
-    [verbs],
+    [error, verbs],
   )
   useEffect(
     () => {
@@ -137,7 +141,8 @@ function MainPage() {
   const onChangeFilter = useCallback(
     (newFilterConditions: FilterCondition) => {
       setFilterConditions(newFilterConditions)
-      setVerbs(undefined)
+      setVerbs([])
+      setError('')
     },
     [],
   )

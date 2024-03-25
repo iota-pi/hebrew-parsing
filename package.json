@@ -10,7 +10,7 @@
     "deploy:app": "yarn build && yarn upload",
     "build:lambda": "esbuild lambda/lambda.ts --outfile=lambda/build/lambda.js --bundle --minify --platform=node --target=node20 --external:aws-sdk --external:canvas",
     "bundle:lambda": "cd lambda/build && 7z a -tzip lambda.zip lambda.js",
-    "upload:lambda": "aws s3 cp lambda/build/lambda.zip s3://crosscode-lambdas/hebrew-parsing/lambda.zip",
+    "upload:lambda": "aws s3 cp lambda/build/lambda.zip s3://crosscode-lambdas/hebrew-parsing/lambda.zip || true",
     "deploy:lambda": "yarn build:lambda && yarn bundle:lambda && yarn upload:lambda",
     "deploy": "yarn deploy:app && yarn deploy:lambda && cd infra && terraform apply",
     "lint": "yarn run eslint src lambda --ext .ts,.tsx",

@@ -2,7 +2,6 @@ locals {
   bucket_name = "hebrew-parsing-app-${var.environment}"
   compress    = true
   origin_id   = "app_s3_origin"
-  domain      = "${subdomain}.${var.root_domain}"
 
   min_ttl     = 0
   default_ttl = 0

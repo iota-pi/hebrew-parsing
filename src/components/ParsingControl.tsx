@@ -41,15 +41,19 @@ function ParsingControl<T extends string | number | PGN>({
       value={option}
       selected={
         !disabled
-        && (selected || (showAnswer && correct))
+        && (selected || (showAnswer && exact))
       }
       color={(
         showAnswer
-          ? (
-            correct
-              ? selected ? (exact ? 'success' : 'warning') : 'info'
-              : 'error'
-          )
+          ? correct
+            ? selected
+              ? exact
+                ? 'success'
+                : 'warning'
+              : exact
+                ? 'info'
+                : undefined
+            : 'error'
           : undefined
       )}
       sx={{

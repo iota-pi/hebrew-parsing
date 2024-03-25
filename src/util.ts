@@ -3,11 +3,10 @@ import type {
   NA,
   PGN,
   Person,
-  Stem,
-  Tense,
   Verb,
   VerbNumber,
 } from '../lambda/data'
+import type { Stem, Tense } from '../lambda/filter'
 import { ParsingCondition, equivalents } from './paradigms'
 
 export type OptionCorrectness = {

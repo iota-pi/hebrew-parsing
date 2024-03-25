@@ -1,25 +1,7 @@
 import { readFile } from 'node:fs/promises'
+import type { Stem, Tense } from './filter'
 
 export type NA = 'N/A'
-export type Stem = (
-  | 'Qal'
-  | 'Hiphil'
-  | 'Piel'
-  | 'Niphal'
-  | 'Hitpael'
-  | 'Pual'
-  | 'Hophal'
-)
-export type Tense = (
-  | 'Qatal'
-  | 'Yiqtol'
-  | 'Wayyiqtol'
-  | 'Active participle'
-  | 'Infinitive construct'
-  | 'Imperative'
-  | 'Passive participle'
-  | 'Infinitive absolute'
-)
 export type Person = 1 | 2 | 3 | NA
 export type Gender = 'm' | 'f' | 'c' | NA
 export type VerbNumber = 's' | 'p' | NA

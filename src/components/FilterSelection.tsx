@@ -7,8 +7,7 @@ import {
 } from '@mui/material'
 import type { FilterCondition } from '../../lambda/filter'
 import { ChangeEvent, useCallback, useMemo } from 'react'
-import { ALL_STEMS, getTenseName } from '../util'
-import { Tense } from '../../lambda/data'
+import { ALL_STEMS, ALL_TENSES, getTenseName } from '../util'
 
 const allRoots = [
   '1-gutteral',
@@ -26,33 +25,12 @@ const baseRoots = (
   Object.fromEntries(allRoots.map(root => [root, false]))
 ) as FilterCondition['root']
 
-const allStems = ALL_STEMS.map(stem => stem.toLowerCase() as keyof FilterCondition['stem'])
 const baseStems = (
-  Object.fromEntries(allStems.map(stem => [stem, false]))
+  Object.fromEntries(ALL_STEMS.map(stem => [stem, false]))
 ) as FilterCondition['stem']
 
-const allTenses = [
-  'qatal',
-  'yiqtol',
-  'wayyiqtol',
-  'imperative',
-  'activeParticiple',
-  'passiveParticiple',
-  'infinitiveConstruct',
-  'infinitiveAbsolute',
-] as const
-const tenseNameLookup: Record<keyof FilterCondition['tense'], Tense> = {
-  qatal: 'Qatal',
-  yiqtol: 'Yiqtol',
-  wayyiqtol: 'Wayyiqtol',
-  imperative: 'Imperative',
-  activeParticiple: 'Active participle',
-  passiveParticiple: 'Passive participle',
-  infinitiveConstruct: 'Infinitive construct',
-  infinitiveAbsolute: 'Infinitive absolute',
-}
 const baseTenses = (
-  Object.fromEntries(allTenses.map(tense => [tense, false]))
+  Object.fromEntries(ALL_TENSES.map(tense => [tense, false]))
 ) as FilterCondition['tense']
 
 const minFrequencyOptions = [
@@ -180,7 +158,7 @@ function FilterSelection({
         onChange={handleChangeStems}
         value={selectedStems}
       >
-        {allStems.map(stem => (
+        {ALL_STEMS.map(stem => (
           <ToggleButton
             key={stem}
             value={stem}
@@ -195,12 +173,12 @@ function FilterSelection({
         value={selectedTenses}
         onChange={handleChangeTenses}
       >
-        {allTenses.map(tense => (
+        {ALL_TENSES.map(tense => (
           <ToggleButton
             key={tense}
             value={tense}
           >
-            {getTenseName(tenseNameLookup[tense])}
+            {getTenseName(tense)}
           </ToggleButton>
         ))}
       </ToggleButtonGroup>

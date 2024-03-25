@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import type { Root, RootMap, Tense, Verb } from './data'
+import type { Root, RootMap, Verb } from './data'
 import { hasSetPGN } from '../src/util'
 
 export const filterConditions = z.object({
@@ -16,23 +16,23 @@ export const filterConditions = z.object({
     geminate: z.boolean(),
   }),
   'stem': z.object({
-    qal: z.boolean(),
-    niphal: z.boolean(),
-    piel: z.boolean(),
-    pual: z.boolean(),
-    hitpael: z.boolean(),
-    hiphil: z.boolean(),
-    hophal: z.boolean(),
+    Qal: z.boolean(),
+    Niphal: z.boolean(),
+    Piel: z.boolean(),
+    Pual: z.boolean(),
+    Hitpael: z.boolean(),
+    Hiphil: z.boolean(),
+    Hophal: z.boolean(),
   }),
   'tense': z.object({
-    qatal: z.boolean(),
-    yiqtol: z.boolean(),
-    wayyiqtol: z.boolean(),
-    imperative: z.boolean(),
-    activeParticiple: z.boolean(),
-    passiveParticiple: z.boolean(),
-    infinitiveConstruct: z.boolean(),
-    infinitiveAbsolute: z.boolean(),
+    Qatal: z.boolean(),
+    Yiqtol: z.boolean(),
+    Wayyiqtol: z.boolean(),
+    Imperative: z.boolean(),
+    'Active participle': z.boolean(),
+    'Passive participle': z.boolean(),
+    'Infinitive construct': z.boolean(),
+    'Infinitive absolute': z.boolean(),
   }),
   suffixes: z.object({
     include: z.boolean(),
@@ -41,21 +41,8 @@ export const filterConditions = z.object({
   minFrequency: z.number(),
 })
 export type FilterCondition = z.infer<typeof filterConditions>
-
-const TENSE_KEY_MAPPING: Record<Tense, keyof FilterCondition['tense']> = {
-  Qatal: 'qatal',
-  Yiqtol: 'yiqtol',
-  Wayyiqtol: 'wayyiqtol',
-  Imperative: 'imperative',
-  'Active participle': 'activeParticiple',
-  'Passive participle': 'passiveParticiple',
-  'Infinitive construct': 'infinitiveConstruct',
-  'Infinitive absolute': 'infinitiveAbsolute',
-}
-
-export function getTenseKey(tense: Tense) {
-  return TENSE_KEY_MAPPING[tense]
-}
+export type Stem = keyof FilterCondition['stem']
+export type Tense = keyof FilterCondition['tense']
 
 export function getFilterFromConditions(
   condition: FilterCondition | undefined,
@@ -70,11 +57,11 @@ export function getFilterFromConditions(
       return false
     }
 
-    if (!condition.stem[verb.stem.toLowerCase() as keyof FilterCondition['stem']]) {
+    if (!condition.stem[verb.stem]) {
       return false
     }
 
-    if (!condition.tense[getTenseKey(verb.tense) as keyof FilterCondition['tense']]) {
+    if (!condition.tense[verb.tense]) {
       return false
     }
 

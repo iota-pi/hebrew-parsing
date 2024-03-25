@@ -34,23 +34,23 @@ function MainPage() {
         geminate: true,
       },
       stem: {
-        qal: true,
-        niphal: true,
-        piel: true,
-        pual: true,
-        hitpael: true,
-        hiphil: true,
-        hophal: true,
+        Qal: true,
+        Niphal: true,
+        Piel: true,
+        Pual: true,
+        Hitpael: true,
+        Hiphil: true,
+        Hophal: true,
       },
       tense: {
-        qatal: true,
-        yiqtol: true,
-        wayyiqtol: true,
-        imperative: true,
-        activeParticiple: true,
-        passiveParticiple: true,
-        infinitiveConstruct: true,
-        infinitiveAbsolute: true,
+        Qatal: true,
+        Yiqtol: true,
+        Wayyiqtol: true,
+        Imperative: true,
+        "Active participle": true,
+        "Passive participle": true,
+        "Infinitive construct": true,
+        "Infinitive absolute": true,
       },
       suffixes: {
         include: true,
@@ -59,7 +59,7 @@ function MainPage() {
       minFrequency: 0,
     },
   )
-  const [biasOptions, setBiasOptions] = useLocalStorage<BiasOptions>('biasOptions', {
+  const [biasOptions] = useLocalStorage<BiasOptions>('biasOptions', {
     biasStems: true,
     biasTenses: true,
   })

@@ -30,7 +30,7 @@ import type { Verb, Root } from '../../lambda/data'
 import ParsingControlGroup from './ParsingControlGroup'
 import PGNGroup from './PGNGroup'
 import SuffixSelection, { Suffix } from './SuffixSelection'
-import { FilterCondition } from '../../lambda/filter'
+import type { FilterCondition, Stem, Tense } from '../../lambda/filter'
 
 const MAIN_PARTS = ALL_PARTS.filter(part => part !== 'suffix')
 const DEFAULT_SUFFIX: Suffix = 'no-suffix'
@@ -58,7 +58,24 @@ function VerbParsing({
   onAnswer: (correct: boolean) => void,
   onNext: () => void,
 }) {
-  const [parsing, setParsing] = useState(getInitialParsing())
+  const [stems, tenses] = useMemo(
+    () => {
+      const stems = (
+        Object.entries(
+          filterOptions.stem
+        ).filter(([, v]) => v).map(([k]) => k as Stem)
+      )
+      const tenses = (
+        Object.entries(
+          filterOptions.tense
+        ).filter(([, v]) => v).map(([k]) => k as Tense)
+      )
+      return [stems, tenses]
+    },
+    [filterOptions.stem, filterOptions.tense],
+  )
+
+  const [parsing, setParsing] = useState(getInitialParsing(stems, tenses))
   const [suffix, setSuffix] = useState<Suffix>(DEFAULT_SUFFIX)
   const [showAnswer, setShowAnswer] = useState(false)
 
@@ -74,8 +91,32 @@ function VerbParsing({
     [showAnswer, rawVerb, rawRoot],
   )
 
+  useEffect(
+    () => {
+      let newStem: Stem | undefined = undefined
+      let newTense: Tense | undefined = undefined
+      if (stems.length === 1) {
+        newStem = stems[0]
+      }
+      if (tenses.length === 1) {
+        newTense = tenses[0]
+      }
+      if (newStem || newTense) {
+        setParsing(prev => ({
+          ...prev,
+          stem: newStem || prev.stem,
+          tense: newTense || prev.tense,
+        }))
+      }
+    },
+    [stems, tenses],
+  )
+
   const canHaveSuffixes = filterOptions.suffixes.include
-  const mustHaveSuffixes = filterOptions.suffixes.include && filterOptions.suffixes.exclusive
+  const mustHaveSuffixes = (
+    filterOptions.suffixes.include
+    && filterOptions.suffixes.exclusive
+  )
   useEffect(
     () => {
       if (!canHaveSuffixes) {
@@ -108,9 +149,21 @@ function VerbParsing({
         parts.tense['Passive participle'] = false
       }
 
+      if (parts.stem) {
+        for (const stem of Object.keys(parts.stem) as Stem[]) {
+          parts.stem[stem] = filterOptions.stem[stem]
+        }
+      }
+
+      if (parts.tense) {
+        for (const tense of Object.keys(parts.tense) as Tense[]) {
+          parts.tense[tense] = filterOptions.tense[tense]
+        }
+      }
+
       return parts
     },
-    [parsing, suffix],
+    [filterOptions, parsing, suffix],
   )
 
   const isValid = useMemo(
@@ -193,12 +246,12 @@ function VerbParsing({
 
   const handleNext = useCallback(
     () => {
-      setParsing(getInitialParsing())
+      setParsing(getInitialParsing(stems, tenses))
       setSuffix(DEFAULT_SUFFIX)
       setShowAnswer(false)
       onNext()
     },
-    [onNext],
+    [filterOptions, onNext, stems, tenses],
   )
 
   const clauseParts = useMemo(
@@ -408,10 +461,10 @@ function getInitialApplicableParts(): ApplicableParts {
   }
 }
 
-export function getInitialParsing(): Parsing {
+export function getInitialParsing(stems: Stem[], tenses: Tense[]): Parsing {
   return {
-    stem: 'N/A',
-    tense: 'N/A',
+    stem: stems.length === 1 ? stems[0] : 'N/A',
+    tense: tenses.length === 1 ? tenses[0] : 'N/A',
     pgn: {
       person: 'N/A',
       gender: 'N/A',

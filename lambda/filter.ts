@@ -104,7 +104,22 @@ export function checkRoot(root: string, condition: FilterCondition['root']) {
     || (!condition['3-heh'] && 'ה'.includes(root[2]))
     || (!condition['3-aleph'] && 'א'.includes(root[2]))
     || (!condition.hollow && ('וי'.includes(root[1]) || root.length === 2))
-    || (!condition.geminate && root[1] === root[2])
+    || (!condition.geminate && isSameLetter(root[1], root[2]))
+  )
+}
+
+export function isSameLetter(a: string, b: string) {
+  return replaceSofits(a) === replaceSofits(b)
+}
+
+export function replaceSofits(str: string) {
+  return (
+    str
+      .replace(/ך$/, 'כ')
+      .replace(/ם$/, 'מ')
+      .replace(/ן$/, 'נ')
+      .replace(/ף$/, 'פ')
+      .replace(/ץ$/, 'צ')
   )
 }
 

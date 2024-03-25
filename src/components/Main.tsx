@@ -55,7 +55,7 @@ function MainPage() {
         include: true,
         exclusive: false,
       },
-      minFrequency: 0,
+      minFrequency: 50,
     },
   )
   const [biasOptions] = useLocalStorage<BiasOptions>('biasOptions', {

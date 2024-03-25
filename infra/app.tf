@@ -1,5 +1,5 @@
 locals {
-  bucket_name = "hebrew-parsing-app-${var.environment}"
+  bucket_name = "hebrew-parsing-${var.environment}"
   compress    = true
   origin_id   = "app_s3_origin"
 

@@ -8,7 +8,6 @@ export const filterConditions = z.object({
     '1-aleph': z.boolean(),
     '1-nun': z.boolean(),
     '1-waw': z.boolean(),
-    '1-yod': z.boolean(),
     '2-gutteral': z.boolean(),
     '3-heh': z.boolean(),
     '3-aleph': z.boolean(),
@@ -85,8 +84,7 @@ export function checkRoot(root: string, condition: FilterCondition['root']) {
     (!condition['1-gutteral'] && 'עהחר'.includes(root[0]))
     || (!condition['1-aleph'] && 'א'.includes(root[0]))
     || (!condition['1-nun'] && ('נ'.includes(root[0])))
-    || (!condition['1-waw'] && 'ו'.includes(root[0]))
-    || (!condition['1-yod'] && 'י'.includes(root[0]))
+    || (!condition['1-waw'] && 'וי'.includes(root[0]))
     || (!condition['2-gutteral'] && 'אעהחר'.includes(root[1]))
     || (!condition['3-heh'] && 'ה'.includes(root[2]))
     || (!condition['3-aleph'] && 'א'.includes(root[2]))

@@ -14,13 +14,12 @@ const allRoots = [
   '1-aleph',
   '1-nun',
   '1-waw',
-  '1-yod',
   '2-gutteral',
   '3-heh',
   '3-aleph',
   'hollow',
   'geminate',
-] as const
+] satisfies (keyof FilterCondition['root'])[]
 const baseRoots = (
   Object.fromEntries(allRoots.map(root => [root, false]))
 ) as FilterCondition['root']
@@ -148,7 +147,13 @@ function FilterSelection({
             key={root}
             value={root}
           >
-            {root}
+            <span style={{ whiteSpace: 'no-wrap' }}>
+              {(
+                root === '1-waw'
+                  ? '1\u2011waw / 1\u2011yod'
+                  : root.replaceAll('-', '\u2011')
+              )}
+            </span>
           </ToggleButton>
         ))}
       </ToggleButtonGroup>

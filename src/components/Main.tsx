@@ -26,7 +26,6 @@ function MainPage() {
         '1-aleph': true,
         '1-nun': true,
         '1-waw': true,
-        '1-yod': true,
         '2-gutteral': true,
         '3-heh': true,
         '3-aleph': true,

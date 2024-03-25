@@ -8,6 +8,12 @@ import type {
   Verb,
   VerbNumber,
 } from '../lambda/data'
+import { ParsingCondition, equivalents } from './paradigms'
+
+export type OptionCorrectness = {
+  match: boolean,
+  exact: boolean,
+}
 
 export const ONE_DAY = 1000 * 60 * 60 * 24
 export const ONE_WEEK = ONE_DAY * 7
@@ -56,9 +62,10 @@ export type Parsing = {
   pgn: PGN,
   suffix: PGN,
 }
-export type SimpleParsingPartKey = 'stem' | 'tense'
-export type SimpleParsingPart = Stem | Tense
 export type ParsingKey = keyof Parsing
+export type SimpleParsingPart = Stem | Tense
+export type SimpleParsingPartKey = ParsingKey & ('stem' | 'tense')
+export type PGNParsingKey = ParsingKey & ('pgn' | 'suffix')
 export type ApplicableParts = {
   stem: Record<Exclude<Stem, NA>, boolean> | false,
   tense: Record<Exclude<Tense, NA>, boolean> | false,
@@ -135,19 +142,68 @@ export function checkSimplePart<T extends SimpleParsingPartKey>(attempt: Parsing
   return attempt === correct
 }
 
-export function checkPGN(attempt: PGN, correct: PGN, fullParsingAttempt: Parsing) {
-  if (fullParsingAttempt.tense === 'Imperative') {
+export function checkPGN(
+  fullParsingAttempt: Parsing,
+  part: PGNParsingKey,
+  correct: PGN,
+): OptionCorrectness {
+  if (fullParsingAttempt.tense === 'Imperative' && part === 'pgn') {
     correct = {
       ...correct,
       person: 'N/A',
     }
   }
 
-  return {
-    person: correct.person === 'N/A' || attempt.person === correct.person,
-    gender: correct.gender === 'N/A' || checkGender(attempt.gender, correct.gender),
-    number: correct.number === 'N/A' || attempt.number === correct.number,
+  const attempt = fullParsingAttempt[part]
+  const alternatives = [
+    correct,
+    ...getMatchingAlternatives(fullParsingAttempt, correct),
+  ]
+  for (const alt of alternatives) {
+    if (
+      (alt.person === 'N/A' || attempt.person === alt.person)
+      && (alt.gender === 'N/A' || checkGender(attempt.gender, alt.gender))
+      && (alt.number === 'N/A' || attempt.number === alt.number)
+    ) {
+      return { match: true, exact: alt === correct }
+    }
   }
+  return { match: false, exact: false }
+}
+
+export function pgnEquals(a: PGN, b: PGN) {
+  return (
+    a.person === b.person
+    && a.gender === b.gender
+    && a.number === b.number
+  )
+}
+
+export function getMatchingAlternatives(
+  attempt: Parsing,
+  correct: PGN,
+): PGN[] {
+  const conditionGroups = equivalents.filter(
+    group => group.some(
+      condition => checkParsingCondition({ ...attempt, pgn: correct }, condition),
+    ),
+  )
+  return conditionGroups.flatMap(
+    group => group.map(
+      condition => condition.pgn,
+    )
+  )
+}
+
+export function checkParsingCondition(
+  attempt: Parsing,
+  condition: ParsingCondition,
+) {
+  return Object.entries(condition).every(([key, value]) => (
+    key === 'pgn' || key === 'suffix'
+      ? pgnEquals(attempt[key], value as PGN)
+      : attempt[key as keyof ParsingCondition] === value
+  ))
 }
 
 export function checkPart<T extends ParsingKey>(part: T, attempt: Parsing, correct: Parsing[T]) {
@@ -159,10 +215,10 @@ export function checkPart<T extends ParsingKey>(part: T, attempt: Parsing, corre
   }
 
   return checkPGN(
-    attempt[part] as PGN,
-    correct as PGN,
     attempt,
-  )
+    part,
+    correct as PGN,
+  ).match
 }
 
 export function isSimplePart(part: ParsingKey): part is SimpleParsingPartKey {

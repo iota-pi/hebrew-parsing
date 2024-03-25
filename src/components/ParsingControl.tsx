@@ -1,7 +1,7 @@
 import {
   ToggleButton,
 } from '@mui/material'
-import { getPGNKey } from '../util'
+import { OptionCorrectness, getPGNKey } from '../util'
 import { PGN } from '../../lambda/data'
 
 
@@ -18,7 +18,7 @@ function ParsingControl<T extends string | number | PGN>({
 }: {
   disabled?: boolean,
   doubleHeight?: boolean,
-  isCorrect: boolean,
+  isCorrect: boolean | OptionCorrectness,
   isFirst?: boolean,
   isLast?: boolean,
   option: T,
@@ -34,18 +34,20 @@ function ParsingControl<T extends string | number | PGN>({
       ? getPGNKey(value) === getPGNKey(option)
       : value === option
   )
+  const correct = typeof isCorrect === 'boolean' ? isCorrect : isCorrect.match
+  const exact = typeof isCorrect === 'boolean' ? isCorrect : isCorrect.exact
   return (
     <ToggleButton
       value={option}
       selected={
         !disabled
-        && (selected || (showAnswer && isCorrect))
+        && (selected || (showAnswer && correct))
       }
       color={(
         showAnswer
           ? (
-            isCorrect
-              ? selected ? 'success' : 'info'
+            correct
+              ? selected ? (exact ? 'success' : 'warning') : 'info'
               : 'error'
           )
           : undefined

@@ -15,6 +15,7 @@ import {
   isValidPGN,
   isValidSuffix,
   hasSetPGN,
+  OptionCorrectness,
 } from '../util'
 import type { NA, PGN, Verb } from '../../lambda/data'
 import { useCallback, useMemo } from 'react'
@@ -113,13 +114,17 @@ function PGNGroup<P extends ParsingKey & ('pgn' | 'suffix')>({
     [part, verb],
   )
   const isCorrectOption = useCallback(
-    (option: PGN) => {
+    (option: PGN): OptionCorrectness => {
       if (part === 'suffix' && !hasSetPGN(verb.suffix)) {
-        return false
+        return { match: false, exact: false }
       }
-      return Object.values(checkPGN(option, correctAnswer, parsing)).every(Boolean)
+      const projectedParsing: Parsing = {
+        ...parsing,
+        [part]: option,
+      }
+      return checkPGN(projectedParsing, part, correctAnswer)
     },
-    [correctAnswer, parsing],
+    [correctAnswer, parsing, part],
   )
   const isApplicableOption = useCallback(
     (option: PGN) => {
@@ -158,7 +163,7 @@ function PGNGroup<P extends ParsingKey & ('pgn' | 'suffix')>({
                 && option.gender === 'c'
                 && option.number === 'p'
               )}
-              isCorrect={isCorrectOption(option) || false}
+              isCorrect={isCorrectOption(option)}
               isLast={i === numberOptions.length - 1}
               isFirst={i === 0}
               option={option}

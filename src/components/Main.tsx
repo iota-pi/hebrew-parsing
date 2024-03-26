@@ -196,7 +196,9 @@ function MainPage() {
           <Divider />
 
           <Typography>
-            So far you've practised on <strong>{totalCount ?? 0}</strong> words.
+            {'So far you\'ve practised on '}
+            <strong>{totalCount ?? 0}</strong>
+            {' words.'}
           </Typography>
         </Stack>
       </Box>

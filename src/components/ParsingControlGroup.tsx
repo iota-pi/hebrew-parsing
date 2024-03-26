@@ -1,9 +1,10 @@
 import {
   ToggleButtonGroup,
 } from '@mui/material'
-import { Parsing, PART_MAPPING, checkSimplePart, getPartFromVerb, ApplicableParts, getSimplePartName, SimpleParsingPartKey } from '../util'
-import type { Stem, Tense, Verb } from '../../lambda/data'
 import { useCallback, useMemo } from 'react'
+import { Parsing, PART_MAPPING, checkSimplePart, getPartFromVerb, ApplicableParts, getSimplePartName, SimpleParsingPartKey } from '../util'
+import type { Verb } from '../../lambda/data'
+import type { Stem, Tense } from '../../lambda/filter'
 import ParsingControl from './ParsingControl'
 
 

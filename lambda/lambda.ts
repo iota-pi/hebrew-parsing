@@ -1,7 +1,7 @@
-// eslint-disable-next-line import/no-unresolved
 import {
   awsLambdaRequestHandler,
   CreateAWSLambdaContextOptions,
+// eslint-disable-next-line import/no-unresolved
 } from '@trpc/server/adapters/aws-lambda'
 import { APIGatewayProxyEventV2 } from 'aws-lambda'
 import { appRouter } from './router'

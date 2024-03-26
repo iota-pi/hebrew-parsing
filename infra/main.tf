@@ -96,7 +96,7 @@ resource "aws_apigatewayv2_integration" "hebrew_lambda" {
 
   connection_type           = "INTERNET"
   description               = "hebrew_lambda lambda integration"
-  integration_method        = "ANY"
+  integration_method        = "POST"
   integration_uri           = aws_lambda_function.hebrew_lambda.invoke_arn
   passthrough_behavior      = "WHEN_NO_MATCH"
 

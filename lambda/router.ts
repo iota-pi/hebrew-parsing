@@ -4,12 +4,14 @@ import { VerbAndRoot, roots, verbs } from './data'
 import { filterConditions, getFilterFromConditions, getValidVerbs } from './filter'
 import { publicProcedure, router } from './trpc'
 
+const BATCH_SIZE = 5
+
 export const appRouter = router({
   getWords: (
     publicProcedure
       .input(z.object({
         biasOptions,
-        count: z.number().default(10),
+        count: z.number().default(BATCH_SIZE),
         filterConditions,
       }))
       .query(async ({ input }): Promise<VerbAndRoot[]> => {

@@ -178,6 +178,12 @@ function MainPage() {
             </Typography>
           )}
 
+          <Typography>
+            {'So far you\'ve practised on '}
+            <strong>{totalCount ?? 0}</strong>
+            {' words.'}
+          </Typography>
+
           <Divider />
 
           <Typography
@@ -192,14 +198,6 @@ function MainPage() {
             filterConditions={filterConditions}
             onChange={onChangeFilter}
           />
-
-          <Divider />
-
-          <Typography>
-            {'So far you\'ve practised on '}
-            <strong>{totalCount ?? 0}</strong>
-            {' words.'}
-          </Typography>
         </Stack>
       </Box>
     </Box>

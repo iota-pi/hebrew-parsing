@@ -95,7 +95,6 @@ resource "aws_apigatewayv2_integration" "hebrew_lambda" {
   integration_type = "AWS_PROXY"
 
   connection_type           = "INTERNET"
-  content_handling_strategy = "CONVERT_TO_TEXT"
   description               = "hebrew_lambda lambda integration"
   integration_method        = "ANY"
   integration_uri           = aws_lambda_function.hebrew_lambda.invoke_arn

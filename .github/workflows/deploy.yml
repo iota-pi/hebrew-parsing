@@ -35,6 +35,12 @@ jobs:
         role-to-assume: arn:aws:iam::579194700615:role/GitHubActions_OIDC
         aws-region: ap-southeast-2
 
+    - name: Collect data
+      run: |
+        python3 -m pip install text-fabric
+        cd data
+        python3 collect_data.py
+
     - name: Deploy lambda
       run: yarn deploy:lambda
       env:

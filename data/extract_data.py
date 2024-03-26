@@ -1,40 +1,42 @@
 #!/usr/bin/env python3
 
 import json
+import random
 from typing import Set
 from tf.advanced.app import App
 from tf.app import use
 
 MIN_LEX_FREQ = 0
+MIN_QAL_QATAL_FREQ = 50
 MAX_VERSE_LENGTH = 15
 
 STEMS = {
-    "qal":  "qal",
-    "hif":  "hif",
-    "piel": "piel",
-    "nif":  "nif",
-    "hit":  "hit",
-    "pual": "pual",
-    "hof":  "hof",
+    "qal": 1,
+    "hif": 2,
+    "piel": 3,
+    "nif": 4,
+    "hit": 5,
+    "pual": 6,
+    "hof": 7,
 }
 
 TENSES = {
-    "perf": "perf",
-    "impf": "impf",
-    "wayq": "wayq",
-    "ptca": "ptca",
-    "infc": "infc",
-    "impv": "impv",
-    "ptcp": "ptcp",
-    "infa": "infa",
+    "perf": 1,
+    "impf": 2,
+    "wayq": 3,
+    "ptca": 4,
+    "infc": 5,
+    "impv": 6,
+    "ptcp": 7,
+    "infa": 8,
 }
 
 class UnhandledStemError(KeyError):
     pass
 
-PERSONS = {"p1": 1, "p2": 2, "p3": 3, "unknown": None}
-GENDERS = {"m": "m", "f": "f", "unkown": None}
-NUMBERS = {"sg": "s", "pl": "p", "unknown": None}
+PERSONS = {"p1": 1, "p2": 2, "p3": 3, "unknown": 0, "NA": 0}
+GENDERS = {"m": 1, "f": 2, "unknown": 0, "NA": 0}
+NUMBERS = {"sg": 1, "pl": 2, "unknown": 0, "NA": 0}
 
 app: App = use("ETCBC/bhsa", silent=True)
 api = app.api
@@ -58,18 +60,17 @@ class Verb:
     def __init__(self, n):
         self.n = n
         self.verb = api.F.g_word_utf8.v(n)
-        self.root = api.F.lex_utf8.v(n)
-        try:
-            self.stem = STEMS[api.F.vs.v(n)]
-        except KeyError:
+        self.root = Root(n)
+        self.stem = api.F.vs.v(n)
+        if self.stem not in STEMS:
             raise UnhandledStemError()
-        self.tense = TENSES[api.F.vt.v(n)]
-        self.person = PERSONS.get(api.F.ps.v(n))
-        self.gender = GENDERS.get(api.F.gn.v(n))
-        self.number = NUMBERS.get(api.F.nu.v(n))
-        self.pronom_person = PERSONS.get(api.F.prs_ps.v(n))
-        self.pronom_gender = GENDERS.get(api.F.prs_gn.v(n))
-        self.pronom_number = NUMBERS.get(api.F.prs_nu.v(n))
+        self.tense = api.F.vt.v(n)
+        self.person = api.F.ps.v(n)
+        self.gender = api.F.gn.v(n)
+        self.number = api.F.nu.v(n)
+        self.pronom_person = api.F.prs_ps.v(n)
+        self.pronom_gender = api.F.prs_gn.v(n)
+        self.pronom_number = api.F.prs_nu.v(n)
         self.reference = api.T.sectionFromNode(n)
 
         if self.tense == "wayq":
@@ -77,21 +78,60 @@ class Verb:
             if api.F.sp.v(p) == "conj":
                 self.verb = api.F.g_word_utf8.v(p) + self.verb
 
-    def get_context(self):
+    def get_context(self) -> tuple[str, tuple]:
         clause = api.L.u(self.n, otype="clause")[0]
-        try:
-            verse = api.L.u(clause, otype="verse")[0]
-            if len(api.T.text(verse).split()) > MAX_VERSE_LENGTH:
-                verse = api.L.u(clause, otype="half_verse")[0]
-        except IndexError:
-            verse = api.L.u(clause, otype="sentence")[0]
         clause_text = api.T.text(clause)
-        verse_text = api.T.text(verse)
-
-        verse_text = verse_text.replace(clause_text, "$")
         clause_text = clause_text.replace(self.verb, "$")
 
-        return (clause_text, verse_text, self.reference)
+        return (clause_text, *self.reference)
+
+    def to_simple_obj(self):
+        result = [
+            self.verb,
+            self.root.lex,
+            STEMS[self.stem],
+            TENSES[self.tense],
+            *self.get_context(),
+        ]
+
+        pgn = [
+            PERSONS.get(self.person, 0),
+            GENDERS.get(self.gender, 0),
+            NUMBERS.get(self.number, 0),
+        ]
+        if sum(pgn) > 0:
+            result.extend(pgn)
+
+        suffix = [
+            PERSONS.get(self.pronom_person, 0),
+            GENDERS.get(self.pronom_gender, 0),
+            NUMBERS.get(self.pronom_number, 0),
+        ]
+        if sum(suffix) > 0:
+            result.extend(suffix)
+
+        return result
+
+    def should_skip(self):
+        r = random.random()
+        if self.root.lex == "אמר" and len(self.get_context()[0].split()) == 1:
+            return True
+        if self.root.lex == "אמר" and self.stem == "qal" and self.tense == "perf":
+            return r < 1 / 2
+        if self.root.lex == "אמר" and self.stem == "qal" and self.tense == "wayq":
+            return r < 2 / 3
+        if (
+            self.root.lex == "היה"
+            and self.stem == "qal"
+        ):
+            return r < 1 / 2
+        if (
+            self.stem == "qal"
+            and self.tense == "perf"
+            and self.root.freq_lex < MIN_QAL_QATAL_FREQ
+        ):
+            return True
+        return False
 
     def __eq__(self, other):
         return self.__hash__() == other.__hash__()
@@ -100,7 +140,7 @@ class Verb:
         return hash(
             (
                 self.verb,
-                self.root,
+                self.root.lex,
                 self.stem,
                 self.tense,
                 self.person,
@@ -113,27 +153,6 @@ class Verb:
             )
         )
 
-    def to_simple_obj(self):
-        result = [
-            self.verb,
-            self.root,
-            self.stem,
-            self.tense,
-            self.get_context(),
-        ]
-        if self.person or self.gender or self.number:
-            result.append([self.person, self.gender, self.number])
-        else:
-            result.append(None)
-        if self.pronom_person:
-            result.append([
-                self.pronom_person,
-                self.pronom_gender,
-                self.pronom_number,
-            ])
-
-        return result
-
 
 class DataProcessor:
     def __init__(self):
@@ -145,12 +164,14 @@ class DataProcessor:
 
     def add_verb(self, n):
         verb = Verb(n)
+        if verb.should_skip():
+            return
         self.verbs.add(verb)
         self.stem_stats[verb.stem] += 1
         self.tense_stats[verb.tense] += 1
         if verb.pronom_person:
             self.suffixes += 1
-        self.roots.add(Root(n))
+        self.roots.add(verb.root)
 
     def should_skip_node(self, n):
         if api.F.language.v(n) != "Hebrew":

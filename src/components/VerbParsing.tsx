@@ -36,7 +36,7 @@ const MAIN_PARTS = ALL_PARTS.filter(part => part !== 'suffix')
 const DEFAULT_SUFFIX: Suffix = 'no-suffix'
 
 const FadedSpan = styled('span')({
-  color: grey[600],
+  color: grey[800],
 })
 const HighlightedSpan = styled('span')({
   color: 'blue',
@@ -255,11 +255,7 @@ function VerbParsing({
   )
 
   const clauseParts = useMemo(
-    () => verb.context[0].split(CONTEXT_REPLACEMENT_CODE),
-    [verb.context],
-  )
-  const verseParts = useMemo(
-    () => verb.context[1].split(CONTEXT_REPLACEMENT_CODE),
+    () => verb.context.clause.split(CONTEXT_REPLACEMENT_CODE),
     [verb.context],
   )
   const clauseElement = useMemo(
@@ -275,18 +271,6 @@ function VerbParsing({
       </Fragment>
     )),
     [clauseParts],
-  )
-  const verseElement = useMemo(
-    () => verseParts.map((part, index) => (
-      <Fragment key={index}>
-        {index > 0 && clauseElement}
-
-        <FadedSpan>
-          {part}
-        </FadedSpan>
-      </Fragment>
-    )),
-    [verseParts],
   )
 
   return (
@@ -308,7 +292,9 @@ function VerbParsing({
         lineHeight={1.5}
         textAlign={'right'}
       >
-        {verseElement}
+        <FadedSpan>
+          {clauseElement}
+        </FadedSpan>
       </Typography>
 
       <Typography
@@ -316,7 +302,7 @@ function VerbParsing({
         textAlign={'right'}
         color='grey.600'
       >
-        {referenceToString(verb.context[2])}
+        {referenceToString(verb.context.reference)}
       </Typography>
 
       <Stack direction="row" spacing={2}>

@@ -12,64 +12,88 @@ export type PGN = {
 }
 
 type DataWordReference = [string, number, number]
-type DataWordContext = [string, string, DataWordReference]
-type DataParsing = [Person | null, Gender | null, VerbNumber | null]
+type DataWordContext = [string, ...DataWordReference]
+type WordContext = {
+  clause: string,
+  reference: DataWordReference,
+}
+type DataParsing = [
+  PersonAbbreviation,
+  GenderAbbreviation,
+  VerbNumberAbbreviation,
+]
 type DataVerb = [
   string,
   string,
-  Stem,
-  Tense,
-  DataWordContext,
-  DataParsing | null,
-  DataParsing | undefined,
+  StemAbbreviation,
+  TenseAbbreviation,
+  ...DataWordContext,
+  ...DataParsing,
+  ...DataParsing | [undefined, undefined, undefined],
 ]
 type DataRoot = [string, number, string]
-type DataStats = {
-  verbs: number,
-  roots: number,
-  stems: Record<StemAbbreviation, number>,
-  tenses: Record<TenseAbbreviation, number>,
-  suffixes: number,
-}
 
 export type StemAbbreviation = (
-  | 'qal'
-  | 'hif'
-  | 'piel'
-  | 'nif'
-  | 'hit'
-  | 'pual'
-  | 'hof'
+  | 1
+  | 2
+  | 3
+  | 4
+  | 5
+  | 6
+  | 7
 )
 export type TenseAbbreviation = (
-  | 'perf'
-  | 'impf'
-  | 'wayq'
-  | 'ptca'
-  | 'infc'
-  | 'impv'
-  | 'ptcp'
-  | 'infa'
+  | 1
+  | 2
+  | 3
+  | 4
+  | 5
+  | 6
+  | 7
+  | 8
+)
+export type PersonAbbreviation = Exclude<Person, 'N/A'> | 0
+export type GenderAbbreviation = (
+  | 0
+  | 1
+  | 2
+  | 3
+)
+export type VerbNumberAbbreviation = (
+  | 0
+  | 1
+  | 2
 )
 
 const stemMapping: Record<StemAbbreviation, Stem> = {
-  qal: 'Qal',
-  hif: 'Hiphil',
-  piel: 'Piel',
-  nif: 'Niphal',
-  hit: 'Hitpael',
-  pual: 'Pual',
-  hof: 'Hophal',
+  1: 'Qal',
+  2: 'Hiphil',
+  3: 'Piel',
+  4: 'Niphal',
+  5: 'Hitpael',
+  6: 'Pual',
+  7: 'Hophal',
 }
 const tenseMapping: Record<TenseAbbreviation, Tense> = {
-  perf: 'Qatal',
-  impf: 'Yiqtol',
-  wayq: 'Wayyiqtol',
-  ptca: 'Active participle',
-  infc: 'Infinitive construct',
-  impv: 'Imperative',
-  ptcp: 'Passive participle',
-  infa: 'Infinitive absolute',
+  1: 'Qatal',
+  2: 'Yiqtol',
+  3: 'Wayyiqtol',
+  4: 'Active participle',
+  5: 'Infinitive construct',
+  6: 'Imperative',
+  7: 'Passive participle',
+  8: 'Infinitive absolute',
+}
+const genderMapping: Record<GenderAbbreviation, Gender> = {
+  0: 'N/A',
+  1: 'm',
+  2: 'f',
+  3: 'c',
+}
+const numberMapping: Record<VerbNumberAbbreviation, VerbNumber> = {
+  0: 'N/A',
+  1: 's',
+  2: 'p',
 }
 
 export function processRoots(roots: DataRoot[]) {
@@ -85,43 +109,78 @@ export function processVerbs(verbs: DataVerb[]) {
       root,
       stemCode,
       tenseCode,
-      context,
-      parsing,
-      suffixParsing,
+      clauseContext,
+      book,
+      chapter,
+      verse,
+      person,
+      gender,
+      number,
+      suffixPerson,
+      suffixGender,
+      suffixNumber,
     ]) => ({
       verb,
       root,
       stem: getStem(stemCode),
       tense: getTense(tenseCode),
-      context,
-      pgn: getParsing(parsing),
-      suffix: getParsing(suffixParsing),
+      context: {
+        clause: clauseContext,
+        reference: [book, chapter, verse],
+      } as WordContext,
+      pgn: getParsing([person, gender, number]),
+      suffix: getParsing(
+        suffixPerson && suffixGender && suffixNumber
+          ? [suffixPerson, suffixGender, suffixNumber]
+          : undefined
+      ),
     })
   )
 }
 export type Verb = ReturnType<typeof processVerbs>[number]
 export type VerbAndRoot = { verb: Verb, root: Root }
 
-export function getStem(code: string) {
+export function getStem(code: StemAbbreviation) {
   if (code in stemMapping) {
     return stemMapping[code as keyof typeof stemMapping]
   }
   throw new Error(`Unknown stem code "${code}"`)
 }
 
-export function getTense(code: string) {
+export function getTense(code: TenseAbbreviation) {
   if (code in tenseMapping) {
     return tenseMapping[code as keyof typeof tenseMapping]
   }
   throw new Error(`Unknown tense code "${code}"`)
 }
 
+export function getPerson(code: PersonAbbreviation): Person {
+  if (code === 0) {
+    return 'N/A'
+  }
+  return code
+}
+
+export function getGender(code: GenderAbbreviation): Gender {
+  if (code in genderMapping) {
+    return genderMapping[code as keyof typeof genderMapping]
+  }
+  throw new Error(`Unknown gender code "${code}"`)
+}
+
+export function getNumber(code: VerbNumberAbbreviation): VerbNumber {
+  if (code in numberMapping) {
+    return numberMapping[code as keyof typeof numberMapping]
+  }
+  throw new Error(`Unknown number code "${code}"`)
+}
+
 export function getParsing(input: DataParsing | null | undefined): PGN {
-  const [person = null, gender = null, number = null] = input || []
+  const [person = 0, gender = 0, number = 0] = input || []
   return {
-    person: person === null ? 'N/A' : person,
-    gender: gender === null ? 'N/A' : gender,
-    number: number === null ? 'N/A' : number,
+    person: person === 0 ? 'N/A' : getPerson(person),
+    gender: gender === 0 ? 'N/A' : getGender(gender),
+    number: number === 0 ? 'N/A' : getNumber(number),
   }
 }
 

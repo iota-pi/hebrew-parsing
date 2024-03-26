@@ -60,24 +60,22 @@ export function getBiasedVerbs(
 export function getBiasFromCounts<T extends Record<string, number>>(
   counts: T,
 ): T {
+  const minCount = objectMin(counts)
+  const minCountLogged = Math.log(minCount)
   const loggedCounts = Object.fromEntries(
     Object.entries(counts).map(
       ([key, value]) => [key, Math.log(value)]
     )
   ) as T
-
-  const loggedTotal = objectTotal(loggedCounts)
   const targetEquivalentCounts = Object.fromEntries(
     Object.entries(loggedCounts).map(
-      ([key, value]) => [key, (value / loggedTotal) * counts[key]]
+      ([key, value]) => [key, (value / minCountLogged) * minCount]
     )
   ) as T
 
-  const originalTotal = objectTotal(counts)
-  const minCount = Math.min(...Object.values(targetEquivalentCounts))
   const bias = Object.fromEntries(
     Object.entries(targetEquivalentCounts).map(
-      ([key, value]) => [key, value / minCount * originalTotal / counts[key]]
+      ([key, value]) => [key, value / counts[key]]
     )
   ) as T
   return bias
@@ -87,6 +85,12 @@ export function objectTotal(
   obj: Record<string, number>,
 ) {
   return Object.values(obj).reduce((a, b) => a + b, 0)
+}
+
+export function objectMin(
+  obj: Record<string, number>,
+) {
+  return Math.min(...Object.values(obj))
 }
 
 export function applyBias<K extends BiasCompatibleKey, T extends Record<Verb[K], number>>(verbs: Verb[], key: K, bias: T) {

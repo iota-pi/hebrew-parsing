@@ -69,6 +69,8 @@ function MainPage() {
 
   const [streak, setStreak] = useLocalStorage('currentStreak', 0)
   const [bestStreak, setBestStreak] = useLocalStorage('bestStreak', 0)
+  const [, setCorrectCount] = useLocalStorage('correctCount', 0)
+  const [totalCount, setTotalCount] = useLocalStorage('totalCount', 0)
 
   const fetchNewWords = useCallback(
     () => {
@@ -94,7 +96,9 @@ function MainPage() {
 
   const handleAnswer = useCallback(
     (correct: boolean) => {
+      setTotalCount(c => c + 1)
       if (correct) {
+        setCorrectCount(c => c + 1)
         setStreak(s => s + 1)
         if (streak + 1 > bestStreak) {
           setBestStreak(streak + 1)
@@ -103,7 +107,7 @@ function MainPage() {
         setStreak(0)
       }
     },
-    [],
+    [streak, bestStreak],
   )
   const handleNext = useCallback(
     () => {
@@ -188,6 +192,12 @@ function MainPage() {
             filterConditions={filterConditions}
             onChange={onChangeFilter}
           />
+
+          <Divider />
+
+          <Typography>
+            So far you've practised on <strong>{totalCount ?? 0}</strong> words.
+          </Typography>
         </Stack>
       </Box>
     </Box>

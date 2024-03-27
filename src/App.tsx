@@ -19,7 +19,7 @@ const trpcClient = trpc.createClient({
     httpBatchLink({
       url: (
         window.location.hostname !== 'localhost'
-          ? 'https://xg438ztidl.execute-api.ap-southeast-2.amazonaws.com/'
+          ? 'https://xg438ztidl.execute-api.ap-southeast-2.amazonaws.com/production/'
           : `http://localhost:${LOCAL_PORT}`
       ),
     }),

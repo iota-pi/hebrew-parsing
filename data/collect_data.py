@@ -81,6 +81,16 @@ class Verb:
     def get_context(self) -> tuple[str, tuple]:
         clause = api.L.u(self.n, otype="clause")[0]
         clause_text = api.T.text(clause)
+        if (
+            len(clause_text.split()) == 1
+            and self.stem != "qal"
+            and self.tense != "qatal"
+        ):
+            try:
+                clause = api.L.u(clause, otype="half_verse")[0]
+            except IndexError:
+                clause = api.L.u(clause, otype="sentence")[0]
+            clause_text = api.T.text(clause)
         clause_text = clause_text.replace(self.verb, "$")
 
         return (clause_text, *self.reference)
@@ -114,7 +124,7 @@ class Verb:
 
     def should_skip(self):
         r = random.random()
-        if self.root.lex == "אמר" and len(self.get_context()[0].split()) == 1:
+        if len(self.get_context()[0].split()) == 1:
             return True
         if self.root.lex == "אמר" and self.stem == "qal" and self.tense == "perf":
             return r < 1 / 2

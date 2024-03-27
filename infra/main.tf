@@ -76,6 +76,13 @@ resource "aws_apigatewayv2_api" "hebrew_lambda" {
   name                       = "hebrew_lambda"
   protocol_type              = "HTTP"
 
+  cors_configuration {
+    allow_origins = ["https://${local.domain}"]
+    allow_methods = ["GET", "POST", "OPTIONS"]
+    allow_headers = ["*"]
+    max_age       = 3000
+  }
+
   tags = local.standard_tags
 }
 

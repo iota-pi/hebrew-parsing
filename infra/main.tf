@@ -51,6 +51,14 @@ resource "aws_iam_policy" "hebrew_lambda_policy" {
   "Version": "2012-10-17",
   "Statement": [
     {
+      "Sid": "S3Access",
+      "Effect": "Allow",
+      "Action": [
+        "s3:GetObject"
+      ],
+      "Resource": ["arn:aws:s3:::${var.code_bucket}/data/*"]
+    },
+    {
       "Sid": "PutLogs",
       "Effect": "Allow",
       "Action": [

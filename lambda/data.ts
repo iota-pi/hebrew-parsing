@@ -1,5 +1,7 @@
 import { readFile } from 'node:fs/promises'
 import type { Stem, Tense } from './filter'
+import { existsSync } from 'node:fs'
+import { GetObjectCommand, S3Client } from '@aws-sdk/client-s3'
 
 export type NA = 'N/A'
 export type Person = 1 | 2 | 3 | NA
@@ -185,14 +187,34 @@ export function getParsing(input: DataParsing | null | undefined): PGN {
 }
 
 
-export const roots = readFile('../data/roots.json').then(
+const s3 = new S3Client()
+
+export async function flexibleLoadFile(path: string) {
+  const localPath = `../data/${path}`
+  let data: string
+  if (existsSync(path)) {
+    data = (await readFile(localPath)).toString()
+  } else {
+    const s3Path = `data/${path}`
+    const getObjectRequest = await s3.send(new GetObjectCommand({
+      Bucket: 'hebrew-parsing-production',
+      Key: s3Path,
+    }))
+    data = await (getObjectRequest).Body?.transformToString() || ''
+  }
+
+  return JSON.parse(data)
+}
+
+
+export const roots = flexibleLoadFile('roots.json').then(
   data => (
     Object.fromEntries(
-      processRoots(JSON.parse(data.toString()) as DataRoot[])
+      processRoots(data as DataRoot[])
         .map(r => [r.root, r])
     ) as Record<string, Root>
   )
 )
-export const verbs = readFile('../data/verbs.json').then(
-  data => processVerbs(JSON.parse(data.toString()) as DataVerb[])
+export const verbs = flexibleLoadFile('verbs.json').then(
+  data => processVerbs(data as DataVerb[])
 )

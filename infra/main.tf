@@ -57,7 +57,7 @@ resource "aws_iam_policy" "hebrew_lambda_policy" {
         "s3:GetObject",
         "s3:ListBucket"
       ],
-      "Resource": ["arn:aws:s3:::${var.code_bucket}"]
+      "Resource": ["arn:aws:s3:::${aws_s3_bucket.app.id}"]
     },
     {
       "Sid": "PutLogs",

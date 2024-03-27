@@ -38,7 +38,7 @@ resource "aws_s3_bucket_acl" "app_acl" {
 }
 
 resource "aws_s3_bucket_ownership_controls" "app_bucket_acl_ownership" {
-  bucket = aws_s3_bucket.app.id
+  bucket = aws_s3_bucket.app.bucket
   rule {
     object_ownership = "ObjectWriter"
   }

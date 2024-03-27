@@ -20,7 +20,7 @@ resource "aws_s3_bucket" "app" {
 }
 
 resource "aws_s3_bucket_cors_configuration" "app_cors" {
-  bucket = aws_s3_bucket.app.bucket
+  bucket = aws_s3_bucket.app.id
 
   cors_rule {
     allowed_headers = ["*"]
@@ -30,7 +30,7 @@ resource "aws_s3_bucket_cors_configuration" "app_cors" {
 }
 
 resource "aws_s3_bucket_acl" "app_acl" {
-  bucket = aws_s3_bucket.app.bucket
+  bucket = aws_s3_bucket.app.id
 
   acl = "private"
 
@@ -38,14 +38,14 @@ resource "aws_s3_bucket_acl" "app_acl" {
 }
 
 resource "aws_s3_bucket_ownership_controls" "app_bucket_acl_ownership" {
-  bucket = aws_s3_bucket.app.bucket
+  bucket = aws_s3_bucket.app.id
   rule {
     object_ownership = "ObjectWriter"
   }
 }
 
 resource "aws_s3_bucket_public_access_block" "app_public_access" {
-  bucket = aws_s3_bucket.app.bucket
+  bucket = aws_s3_bucket.app.id
 
   block_public_acls       = false
   block_public_policy     = false

@@ -34,14 +34,23 @@ resource "aws_s3_bucket_acl" "app_acl" {
 
   acl = "private"
 
-  depends_on = [aws_s3_bucket_ownership_controls.s3_bucket_acl_ownership]
+  depends_on = [aws_s3_bucket_ownership_controls.app_bucket_acl_ownership]
 }
 
-resource "aws_s3_bucket_ownership_controls" "s3_bucket_acl_ownership" {
+resource "aws_s3_bucket_ownership_controls" "app_bucket_acl_ownership" {
   bucket = aws_s3_bucket.app.id
   rule {
     object_ownership = "ObjectWriter"
   }
+}
+
+resource "aws_s3_bucket_public_access_block" "app_public_access" {
+  bucket = aws_s3_bucket.app.bucket
+
+  block_public_acls       = false
+  block_public_policy     = false
+  ignore_public_acls      = false
+  restrict_public_buckets = false
 }
 
 resource "aws_cloudfront_origin_access_identity" "app_oai" {}

@@ -54,10 +54,9 @@ resource "aws_iam_policy" "hebrew_lambda_policy" {
       "Sid": "S3Access",
       "Effect": "Allow",
       "Action": [
-        "s3:GetObject",
-        "s3:ListBucket"
+        "s3:GetObject"
       ],
-      "Resource": ["arn:aws:s3:::${aws_s3_bucket.app.id}"]
+      "Resource": ["arn:aws:s3:::${aws_s3_bucket.app.id}/data/*"]
     },
     {
       "Sid": "PutLogs",

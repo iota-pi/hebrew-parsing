@@ -55,6 +55,9 @@ export function getFilterFromConditions(
     if (!condition.root['1-nun'] && (verb.root === 'לקח' && verb.stem === 'Qal')) {
       return false
     }
+    if (!condition.root['1-waw'] && verb.root === 'הלך') {
+      return false
+    }
 
     if (!condition.stem[verb.stem]) {
       return false

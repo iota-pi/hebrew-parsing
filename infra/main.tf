@@ -127,28 +127,11 @@ resource "aws_apigatewayv2_route" "hebrew_lambda_default" {
   target = "integrations/${aws_apigatewayv2_integration.hebrew_lambda.id}"
 }
 
-resource "aws_apigatewayv2_deployment" "hebrew_lambda" {
-  api_id      = aws_apigatewayv2_api.hebrew_lambda.id
-  description = "Deployment for hebrew_lambda"
-
-  triggers = {
-    redeployment = sha1(join(",", [
-      jsonencode(aws_apigatewayv2_integration.hebrew_lambda),
-      jsonencode(aws_apigatewayv2_route.hebrew_lambda_default),
-      local.force_api_redeploy,
-    ]))
-  }
-
-  lifecycle {
-    create_before_destroy = true
-  }
-}
-
 resource "aws_apigatewayv2_stage" "hebrew_lambda_production" {
   api_id = aws_apigatewayv2_api.hebrew_lambda.id
   name   = "production"
 
-  deployment_id = aws_apigatewayv2_deployment.hebrew_lambda.id
+  auto_deploy = true
 
   default_route_settings {
     throttling_burst_limit = 5000
@@ -157,5 +140,5 @@ resource "aws_apigatewayv2_stage" "hebrew_lambda_production" {
 }
 
 output "invoke_url" {
-  value = aws_apigatewayv2_api.hebrew_lambda.api_endpoint
+  value = "${aws_apigatewayv2_api.hebrew_lambda.api_endpoint}/${aws_apigatewayv2_stage.hebrew_lambda_production.name}"
 }

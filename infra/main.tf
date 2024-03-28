@@ -122,7 +122,7 @@ resource "aws_apigatewayv2_integration" "hebrew_lambda" {
 
 resource "aws_apigatewayv2_route" "hebrew_lambda_default" {
   api_id    = aws_apigatewayv2_api.hebrew_lambda.id
-  route_key = "ANY /{proxy+}"
+  route_key = "$default"
 
   target = "integrations/${aws_apigatewayv2_integration.hebrew_lambda.id}"
 }

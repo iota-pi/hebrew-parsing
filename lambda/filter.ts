@@ -51,13 +51,7 @@ export function getFilterFromConditions(
   return (verb: Verb, root: Root) => {
     if (!condition) return true
 
-    if (!checkRoot(root.root, condition.root)) {
-      return false
-    }
-    if (!condition.root['1-nun'] && (root.root === 'לקח' && verb.stem === 'Qal')) {
-      return false
-    }
-    if (!condition.root['1-waw'] && root.root === 'הלך') {
+    if (!checkRoot(root.root, condition.root, verb.stem)) {
       return false
     }
 
@@ -84,7 +78,11 @@ export function getFilterFromConditions(
   }
 }
 
-export function checkRoot(root: string, condition: FilterCondition['root']) {
+export function checkRoot(
+  root: string,
+  condition: FilterCondition['root'],
+  stem: Stem,
+) {
   let strong = true
   if ('עהחר'.includes(root[0])) {
     strong = false
@@ -100,14 +98,14 @@ export function checkRoot(root: string, condition: FilterCondition['root']) {
     }
   }
 
-  if ('נ'.includes(root[0])) {
+  if ('נ'.includes(root[0]) || (root === 'לקח' && stem === 'Qal')) {
     strong = false
     if (!condition['1-nun']) {
       return false
     }
   }
 
-  if ('וי'.includes(root[0])) {
+  if ('וי'.includes(root[0]) || root === 'הלך') {
     strong = false
     if (!condition['1-waw']) {
       return false

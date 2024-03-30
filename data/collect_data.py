@@ -2,7 +2,8 @@
 
 import json
 import random
-from typing import Set
+from collections import Counter
+from typing import Dict, Set
 from tf.advanced.app import App
 from tf.app import use
 
@@ -87,6 +88,36 @@ NUMBERS = {"sg": 1, "pl": 2, "unknown": 0, "NA": 0}
 app: App = use("ETCBC/bhsa", silent=True)
 api = app.api
 
+
+class RootManager:
+    def __init__(self):
+        self.roots: Dict[str, Root] = {}
+        self.counts: Dict[Root, int] = {}
+        self.order_lookup: Dict[Root, int] = {}
+        self.order_needs_updating = False
+
+    def __len__(self):
+        return len(self.roots)
+
+    def get_root(self, n):
+        root = Root(n)
+        self.roots.setdefault(root.lex, root)
+        self.counts.setdefault(root, 0)
+        self.counts[root] += 1
+        self.order_needs_updating = True
+        return root
+
+    def update_order(self):
+        order = Counter(self.counts).most_common()
+        self.order_lookup = {root: i for i, (root, _) in enumerate(order)}
+        self.order_needs_updating = False
+
+    def get_id(self, root):
+        if self.order_needs_updating:
+            self.update_order()
+        return self.order_lookup[root]
+
+
 class Root:
     def __init__(self, n):
         self.lex = api.F.lex_utf8.v(n)
@@ -99,14 +130,15 @@ class Root:
     def __hash__(self):
         return hash(self.lex)
 
-    def to_simple_obj(self):
-        return [self.lex, self.freq_lex, self.gloss]
+    def to_simple_obj(self, roots: RootManager):
+        return [roots.get_id(self), self.lex, self.freq_lex, self.gloss]
+
 
 class Verb:
-    def __init__(self, n):
+    def __init__(self, n, roots: RootManager):
         self.n = n
         self.verb = api.F.g_word_utf8.v(n)
-        self.root = Root(n)
+        self.root = roots.get_root(api.L.u(n, otype="lex")[0])
         self.stem = api.F.vs.v(n)
         if self.stem not in STEMS:
             raise UnhandledStemError()
@@ -138,6 +170,7 @@ class Verb:
                 clause = api.L.u(clause, otype="sentence")[0]
             clause_text = api.T.text(clause)
         clause_text = clause_text.replace(self.verb, "$")
+        clause_text = clause_text.replace("׃", "").strip()
 
         return (
             clause_text,
@@ -145,10 +178,10 @@ class Verb:
             *self.reference[1:],
         )
 
-    def to_simple_obj(self):
+    def to_simple_obj(self, roots):
         result = [
             self.verb,
-            self.root.lex,
+            roots.get_id(self.root),
             STEMS[self.stem],
             TENSES[self.tense],
             *self.get_context(),
@@ -179,9 +212,6 @@ class Verb:
         return False
 
     def should_skip(self):
-        if not self.has_vowels():
-            return True
-
         r = random.random()
         if len(self.get_context()[0].split()) == 1:
             return True
@@ -223,16 +253,16 @@ class Verb:
         )
 
 
-class DataProcessor:
+class DataManager:
     def __init__(self):
         self.verbs: Set[Verb] = set()
-        self.roots: Set[Root] = set()
+        self.roots = RootManager()
         self.stem_stats = { key: 0 for key in STEMS.keys() }
         self.tense_stats = { key: 0 for key in TENSES.keys() }
         self.suffixes = 0
 
     def add_verb(self, n):
-        verb = Verb(n)
+        verb = Verb(n, self.roots)
         if verb.should_skip():
             return
         self.verbs.add(verb)
@@ -240,7 +270,6 @@ class DataProcessor:
         self.tense_stats[verb.tense] += 1
         if PERSONS.get(verb.pronom_person):
             self.suffixes += 1
-        self.roots.add(verb.root)
 
     def should_skip_node(self, n):
         if api.F.language.v(n) != "Hebrew":
@@ -275,7 +304,7 @@ class DataProcessor:
         }
 
 def main():
-    data = DataProcessor()
+    data = DataManager()
 
     for n in api.N.walk():
         if api.F.otype.v(n) != "word":
@@ -285,7 +314,7 @@ def main():
     with open("verbs.json", "w", encoding="utf-8") as verbsFile:
         json.dump(
             [
-                verb.to_simple_obj()
+                verb.to_simple_obj(data.roots)
                 for verb in data.verbs
             ],
             verbsFile,
@@ -296,7 +325,7 @@ def main():
 
     with open("roots.json", "w", encoding="utf-8") as rootsFile:
         json.dump(
-            [root.to_simple_obj() for root in data.roots],
+            [root.to_simple_obj(data.roots) for root in data.roots.roots.values()],
             rootsFile,
             separators=(",", ":"),
             ensure_ascii=False,

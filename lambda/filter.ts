@@ -51,13 +51,13 @@ export function getFilterFromConditions(
   return (verb: Verb, root: Root) => {
     if (!condition) return true
 
-    if (!checkRoot(verb.root, condition.root)) {
+    if (!checkRoot(root.root, condition.root)) {
       return false
     }
-    if (!condition.root['1-nun'] && (verb.root === 'לקח' && verb.stem === 'Qal')) {
+    if (!condition.root['1-nun'] && (root.root === 'לקח' && verb.stem === 'Qal')) {
       return false
     }
-    if (!condition.root['1-waw'] && verb.root === 'הלך') {
+    if (!condition.root['1-waw'] && root.root === 'הלך') {
       return false
     }
 

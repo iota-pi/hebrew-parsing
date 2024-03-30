@@ -27,14 +27,14 @@ type DataParsing = [
 ]
 type DataVerb = [
   string,
-  string,
+  number,
   StemAbbreviation,
   TenseAbbreviation,
   ...DataWordContext,
   ...DataParsing,
   ...DataParsing | [undefined, undefined, undefined],
 ]
-type DataRoot = [string, number, string]
+type DataRoot = [number, string, number, string]
 
 const rawStemMapping = {
   1: 'Qal',
@@ -126,10 +126,10 @@ type Book = typeof rawBookMapping[BookAbbreviation]
 const bookMapping = rawBookMapping as Record<BookAbbreviation, string>
 
 export function processRoots(roots: DataRoot[]) {
-  return roots.map(([root, count, gloss]) => ({ root, count, gloss }))
+  return roots.map(([id, root, count, gloss]) => ({ id, root, count, gloss }))
 }
 export type Root = ReturnType<typeof processRoots>[number]
-export type RootMap = Record<string, Root>
+export type RootMap = Record<number, Root>
 
 export function processVerbs(verbs: DataVerb[]) {
   return verbs.map(
@@ -249,8 +249,8 @@ export const roots = flexibleLoadFile('roots.json').then(
   data => (
     Object.fromEntries(
       processRoots(data as DataRoot[])
-        .map(r => [r.root, r])
-    ) as Record<string, Root>
+        .map(r => [r.id, r])
+    ) as Record<number, Root>
   )
 )
 export const verbs = flexibleLoadFile('verbs.json').then(

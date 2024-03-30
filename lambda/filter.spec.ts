@@ -4,6 +4,7 @@ describe('checkRoot', () => {
   it('should return true when all conditions are met', () => {
     const root = 'אבג'
     const condition = {
+      strong: true,
       '1-gutteral': true,
       '1-aleph': true,
       '1-nun': true,

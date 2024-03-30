@@ -85,17 +85,75 @@ export function getFilterFromConditions(
 }
 
 export function checkRoot(root: string, condition: FilterCondition['root']) {
-  return !(
-    (!condition['1-gutteral'] && 'עהחר'.includes(root[0]))
-    || (!condition['1-aleph'] && 'א'.includes(root[0]))
-    || (!condition['1-nun'] && ('נ'.includes(root[0])))
-    || (!condition['1-waw'] && 'וי'.includes(root[0]))
-    || (!condition['2-gutteral'] && 'אעהחר'.includes(root[1]))
-    || (!condition['3-heh'] && 'ה'.includes(root[2]))
-    || (!condition['3-aleph'] && 'א'.includes(root[2]))
-    || (!condition.hollow && ('וי'.includes(root[1]) || root.length === 2))
-    || (!condition.geminate && isSameLetter(root[1], root[2]))
-  )
+  let strong = true
+  if ('עהחר'.includes(root[0])) {
+    strong = false
+    if (!condition['1-gutteral']) {
+      return false
+    }
+  }
+
+  if ('א'.includes(root[0])) {
+    strong = false
+    if (!condition['1-aleph']) {
+      return false
+    }
+  }
+
+  if ('נ'.includes(root[0])) {
+    strong = false
+    if (!condition['1-nun']) {
+      return false
+    }
+  }
+
+  if ('וי'.includes(root[0])) {
+    strong = false
+    if (!condition['1-waw']) {
+      return false
+    }
+  }
+
+  if ('אעהחר'.includes(root[1])) {
+    strong = false
+    if (!condition['2-gutteral']) {
+      return false
+    }
+  }
+
+  if ('ה'.includes(root[2])) {
+    strong = false
+    if (!condition['3-heh']) {
+      return false
+    }
+  }
+
+  if ('א'.includes(root[2])) {
+    strong = false
+    if (!condition['3-aleph']) {
+      return false
+    }
+  }
+
+  if ('וי'.includes(root[1]) || root.length === 2) {
+    strong = false
+    if (!condition.hollow) {
+      return false
+    }
+  }
+
+  if (isSameLetter(root[1], root[2])) {
+    strong = false
+    if (!condition.geminate) {
+      return false
+    }
+  }
+
+  if (strong && !condition.strong) {
+    return false
+  }
+
+  return true
 }
 
 export function isSameLetter(a: string, b: string) {

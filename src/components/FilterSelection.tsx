@@ -9,7 +9,7 @@ import {
 } from '@mui/material'
 import type { FilterCondition, RootKey, Stem, Tense } from '../../lambda/filter'
 import { ChangeEvent, useCallback, useMemo } from 'react'
-import { ALL_STEMS, ALL_TENSES, getTenseName } from '../util'
+import { ALL_STEMS, ALL_TENSES, getRootTypeName, getTenseName } from '../util'
 import FilterSelect from './FilterSelect'
 
 const allRoots = [
@@ -151,7 +151,7 @@ function FilterSelection({
         getOptionLabel={root => (
           root === '1-waw'
             ? '1-waw / 1-yod'
-            : root
+            : getRootTypeName(root)
         )}
       />
 

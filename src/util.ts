@@ -6,7 +6,7 @@ import type {
   Verb,
   VerbNumber,
 } from '../lambda/data'
-import type { Stem, Tense } from '../lambda/filter'
+import type { RootKey, Stem, Tense } from '../lambda/filter'
 import { ParsingCondition, equivalents } from './paradigms'
 
 export type OptionCorrectness = {
@@ -105,6 +105,10 @@ export function getPGNKey(pgn: PGN) {
   const g = pgn.gender === 'N/A' ? '' : pgn.gender
   const n = pgn.number === 'N/A' ? '' : pgn.number
   return p + g + n
+}
+
+export function getRootTypeName(r: RootKey) {
+  return r.charAt(0).toUpperCase() + r.slice(1)
 }
 
 export function getStemName(s: Stem) {

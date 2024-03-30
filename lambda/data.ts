@@ -190,10 +190,14 @@ export function getParsing(input: DataParsing | null | undefined): PGN {
 const s3 = new S3Client()
 
 export async function flexibleLoadFile(path: string) {
-  const localPath = `../data/${path}`
+  const localPath = [
+    path,
+    `data/${path}`,
+    `../data/${path}`,
+  ].filter(p => existsSync(p))
   let data: string
-  if (existsSync(path)) {
-    data = (await readFile(localPath)).toString()
+  if (localPath.length > 0) {
+    data = (await readFile(localPath[0])).toString()
   } else {
     const s3Path = `data/${path}`
     const getObjectRequest = await s3.send(new GetObjectCommand({

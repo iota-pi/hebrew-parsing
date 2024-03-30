@@ -10,6 +10,10 @@ MIN_LEX_FREQ = 0
 MIN_QAL_QATAL_FREQ = 50
 MAX_VERSE_LENGTH = 15
 
+VOWELS = (
+    '\u05b0\u05b1\u05b2\u05b3\u05b4\u05b5\u05b6\u05b7\u05b8\u05b9\u05ba\u05bb\u05bc'
+)
+
 STEMS = {
     "qal": 1,
     "hif": 2,
@@ -122,7 +126,16 @@ class Verb:
 
         return result
 
+    def has_vowels(self):
+        for vowel in VOWELS:
+            if vowel in self.verb:
+                return True
+        return False
+
     def should_skip(self):
+        if not self.has_vowels():
+            return True
+
         r = random.random()
         if len(self.get_context()[0].split()) == 1:
             return True

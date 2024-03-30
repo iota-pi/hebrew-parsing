@@ -2,14 +2,18 @@ import {
   MenuItem,
   Stack,
   TextField,
+  Theme,
   ToggleButton,
   ToggleButtonGroup,
+  useMediaQuery,
 } from '@mui/material'
-import type { FilterCondition } from '../../lambda/filter'
+import type { FilterCondition, RootKey, Stem, Tense } from '../../lambda/filter'
 import { ChangeEvent, useCallback, useMemo } from 'react'
 import { ALL_STEMS, ALL_TENSES, getTenseName } from '../util'
+import FilterSelect from './FilterSelect'
 
 const allRoots = [
+  'strong',
   '1-gutteral',
   '1-aleph',
   '1-nun',
@@ -50,12 +54,12 @@ function FilterSelection({
     () => (
       Object.entries(filterConditions.root)
         .filter(([, value]) => value)
-        .map(([key]) => key)
+        .map(([key]) => key as RootKey)
     ),
     [filterConditions.root],
   )
   const handleChangeRoots = useCallback(
-    (event: React.MouseEvent<HTMLElement>, newRoots: (keyof FilterCondition['root'])[]) => {
+    (newRoots: RootKey[]) => {
       const rootMap = newRoots.reduce(
         (acc, root) => ({ ...acc, [root]: true }),
         { ...baseRoots },
@@ -65,19 +69,19 @@ function FilterSelection({
         root: rootMap,
       })
     },
-    [filterConditions],
+    [filterConditions, onChange],
   )
 
   const selectedStems = useMemo(
     () => (
       Object.entries(filterConditions.stem)
         .filter(([, value]) => value)
-        .map(([key]) => key)
+        .map(([key]) => key as Stem)
     ),
     [filterConditions.stem],
   )
   const handleChangeStems = useCallback(
-    (event: React.MouseEvent<HTMLElement>, newStems: (keyof FilterCondition['stem'])[]) => {
+    (newStems: Stem[]) => {
       const stemMap = newStems.reduce(
         (acc, stem) => ({ ...acc, [stem]: true }),
         { ...baseStems },
@@ -87,19 +91,19 @@ function FilterSelection({
         stem: stemMap,
       })
     },
-    [filterConditions],
+    [filterConditions, onChange],
   )
 
   const selectedTenses = useMemo(
     () => (
       Object.entries(filterConditions.tense)
         .filter(([, value]) => value)
-        .map(([key]) => key)
+        .map(([key]) => key as Tense)
     ),
     [filterConditions.tense],
   )
   const handleChangeTenses = useCallback(
-    (event: React.MouseEvent<HTMLElement>, newTenses: (keyof FilterCondition['tense'])[]) => {
+    (newTenses: Tense[]) => {
       const tenseMap = newTenses.reduce(
         (acc, tense) => ({ ...acc, [tense]: true }),
         { ...baseTenses },
@@ -109,7 +113,7 @@ function FilterSelection({
         tense: tenseMap,
       })
     },
-    [filterConditions],
+    [filterConditions, onChange],
   )
 
   const handleChangeSuffixes = useCallback(
@@ -122,7 +126,7 @@ function FilterSelection({
         },
       })
     },
-    [filterConditions],
+    [filterConditions, onChange],
   )
 
   const handleChangeFrequency = useCallback(
@@ -132,61 +136,39 @@ function FilterSelection({
         minFrequency: Number.parseInt(event.target.value, 10),
       })
     },
-    [filterConditions],
+    [filterConditions, onChange],
   )
+
+  const xs = useMediaQuery<Theme>(theme => theme.breakpoints.only('xs'))
 
   return (
     <Stack spacing={2}>
-      <ToggleButtonGroup
-        fullWidth
-        onChange={handleChangeRoots}
+      <FilterSelect
         value={selectedRoots}
-      >
-        {allRoots.map(root => (
-          <ToggleButton
-            key={root}
-            value={root}
-          >
-            <span style={{ whiteSpace: 'no-wrap' }}>
-              {(
-                root === '1-waw'
-                  ? '1\u2011waw / 1\u2011yod'
-                  : root.replaceAll('-', '\u2011')
-              )}
-            </span>
-          </ToggleButton>
-        ))}
-      </ToggleButtonGroup>
+        options={allRoots}
+        label="Include roots:"
+        onChange={handleChangeRoots}
+        getOptionLabel={root => (
+          root === '1-waw'
+            ? '1-waw / 1-yod'
+            : root
+        )}
+      />
 
-      <ToggleButtonGroup
-        fullWidth
-        onChange={handleChangeStems}
+      <FilterSelect
         value={selectedStems}
-      >
-        {ALL_STEMS.map(stem => (
-          <ToggleButton
-            key={stem}
-            value={stem}
-          >
-            {stem}
-          </ToggleButton>
-        ))}
-      </ToggleButtonGroup>
+        options={ALL_STEMS}
+        label="Include stems:"
+        onChange={handleChangeStems}
+      />
 
-      <ToggleButtonGroup
-        fullWidth
+      <FilterSelect
         value={selectedTenses}
+        options={ALL_TENSES}
+        label="Include tenses:"
         onChange={handleChangeTenses}
-      >
-        {ALL_TENSES.map(tense => (
-          <ToggleButton
-            key={tense}
-            value={tense}
-          >
-            {getTenseName(tense)}
-          </ToggleButton>
-        ))}
-      </ToggleButtonGroup>
+        getOptionLabel={getTenseName}
+      />
 
       <ToggleButtonGroup fullWidth>
         <ToggleButton
@@ -194,7 +176,7 @@ function FilterSelection({
           selected={filterConditions.suffixes.include}
           onChange={handleChangeSuffixes}
         >
-          Include pronominal suffixes
+          Include suffixes
         </ToggleButton>
         <ToggleButton
           value="exclusive"
@@ -205,7 +187,7 @@ function FilterSelection({
           onChange={handleChangeSuffixes}
           disabled={!filterConditions.suffixes.include}
         >
-          Always include suffixes
+          {xs ? 'Only with' : 'Always include'} suffixes
         </ToggleButton>
       </ToggleButtonGroup>
 

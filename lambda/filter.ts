@@ -4,6 +4,7 @@ import { hasSetPGN } from '../src/util'
 
 export const filterConditions = z.object({
   'root': z.object({
+    strong: z.boolean(),
     '1-gutteral': z.boolean(),
     '1-aleph': z.boolean(),
     '1-nun': z.boolean(),
@@ -40,6 +41,7 @@ export const filterConditions = z.object({
   minFrequency: z.number(),
 })
 export type FilterCondition = z.infer<typeof filterConditions>
+export type RootKey = keyof FilterCondition['root']
 export type Stem = keyof FilterCondition['stem']
 export type Tense = keyof FilterCondition['tense']
 

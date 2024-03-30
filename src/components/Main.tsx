@@ -8,55 +8,79 @@ import { useLocalStorage } from 'usehooks-ts'
 import { trpc } from '../trpc'
 import type { FilterCondition } from '../../lambda/filter'
 import VerbParsing from './VerbParsing'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import FilterSelection from './FilterSelection'
 import { BiasOptions } from '../../lambda/bias'
 import { TRPCClientError } from '@trpc/client'
 import { AppRouter } from '../../lambda/router'
 import { VerbAndRoot } from '../../lambda/data'
+import { Entries } from '../util'
+
+const defaultFilterConditions: FilterCondition = {
+  root: {
+    strong: true,
+    '1-gutteral': true,
+    '1-aleph': true,
+    '1-nun': true,
+    '1-waw': true,
+    '2-gutteral': true,
+    '3-heh': true,
+    '3-aleph': true,
+    hollow: true,
+    geminate: true,
+  },
+  stem: {
+    Qal: true,
+    Niphal: true,
+    Piel: true,
+    Pual: true,
+    Hitpael: true,
+    Hiphil: true,
+    Hophal: true,
+  },
+  tense: {
+    Qatal: true,
+    Yiqtol: true,
+    Wayyiqtol: true,
+    Imperative: true,
+    "Active participle": true,
+    "Passive participle": true,
+    "Infinitive construct": true,
+    "Infinitive absolute": true,
+  },
+  suffixes: {
+    include: true,
+    exclusive: false,
+  },
+  minFrequency: 50,
+}
 
 function MainPage() {
   const utils = trpc.useUtils()
 
-  const [filterConditions, setFilterConditions] = useLocalStorage<FilterCondition>(
+  const [rawFilterConditions, setFilterConditions] = useLocalStorage<FilterCondition>(
     'filterConditions',
-    {
-      root: {
-        '1-gutteral': true,
-        '1-aleph': true,
-        '1-nun': true,
-        '1-waw': true,
-        '2-gutteral': true,
-        '3-heh': true,
-        '3-aleph': true,
-        hollow: true,
-        geminate: true,
-      },
-      stem: {
-        Qal: true,
-        Niphal: true,
-        Piel: true,
-        Pual: true,
-        Hitpael: true,
-        Hiphil: true,
-        Hophal: true,
-      },
-      tense: {
-        Qatal: true,
-        Yiqtol: true,
-        Wayyiqtol: true,
-        Imperative: true,
-        "Active participle": true,
-        "Passive participle": true,
-        "Infinitive construct": true,
-        "Infinitive absolute": true,
-      },
-      suffixes: {
-        include: true,
-        exclusive: false,
-      },
-      minFrequency: 50,
-    },
+    defaultFilterConditions,
+  )
+  const filterConditions: FilterCondition = useMemo(
+    () => Object.fromEntries(
+      (Object.entries(defaultFilterConditions) as Entries<FilterCondition>).map(
+        ([key, value]) => (
+          [
+            key,
+            (
+              key === 'minFrequency'
+                ? rawFilterConditions[key] ?? value
+                : {
+                  ...value,
+                  ...rawFilterConditions[key],
+                }
+            ),
+          ]
+        ),
+      ) as Entries<FilterCondition>,
+    ),
+    [rawFilterConditions],
   )
   const [biasOptions] = useLocalStorage<BiasOptions>('biasOptions', {
     biasStems: true,
@@ -79,7 +103,7 @@ function MainPage() {
         {
           biasOptions,
           filterConditions,
-        }
+        },
       )
         .then(newWords => setVerbs(
           words => [...(words ?? []), ...newWords]

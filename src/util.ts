@@ -14,6 +14,10 @@ export type OptionCorrectness = {
   exact: boolean,
 }
 
+export type Entries<T> = {
+  [K in keyof T]: [K, T[K]]
+}[keyof T][]
+
 export const ONE_DAY = 1000 * 60 * 60 * 24
 export const ONE_WEEK = ONE_DAY * 7
 export const CONTEXT_REPLACEMENT_CODE = '$'

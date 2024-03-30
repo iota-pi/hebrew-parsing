@@ -27,10 +27,10 @@ import {
   isValidSuffix,
 } from '../util'
 import type { Verb, Root } from '../../lambda/data'
+import type { FilterCondition, Stem, Tense } from '../../lambda/filter'
 import ParsingControlGroup from './ParsingControlGroup'
 import PGNGroup from './PGNGroup'
 import SuffixSelection, { Suffix } from './SuffixSelection'
-import type { FilterCondition, Stem, Tense } from '../../lambda/filter'
 
 const MAIN_PARTS = ALL_PARTS.filter(part => part !== 'suffix')
 const DEFAULT_SUFFIX: Suffix = 'no-suffix'
@@ -305,7 +305,7 @@ function VerbParsing({
         {referenceToString(verb.context.reference)}
       </Typography>
 
-      <Stack direction="row" spacing={2}>
+      <Stack direction="row" spacing={2} overflow="auto">
         {MAIN_PARTS.map(part => (
           isSimplePart(part) ? (
             <ParsingControlGroup

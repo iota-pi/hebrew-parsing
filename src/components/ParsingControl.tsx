@@ -2,7 +2,7 @@ import {
   ToggleButton,
 } from '@mui/material'
 import { OptionCorrectness, getPGNKey } from '../util'
-import { PGN } from '../../lambda/data'
+import type { PGN } from '../../lambda/data'
 
 
 function ParsingControl<T extends string | number | PGN>({

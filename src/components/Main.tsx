@@ -4,17 +4,17 @@ import {
   Stack,
   Typography,
 } from '@mui/material'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import type { TRPCClientError } from '@trpc/client'
 import { useLocalStorage } from 'usehooks-ts'
 import { trpc } from '../trpc'
-import type { FilterCondition } from '../../lambda/filter'
 import VerbParsing from './VerbParsing'
-import { useCallback, useEffect, useMemo, useState } from 'react'
 import FilterSelection from './FilterSelection'
-import { BiasOptions } from '../../lambda/bias'
-import { TRPCClientError } from '@trpc/client'
-import { AppRouter } from '../../lambda/router'
-import { VerbAndRoot } from '../../lambda/data'
-import { Entries } from '../util'
+import type { BiasOptions } from '../../lambda/bias'
+import type { VerbAndRoot } from '../../lambda/data'
+import type { FilterCondition } from '../../lambda/filter'
+import type { AppRouter } from '../../lambda/router'
+import type { Entries } from '../util'
 
 const defaultFilterConditions: FilterCondition = {
   root: {
@@ -181,7 +181,7 @@ function MainPage() {
       justifyContent="center"
       display="flex"
     >
-      <Box maxWidth={1200} flexGrow={1}>
+      <Box width="100%" maxWidth={1200}>
         <Stack spacing={2}>
           {currentVerb && !error ? (
             <VerbParsing

@@ -179,7 +179,7 @@ class DataProcessor:
         self.verbs.add(verb)
         self.stem_stats[verb.stem] += 1
         self.tense_stats[verb.tense] += 1
-        if verb.pronom_person:
+        if PERSONS.get(verb.pronom_person):
             self.suffixes += 1
         self.roots.add(verb.root)
 

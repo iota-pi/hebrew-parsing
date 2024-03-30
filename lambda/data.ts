@@ -13,11 +13,12 @@ export type PGN = {
   number: VerbNumber,
 }
 
-type DataWordReference = [string, number, number]
+type DataWordReference = [BookAbbreviation, number, number]
+type WordReference = [Book, number, number]
 type DataWordContext = [string, ...DataWordReference]
 type WordContext = {
   clause: string,
-  reference: DataWordReference,
+  reference: WordReference,
 }
 type DataParsing = [
   PersonAbbreviation,
@@ -35,39 +36,7 @@ type DataVerb = [
 ]
 type DataRoot = [string, number, string]
 
-export type StemAbbreviation = (
-  | 1
-  | 2
-  | 3
-  | 4
-  | 5
-  | 6
-  | 7
-)
-export type TenseAbbreviation = (
-  | 1
-  | 2
-  | 3
-  | 4
-  | 5
-  | 6
-  | 7
-  | 8
-)
-export type PersonAbbreviation = Exclude<Person, 'N/A'> | 0
-export type GenderAbbreviation = (
-  | 0
-  | 1
-  | 2
-  | 3
-)
-export type VerbNumberAbbreviation = (
-  | 0
-  | 1
-  | 2
-)
-
-const stemMapping: Record<StemAbbreviation, Stem> = {
+const rawStemMapping = {
   1: 'Qal',
   2: 'Hiphil',
   3: 'Piel',
@@ -75,8 +44,11 @@ const stemMapping: Record<StemAbbreviation, Stem> = {
   5: 'Hitpael',
   6: 'Pual',
   7: 'Hophal',
-}
-const tenseMapping: Record<TenseAbbreviation, Tense> = {
+} as const
+type StemAbbreviation = keyof typeof rawStemMapping
+const stemMapping = rawStemMapping as Record<StemAbbreviation, Stem>
+
+const rawTenseMapping = {
   1: 'Qatal',
   2: 'Yiqtol',
   3: 'Wayyiqtol',
@@ -85,18 +57,73 @@ const tenseMapping: Record<TenseAbbreviation, Tense> = {
   6: 'Imperative',
   7: 'Passive participle',
   8: 'Infinitive absolute',
-}
-const genderMapping: Record<GenderAbbreviation, Gender> = {
+} as const
+type TenseAbbreviation = keyof typeof rawTenseMapping
+const tenseMapping = rawTenseMapping as Record<TenseAbbreviation, Tense>
+
+type PersonAbbreviation = Exclude<Person, 'N/A'> | 0
+
+const rawGenderMapping = {
   0: 'N/A',
   1: 'm',
   2: 'f',
   3: 'c',
-}
-const numberMapping: Record<VerbNumberAbbreviation, VerbNumber> = {
+} as const
+type GenderAbbreviation = keyof typeof rawGenderMapping
+const genderMapping = rawGenderMapping as  Record<GenderAbbreviation, Gender>
+
+const rawNumberMapping = {
   0: 'N/A',
   1: 's',
   2: 'p',
+} as const
+type VerbNumberAbbreviation = keyof typeof rawNumberMapping
+const numberMapping = rawNumberMapping as Record<VerbNumberAbbreviation, VerbNumber>
+
+const rawBookMapping = {
+  0: '1_Chronicles',
+  1: '1_Kings',
+  2: '1_Samuel',
+  3: '2_Chronicles',
+  4: '2_Kings',
+  5: '2_Samuel',
+  6: 'Amos',
+  7: 'Daniel',
+  8: 'Deuteronomy',
+  9: 'Ecclesiastes',
+  10: 'Esther',
+  11: 'Exodus',
+  12: 'Ezekiel',
+  13: 'Ezra',
+  14: 'Genesis',
+  15: 'Habakkuk',
+  16: 'Haggai',
+  17: 'Hosea',
+  18: 'Isaiah',
+  19: 'Jeremiah',
+  20: 'Job',
+  21: 'Joel',
+  22: 'Jonah',
+  23: 'Joshua',
+  24: 'Judges',
+  25: 'Lamentations',
+  26: 'Leviticus',
+  27: 'Malachi',
+  28: 'Micah',
+  29: 'Nahum',
+  30: 'Nehemiah',
+  31: 'Numbers',
+  32: 'Obadiah',
+  33: 'Proverbs',
+  34: 'Psalms',
+  35: 'Ruth',
+  36: 'Song_of_songs',
+  37: 'Zechariah',
+  38: 'Zephaniah',
 }
+type BookAbbreviation = keyof typeof rawBookMapping
+type Book = typeof rawBookMapping[BookAbbreviation]
+const bookMapping = rawBookMapping as Record<BookAbbreviation, string>
 
 export function processRoots(roots: DataRoot[]) {
   return roots.map(([root, count, gloss]) => ({ root, count, gloss }))
@@ -128,7 +155,7 @@ export function processVerbs(verbs: DataVerb[]) {
       tense: getTense(tenseCode),
       context: {
         clause: clauseContext,
-        reference: [book, chapter, verse],
+        reference: [getBook(book), chapter, verse],
       } as WordContext,
       pgn: getParsing([person, gender, number]),
       suffix: getParsing(
@@ -184,6 +211,13 @@ export function getParsing(input: DataParsing | null | undefined): PGN {
     gender: gender === 0 ? 'N/A' : getGender(gender),
     number: number === 0 ? 'N/A' : getNumber(number),
   }
+}
+
+export function getBook(book: BookAbbreviation) {
+  if (book in bookMapping) {
+    return bookMapping[book]
+  }
+  throw new Error(`Unknown book code "${book}"`)
 }
 
 

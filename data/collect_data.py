@@ -35,6 +35,48 @@ TENSES = {
     "infa": 8,
 }
 
+BOOKS = {
+    '1_Chronicles': 0,
+    '1_Kings': 1,
+    '1_Samuel': 2,
+    '2_Chronicles': 3,
+    '2_Kings': 4,
+    '2_Samuel': 5,
+    'Amos': 6,
+    'Daniel': 7,
+    'Deuteronomy': 8,
+    'Ecclesiastes': 9,
+    'Esther': 10,
+    'Exodus': 11,
+    'Ezekiel': 12,
+    'Ezra': 13,
+    'Genesis': 14,
+    'Habakkuk': 15,
+    'Haggai': 16,
+    'Hosea': 17,
+    'Isaiah': 18,
+    'Jeremiah': 19,
+    'Job': 20,
+    'Joel': 21,
+    'Jonah': 22,
+    'Joshua': 23,
+    'Judges': 24,
+    'Lamentations': 25,
+    'Leviticus': 26,
+    'Malachi': 27,
+    'Micah': 28,
+    'Nahum': 29,
+    'Nehemiah': 30,
+    'Numbers': 31,
+    'Obadiah': 32,
+    'Proverbs': 33,
+    'Psalms': 34,
+    'Ruth': 35,
+    'Song_of_songs': 36,
+    'Zechariah': 37,
+    'Zephaniah': 38,
+}
+
 class UnhandledStemError(KeyError):
     pass
 
@@ -97,7 +139,11 @@ class Verb:
             clause_text = api.T.text(clause)
         clause_text = clause_text.replace(self.verb, "$")
 
-        return (clause_text, *self.reference)
+        return (
+            clause_text,
+            BOOKS[self.reference[0]],
+            *self.reference[1:],
+        )
 
     def to_simple_obj(self):
         result = [
@@ -203,9 +249,10 @@ class DataProcessor:
             return True
         if api.F.sp.v(n) != "verb":
             return True
+
+        # Contains maqef
         word = api.F.g_word_utf8.v(n)
         if "\u05be" in word:
-            # Contains maqef
             return True
 
         return False

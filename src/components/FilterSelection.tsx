@@ -11,6 +11,7 @@ import type { FilterCondition, RootKey, Stem, Tense } from '../../lambda/filter'
 import { ChangeEvent, useCallback, useMemo } from 'react'
 import { ALL_STEMS, ALL_TENSES, getRootTypeName, getTenseName } from '../util'
 import FilterSelect from './FilterSelect'
+import { useDebounceCallback } from 'usehooks-ts'
 
 const allRoots = [
   'strong',
@@ -58,7 +59,7 @@ function FilterSelection({
     ),
     [filterConditions.root],
   )
-  const handleChangeRoots = useCallback(
+  const handleChangeRoots = useDebounceCallback(
     (newRoots: RootKey[]) => {
       const rootMap = newRoots.reduce(
         (acc, root) => ({ ...acc, [root]: true }),
@@ -69,7 +70,8 @@ function FilterSelection({
         root: rootMap,
       })
     },
-    [filterConditions, onChange],
+    100,
+    { leading: true, trailing: false },
   )
 
   const selectedStems = useMemo(
@@ -80,7 +82,7 @@ function FilterSelection({
     ),
     [filterConditions.stem],
   )
-  const handleChangeStems = useCallback(
+  const handleChangeStems = useDebounceCallback(
     (newStems: Stem[]) => {
       const stemMap = newStems.reduce(
         (acc, stem) => ({ ...acc, [stem]: true }),
@@ -91,7 +93,8 @@ function FilterSelection({
         stem: stemMap,
       })
     },
-    [filterConditions, onChange],
+    100,
+    { leading: true, trailing: false },
   )
 
   const selectedTenses = useMemo(
@@ -102,7 +105,7 @@ function FilterSelection({
     ),
     [filterConditions.tense],
   )
-  const handleChangeTenses = useCallback(
+  const handleChangeTenses = useDebounceCallback(
     (newTenses: Tense[]) => {
       const tenseMap = newTenses.reduce(
         (acc, tense) => ({ ...acc, [tense]: true }),
@@ -113,7 +116,8 @@ function FilterSelection({
         tense: tenseMap,
       })
     },
-    [filterConditions, onChange],
+    100,
+    { leading: true, trailing: false },
   )
 
   const handleChangeSuffixes = useCallback(

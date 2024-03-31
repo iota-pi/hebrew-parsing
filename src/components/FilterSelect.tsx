@@ -34,19 +34,51 @@ function FilterSelect<T extends string>({
 
   const handleChange = useCallback(
     (event: SelectChangeEvent<T[]>) => {
-      const newRoots = event.target.value
-      if (Array.isArray(newRoots)) {
-        onChange(newRoots)
+      const newValue = event.target.value
+      if (Array.isArray(newValue)) {
+        onChange(newValue)
       }
     },
     [onChange],
   )
   const deleteOption = useCallback(
     (option: T) => () => {
-      const newRoots = value.filter(v => v !== option)
-      onChange(newRoots)
+      const newValue = value.filter(v => v !== option)
+      onChange(newValue)
     },
     [value, onChange],
+  )
+
+  const handleClickChip = useCallback(
+    (option: T) => (event: React.MouseEvent<HTMLElement>) => {
+      if (event.getModifierState('Control')) {
+        const newValue = value.filter(v => v === option)
+        onChange(newValue)
+      } else {
+        handleOpen()
+      }
+    },
+    [handleOpen, onChange, value],
+  )
+
+  const handleClickOption = useCallback(
+    (option: T) => (event: React.MouseEvent<HTMLElement>) => {
+      console.log('click option', option, event.getModifierState('Control'))
+      if (event.getModifierState('Control')) {
+        if (value.includes(option)) {
+          if (value.length === 1) {
+            onChange(options)
+          } else {
+            const newValue = value.filter(v => v === option)
+            onChange(newValue)
+          }
+          event.preventDefault()
+        } else {
+          onChange([option])
+        }
+      }
+    },
+    [onChange, options, value],
   )
 
   const stopPropagaton = useCallback(
@@ -91,7 +123,7 @@ function FilterSelect<T extends string>({
               <Chip
                 key={v}
                 label={getOptionLabel?.(v) || v}
-                onClick={handleOpen}
+                onClick={handleClickChip(v)}
                 onDelete={deleteOption(v)}
                 onMouseDown={stopPropagaton}
               />
@@ -111,6 +143,7 @@ function FilterSelect<T extends string>({
         <MenuItem
           key={o}
           value={o}
+          onClick={handleClickOption(o)}
         >
           {getOptionLabel?.(o) || o}
         </MenuItem>

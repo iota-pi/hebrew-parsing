@@ -63,7 +63,6 @@ function FilterSelect<T extends string>({
 
   const handleClickOption = useCallback(
     (option: T) => (event: React.MouseEvent<HTMLElement>) => {
-      console.log('click option', option, event.getModifierState('Control'))
       if (event.getModifierState('Control')) {
         if (value.includes(option)) {
           if (value.length === 1) {

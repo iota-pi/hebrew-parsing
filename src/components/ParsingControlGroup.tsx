@@ -29,7 +29,7 @@ function ParsingControlGroup<P extends SimpleParsingPartKey, V extends Parsing[P
         onChange(newData)
       }
     },
-    [part, value],
+    [onChange],
   )
 
   const mapping = PART_MAPPING[part] as V[]

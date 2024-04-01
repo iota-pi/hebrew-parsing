@@ -131,7 +131,7 @@ function MainPage() {
         setStreak(0)
       }
     },
-    [streak, bestStreak],
+    [streak, bestStreak, setBestStreak, setCorrectCount, setStreak, setTotalCount],
   )
   const handleNext = useCallback(
     () => {
@@ -154,7 +154,7 @@ function MainPage() {
         handleNext()
       }
     },
-    [error, verbs],
+    [error, verbs, handleNext],
   )
   useEffect(
     () => {
@@ -171,7 +171,7 @@ function MainPage() {
       setVerbs([])
       setError('')
     },
-    [],
+    [setFilterConditions],
   )
 
   return (

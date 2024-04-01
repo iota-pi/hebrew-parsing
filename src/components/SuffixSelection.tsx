@@ -30,7 +30,7 @@ function SuffixSelection({
         onChange(newData)
       }
     },
-    [],
+    [onChange],
   )
   const hasSuffix = hasSetPGN(verb.suffix)
 

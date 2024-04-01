@@ -45,7 +45,7 @@ function PGNGroup<P extends ParsingKey & ('pgn' | 'suffix')>({
         onChange(newData)
       }
     },
-    [value],
+    [onChange],
   )
 
   const isValid = part === 'pgn' ? isValidPGN : isValidSuffix
@@ -60,7 +60,7 @@ function PGNGroup<P extends ParsingKey & ('pgn' | 'suffix')>({
       }
       return rawApplicable
     },
-    [rawApplicable, showAnswer],
+    [rawApplicable, showAnswer, verb.suffix],
   )
 
   const pgnOptions: [PGN[], PGN[]] = useMemo(
@@ -107,7 +107,7 @@ function PGNGroup<P extends ParsingKey & ('pgn' | 'suffix')>({
       }
       return result
     },
-    [applicable, isValid, parsing],
+    [applicable, isValid, parsing, part],
   )
   const correctAnswer = useMemo(
     () => getPartFromVerb(part, verb) as PGN,
@@ -124,7 +124,7 @@ function PGNGroup<P extends ParsingKey & ('pgn' | 'suffix')>({
       }
       return checkPGN(projectedParsing, part, correctAnswer)
     },
-    [correctAnswer, parsing, part],
+    [correctAnswer, parsing, part, verb.suffix],
   )
   const isApplicableOption = useCallback(
     (option: PGN) => {

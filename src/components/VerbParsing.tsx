@@ -125,7 +125,7 @@ function VerbParsing({
         setSuffix('suffix')
       }
     },
-    [filterOptions],
+    [canHaveSuffixes, mustHaveSuffixes],
   )
 
   const applicableParts = useMemo(
@@ -251,7 +251,7 @@ function VerbParsing({
       setShowAnswer(false)
       onNext()
     },
-    [filterOptions, onNext, stems, tenses],
+    [onNext, stems, tenses],
   )
 
   const clauseParts = useMemo(
@@ -270,7 +270,7 @@ function VerbParsing({
         {part}
       </Fragment>
     )),
-    [clauseParts],
+    [clauseParts, verb.verb],
   )
 
   return (

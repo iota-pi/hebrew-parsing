@@ -151,19 +151,19 @@ function VerbParsing({
 
       if (parts.stem) {
         for (const stem of Object.keys(parts.stem) as Stem[]) {
-          parts.stem[stem] = filterOptions.stem[stem]
+          parts.stem[stem] &&= filterOptions.stem[stem]
         }
       }
 
       if (parts.tense) {
         for (const tense of Object.keys(parts.tense) as Tense[]) {
-          parts.tense[tense] = filterOptions.tense[tense]
+          parts.tense[tense] &&= filterOptions.tense[tense]
         }
       }
 
       return parts
     },
-    [filterOptions, parsing, suffix],
+    [filterOptions.stem, filterOptions.tense, parsing.stem, parsing.tense, suffix],
   )
 
   const isValid = useMemo(
@@ -317,13 +317,14 @@ function VerbParsing({
         {MAIN_PARTS.map(part => (
           isSimplePart(part) ? (
             <ParsingControlGroup
-              key={part}
-              part={part}
-              verb={verb}
               applicable={applicableParts[part]}
-              value={parsing[part]}
-              showAnswer={showAnswer}
+              key={part}
               onChange={handleChange(part)}
+              parsing={parsing}
+              part={part}
+              showAnswer={showAnswer}
+              value={parsing[part]}
+              verb={verb}
             />
           ) : (
             <PGNGroup

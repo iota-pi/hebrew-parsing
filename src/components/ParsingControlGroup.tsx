@@ -4,24 +4,25 @@ import {
 import { useCallback, useMemo } from 'react'
 import { Parsing, PART_MAPPING, checkSimplePart, getPartFromVerb, ApplicableParts, getSimplePartName, SimpleParsingPartKey } from '../util'
 import type { Verb } from '../../lambda/data'
-import type { Stem, Tense } from '../../lambda/filter'
 import ParsingControl from './ParsingControl'
 
 
 function ParsingControlGroup<P extends SimpleParsingPartKey, V extends Parsing[P]>({
-  verb,
-  part,
-  value,
   applicable,
-  showAnswer,
   onChange,
+  parsing,
+  part,
+  showAnswer,
+  value,
+  verb,
 }: {
   applicable: ApplicableParts[P],
-  verb: Verb,
-  part: P,
-  value: V,
-  showAnswer: boolean,
   onChange: (newValue: V) => void,
+  parsing: Parsing,
+  part: P,
+  showAnswer: boolean,
+  value: V,
+  verb: Verb,
 }) {
   const handleToggle = useCallback(
     (event: React.MouseEvent<HTMLElement>, newData: V) => {
@@ -38,10 +39,14 @@ function ParsingControlGroup<P extends SimpleParsingPartKey, V extends Parsing[P
     [part, verb],
   )
   const isCorrectSimpleOption = useCallback(
-    (option: Stem | Tense | 'N/A') => {
-      return checkSimplePart(option, correctAnswer as typeof option)
+    (option: V | 'N/A') => {
+      const attempt = {
+        ...parsing,
+        [part]: option,
+      }
+      return checkSimplePart<typeof part>(part, attempt, correctAnswer)
     },
-    [correctAnswer],
+    [correctAnswer, parsing, part],
   )
 
   return (

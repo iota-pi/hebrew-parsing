@@ -60,7 +60,13 @@ export function getFilterFromConditions(
     }
 
     if (!condition.tense[verb.tense]) {
-      return false
+      if (
+        verb.stem === 'Qal'
+        || verb.tense !== 'Passive participle'
+        || !condition.tense['Active participle']
+      ) {
+        return false
+      }
     }
 
     if (!condition.suffixes.include && hasSetPGN(verb.suffix)) {

@@ -145,8 +145,18 @@ export function stripAccents(s: string) {
   return s.replace(/[^\u05b0-\u05bc\u05c1\u05c2\u05c7-\u05ea]/g, '')
 }
 
-export function checkSimplePart<T extends SimpleParsingPartKey>(attempt: Parsing[T], correct: Parsing[T]) {
-  return attempt === correct
+export function checkSimplePart<T extends SimpleParsingPartKey>(
+  part: T,
+  fullParsingAttempt: Parsing,
+  correct: Parsing[T],
+) {
+  let answer = correct
+  if (fullParsingAttempt.stem !== 'Qal') {
+    if (part === 'tense' && correct === 'Passive participle') {
+      answer = 'Active participle' as Parsing[T]
+    }
+  }
+  return fullParsingAttempt[part] === answer
 }
 
 export function checkPGN(
@@ -215,9 +225,10 @@ export function checkParsingCondition(
 
 export function checkPart<T extends ParsingKey>(part: T, attempt: Parsing, correct: Parsing[T]) {
   if (isSimplePart(part)) {
-    return checkSimplePart(
-      attempt[part] as SimpleParsingPart,
-      correct as SimpleParsingPart,
+    return checkSimplePart<typeof part>(
+      part,
+      attempt,
+      attempt[part],
     )
   }
 

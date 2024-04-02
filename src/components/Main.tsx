@@ -6,7 +6,7 @@ import {
 } from '@mui/material'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { TRPCClientError } from '@trpc/client'
-import { useLocalStorage } from 'usehooks-ts'
+import { useDebounceCallback, useLocalStorage } from 'usehooks-ts'
 import { trpc } from '../trpc'
 import VerbParsing from './VerbParsing'
 import FilterSelection from './FilterSelection'
@@ -117,6 +117,10 @@ function MainPage() {
     },
     [filterConditions, biasOptions, utils],
   )
+  const debouncedFetchNewWords = useDebounceCallback(
+    fetchNewWords,
+    500,
+  )
 
   const handleAnswer = useCallback(
     (correct: boolean) => {
@@ -135,40 +139,34 @@ function MainPage() {
   )
   const handleNext = useCallback(
     () => {
+      if (verbs && verbs.length > 0) {
+        const newWords = [...verbs]
+        newWords.shift()
+        setVerbs(newWords)
+      }
       if (!verbs || verbs.length <= 2) {
-        fetchNewWords()
+        debouncedFetchNewWords()
       }
-      if (!verbs) {
-        return
-      }
-
-      const newWords = [...verbs]
-      newWords.shift()
-      setVerbs(newWords)
     },
-    [verbs, fetchNewWords],
+    [verbs, debouncedFetchNewWords],
   )
   useEffect(
     () => {
       if ((!verbs || verbs.length === 0) && !error) {
         handleNext()
       }
-    },
-    [error, verbs, handleNext],
-  )
-  useEffect(
-    () => {
       if (verbs?.[0]) {
         setCurrentVerb(verbs[0])
       }
     },
-    [verbs],
+    [error, verbs, handleNext],
   )
 
   const onChangeFilter = useCallback(
     (newFilterConditions: FilterCondition) => {
       setFilterConditions(newFilterConditions)
       setVerbs([])
+      setCurrentVerb(undefined)
       setError('')
     },
     [setFilterConditions],

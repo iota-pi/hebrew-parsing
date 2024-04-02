@@ -247,11 +247,19 @@ function VerbParsing({
   const handleNext = useCallback(
     () => {
       setParsing(getInitialParsing(stems, tenses))
-      setSuffix(DEFAULT_SUFFIX)
+      setSuffix(
+        mustHaveSuffixes
+          ? 'suffix'
+          : (
+            canHaveSuffixes
+              ? DEFAULT_SUFFIX
+              : 'no-suffix'
+          )
+      )
       setShowAnswer(false)
       onNext()
     },
-    [onNext, stems, tenses],
+    [canHaveSuffixes, mustHaveSuffixes, onNext, stems, tenses],
   )
 
   const clauseParts = useMemo(

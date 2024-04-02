@@ -115,6 +115,9 @@ function PGNGroup<P extends ParsingKey & ('pgn' | 'suffix')>({
   )
   const isCorrectOption = useCallback(
     (option: PGN): OptionCorrectness => {
+      if (part === 'pgn' && !hasSetPGN(verb.pgn)) {
+        return { match: false, exact: false }
+      }
       if (part === 'suffix' && !hasSetPGN(verb.suffix)) {
         return { match: false, exact: false }
       }

@@ -66,7 +66,11 @@ export function getFilterFromConditions(
     if (!condition.suffixes.include && hasSetPGN(verb.suffix)) {
       return false
     }
-    if (condition.suffixes.exclusive && !hasSetPGN(verb.suffix)) {
+    if (
+      condition.suffixes.include
+      && condition.suffixes.exclusive
+      && !hasSetPGN(verb.suffix)
+    ) {
       return false
     }
 

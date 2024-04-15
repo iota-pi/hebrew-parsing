@@ -145,7 +145,12 @@ function VerbParsing({
         parts.suffix = false
       }
 
-      if (parsing.stem && parsing.stem !== 'Qal' && parts.tense) {
+      if (
+        parsing.stem
+        && parsing.stem !== 'Qal'
+        && parsing.stem !== 'N/A'
+        && parts.tense
+      ) {
         parts.tense['Passive participle'] = false
       }
 
@@ -205,6 +210,11 @@ function VerbParsing({
         if (newData) {
           setParsing(prev => ({
             ...prev,
+            tense: (
+              part === 'stem'
+              && newData !== 'Qal'
+              && prev.tense === 'Passive participle'
+            ) ? 'Active participle' : prev.tense,
             [part]: newData,
           }))
         }

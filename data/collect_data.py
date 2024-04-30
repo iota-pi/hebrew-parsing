@@ -192,14 +192,14 @@ class Verb:
             GENDERS.get(self.gender, 0),
             NUMBERS.get(self.number, 0),
         ]
-        if sum(pgn) > 0:
-            result.extend(pgn)
-
         suffix = [
             PERSONS.get(self.pronom_person, 0),
             GENDERS.get(self.pronom_gender, 0),
             NUMBERS.get(self.pronom_number, 0),
         ]
+        if sum(pgn) + sum(suffix) > 0:
+            result.extend(pgn)
+
         if sum(suffix) > 0:
             result.extend(suffix)
 

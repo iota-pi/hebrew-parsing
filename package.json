@@ -15,7 +15,6 @@
     "deploy": "yarn deploy:app && yarn deploy:lambda && cd infra && terraform apply",
     "upload:data": "aws s3 cp data/ s3://hebrew-parsing-production/data/ --recursive",
     "lint": "yarn run eslint src lambda --ext .ts,.tsx",
-    "loadtest": "yarn tsx lambda/loadtest",
     "api": "cd lambda && yarn tsx local",
     "start": "vite",
     "preview": "vite preview",

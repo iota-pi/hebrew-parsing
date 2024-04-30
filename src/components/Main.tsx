@@ -107,8 +107,12 @@ function MainPage() {
           filterConditions,
         },
       )
-        .then(newWords => setVerbs(
-          words => [...(words ?? []), ...newWords]
+        .then(newVerbs => setVerbs(
+          verbs => {
+            const existing = verbs ?? []
+            const uniqueNew = newVerbs.filter(v1 => existing.every(v2 => v1.verb.verb !== v2.verb.verb))
+            return [...existing, ...uniqueNew]
+          },
         ))
         .catch((e: TRPCClientError<AppRouter>) => {
           if (e.message?.toLowerCase().includes('no valid verbs')) {
@@ -142,8 +146,7 @@ function MainPage() {
   const handleNext = useCallback(
     () => {
       if (verbs && verbs.length > 0) {
-        const newWords = [...verbs]
-        newWords.shift()
+        const [, ...newWords] = verbs
         setVerbs(newWords)
       }
       if (!verbs || verbs.length <= 2) {
@@ -160,6 +163,7 @@ function MainPage() {
       if (verbs?.[0]) {
         setCurrentVerb(verbs[0])
       }
+      console.log('verbs', verbs)
     },
     [error, verbs, handleNext],
   )

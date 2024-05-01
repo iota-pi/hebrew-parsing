@@ -87,6 +87,7 @@ function MainPage() {
   const [biasOptions] = useLocalStorage<BiasOptions>('biasOptions', {
     biasStems: true,
     biasTenses: true,
+    biasRoots: true,
   })
 
   const [error, setError] = useState<string>('')

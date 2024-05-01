@@ -20,7 +20,7 @@ export const appRouter = router({
         const allVerbs = await verbs
         const allRoots = await roots
         const validVerbs = getValidVerbs(allVerbs, allRoots, filter)
-        const biasedVerbs = getBiasedVerbs(biasOptions, validVerbs)
+        const biasedVerbs = getBiasedVerbs(biasOptions, validVerbs, allRoots)
 
         const result = (new Array(count * 2)).fill(0).map(
           () => getRandomValidVerb(biasedVerbs, allRoots)

@@ -88,80 +88,70 @@ export function getFilterFromConditions(
   }
 }
 
+export function getRootTypes(root: string, stem: Stem) {
+  const rootTypes: RootKey[] = []
+  if ('עהחר'.includes(root[0])) {
+    rootTypes.push('1-gutteral')
+  }
+
+  if ('א'.includes(root[0])) {
+    rootTypes.push('1-aleph')
+  }
+
+  if ('נ'.includes(root[0]) || (root === 'לקח' && stem === 'Qal')) {
+    rootTypes.push('1-nun')
+  }
+
+  if ('וי'.includes(root[0]) || root === 'הלך') {
+    rootTypes.push('1-waw')
+  }
+
+  if ('אעהחר'.includes(root[1])) {
+    rootTypes.push('2-gutteral')
+  }
+
+  if ('ה'.includes(root[2])) {
+    rootTypes.push('3-heh')
+  }
+
+  if ('א'.includes(root[2])) {
+    rootTypes.push('3-aleph')
+  }
+
+  if ('וי'.includes(root[1]) || root.length === 2) {
+    rootTypes.push('hollow')
+  }
+
+  if (isSameLetter(root[1], root[2])) {
+    rootTypes.push('geminate')
+  }
+
+  if (rootTypes.length === 0) {
+    rootTypes.push('strong')
+  }
+
+  return rootTypes
+}
+
 export function checkRoot(
   root: string,
   condition: FilterCondition['root'],
   stem: Stem,
 ) {
-  let strong = true
-  if ('עהחר'.includes(root[0])) {
-    strong = false
-    if (!condition['1-gutteral']) {
-      return false
-    }
-  }
+  const rootTypes = getRootTypes(root, stem)
 
-  if ('א'.includes(root[0])) {
-    strong = false
-    if (!condition['1-aleph']) {
-      return false
-    }
-  }
-
-  if ('נ'.includes(root[0]) || (root === 'לקח' && stem === 'Qal')) {
-    strong = false
-    if (!condition['1-nun']) {
-      return false
-    }
-  }
-
-  if ('וי'.includes(root[0]) || root === 'הלך') {
-    strong = false
-    if (!condition['1-waw']) {
-      return false
-    }
-  }
-
-  if ('אעהחר'.includes(root[1])) {
-    strong = false
-    if (!condition['2-gutteral']) {
-      return false
-    }
-  }
-
-  if ('ה'.includes(root[2])) {
-    strong = false
-    if (!condition['3-heh']) {
-      return false
-    }
-  }
-
-  if ('א'.includes(root[2])) {
-    strong = false
-    if (!condition['3-aleph']) {
-      return false
-    }
-  }
-
-  if ('וי'.includes(root[1]) || root.length === 2) {
-    strong = false
-    if (!condition.hollow) {
-      return false
-    }
-  }
-
-  if (isSameLetter(root[1], root[2])) {
-    strong = false
-    if (!condition.geminate) {
-      return false
-    }
-  }
-
-  if (strong && !condition.strong) {
-    return false
-  }
-
-  return true
+  return !(
+    (rootTypes.includes('strong') && !condition.strong)
+    || (rootTypes.includes('1-gutteral') && !condition['1-gutteral'])
+    || (rootTypes.includes('1-aleph') && !condition['1-aleph'])
+    || (rootTypes.includes('1-nun') && !condition['1-nun'])
+    || (rootTypes.includes('1-waw') && !condition['1-waw'])
+    || (rootTypes.includes('2-gutteral') && !condition['2-gutteral'])
+    || (rootTypes.includes('3-heh') && !condition['3-heh'])
+    || (rootTypes.includes('3-aleph') && !condition['3-aleph'])
+    || (rootTypes.includes('hollow') && !condition.hollow)
+    || (rootTypes.includes('geminate') && !condition.geminate)
+  )
 }
 
 export function isSameLetter(a: string, b: string) {

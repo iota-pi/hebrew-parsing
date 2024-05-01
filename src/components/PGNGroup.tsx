@@ -127,7 +127,7 @@ function PGNGroup<P extends ParsingKey & ('pgn' | 'suffix')>({
       }
       return checkPGN(projectedParsing, part, correctAnswer)
     },
-    [correctAnswer, parsing, part, verb.suffix],
+    [correctAnswer, parsing, part, verb.pgn, verb.suffix],
   )
   const isApplicableOption = useCallback(
     (option: PGN) => {

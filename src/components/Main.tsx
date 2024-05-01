@@ -164,7 +164,6 @@ function MainPage() {
       if (verbs?.[0]) {
         setCurrentVerb(verbs[0])
       }
-      console.log('verbs', verbs)
     },
     [error, verbs, handleNext],
   )

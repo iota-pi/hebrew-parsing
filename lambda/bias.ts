@@ -64,7 +64,6 @@ export function getBiasedVerbs(
   if (biasOptions.biasRoots) {
     const rootCounts = countByRoot(workingVerbs, roots)
     const biasRoots = getBiasFromCounts(rootCounts)
-    console.log('biasRoots', biasRoots)
     workingVerbs = applyBias(
       verbs,
       verb => getRootTypes(roots[verb.root].root, verb.stem),

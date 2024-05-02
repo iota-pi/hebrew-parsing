@@ -27,6 +27,8 @@ describe('checkRoot', () => {
     ['אמר', { '1-aleph': true }, 'Qal', true],
     ['פלל', { 'geminate': false }, 'Qal', false],
     ['פלל', { 'geminate': true }, 'Qal', true],
+    ['שׁים', { 'hollow': false }, 'Qal', false],
+    ['שׁים', { 'hollow': true }, 'Qal', true],
   ])('returns %s when root = %s, condition = %s', (root, condition, stem, expected) => {
     const result = checkRoot(root, condition as FilterCondition['root'], stem as Stem)
     expect(result).toBe(expected)

@@ -118,11 +118,12 @@ export function getRootTypes(root: string, stem: Stem) {
     rootTypes.push('3-aleph')
   }
 
-  if ('וי'.includes(root[1]) || root.length === 2) {
+  const normalisedRoot = root.replace(/[\u05c1\u05c2]/g, '')
+  if ('וי'.includes(normalisedRoot[1]) || normalisedRoot.length === 2) {
     rootTypes.push('hollow')
   }
 
-  if (isSameLetter(root[1], root[2])) {
+  if (isSameLetter(normalisedRoot[1], normalisedRoot[2])) {
     rootTypes.push('geminate')
   }
 

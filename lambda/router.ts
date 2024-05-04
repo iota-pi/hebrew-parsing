@@ -1,3 +1,4 @@
+import { TRPCError } from '@trpc/server'
 import { z } from 'zod'
 import { biasOptions, getBiasedVerbs, getRandomValidVerb } from './bias'
 import { VerbAndRoot, roots, verbs } from './data'
@@ -22,6 +23,12 @@ export const appRouter = router({
         const validVerbs = getValidVerbs(allVerbs, allRoots, filter)
         const biasedVerbs = getBiasedVerbs(biasOptions, validVerbs, allRoots)
 
+        if (biasedVerbs.length === 0) {
+          throw new TRPCError({
+            code: 'NOT_FOUND',
+            message: 'No valid verbs found',
+          })
+        }
         const result = (new Array(count * 2)).fill(0).map(
           () => getRandomValidVerb(biasedVerbs, allRoots)
         )

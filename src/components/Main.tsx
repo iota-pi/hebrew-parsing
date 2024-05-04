@@ -117,7 +117,7 @@ function MainPage() {
               return [...existing, ...uniqueNew]
             },
           )
-          setFetchedCount(c => newVerbs.length)
+          setFetchedCount(newVerbs.length)
         })
         .catch((e: TRPCClientError<AppRouter>) => {
           if (e.message?.toLowerCase().includes('no valid verbs')) {
@@ -129,7 +129,7 @@ function MainPage() {
           }
         })
     },
-    [biasOptions, filterConditions, utils],
+    [biasOptions, filterConditions, setVerbs, setFetchedCount, setCurrentVerb, utils],
   )
   const debouncedFetchNewWords = useDebounceCallback(
     fetchNewWords,
@@ -164,7 +164,7 @@ function MainPage() {
         debouncedFetchNewWords()
       }
     },
-    [debouncedFetchNewWords, verbs],
+    [debouncedFetchNewWords, fetchedCount, setVerbs, verbs],
   )
   const handleGiveAgain = useCallback(
     () => {
@@ -176,7 +176,7 @@ function MainPage() {
         ])
       }
     },
-    [currentVerb, debouncedFetchNewWords, verbs],
+    [currentVerb, setVerbs],
   )
   useEffect(
     () => {
@@ -187,7 +187,7 @@ function MainPage() {
         setCurrentVerb(verbs[0])
       }
     },
-    [error, verbs, handleNext],
+    [error, handleNext, setCurrentVerb, verbs],
   )
 
   const onChangeFilter = useCallback(
@@ -196,7 +196,7 @@ function MainPage() {
       setVerbs([])
       setError('')
     },
-    [setFilterConditions],
+    [setFilterConditions, setVerbs],
   )
 
   return (

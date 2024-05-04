@@ -58,7 +58,7 @@ export function getBiasedVerbs(
     const rootCounts = countByRoot(workingVerbs, roots)
     const biasRoots = getBiasFromCounts(rootCounts)
     workingVerbs = applyBias(
-      verbs,
+      workingVerbs,
       verb => getRootTypes(roots[verb.root].root, verb.stem),
       biasRoots,
     )
@@ -67,13 +67,13 @@ export function getBiasedVerbs(
   if (biasOptions.biasStems) {
     const stemCounts = countByKey('stem', workingVerbs)
     const biasStems = getBiasFromCounts(stemCounts)
-    workingVerbs = applyBias(verbs, verb => verb.stem, biasStems)
+    workingVerbs = applyBias(workingVerbs, verb => verb.stem, biasStems)
   }
 
   if (biasOptions.biasTenses) {
     const tenseCounts = countByKey('tense', workingVerbs)
     const biasTenses = getBiasFromCounts(tenseCounts)
-    workingVerbs = applyBias(verbs, verb => verb.tense, biasTenses)
+    workingVerbs = applyBias(workingVerbs, verb => verb.tense, biasTenses)
   }
 
   return workingVerbs
@@ -124,7 +124,7 @@ export function applyBias<K extends string, T extends Record<K, number>>(
     verb => {
       const keyResult = key(verb)
       const biasKeys = Array.isArray(keyResult) ? keyResult : [keyResult]
-      const biasThreshold = biasKeys.map(k => bias[k]).reduce((a, b) => Math.max(a, b), 1)
+      const biasThreshold = biasKeys.map(k => bias[k]).reduce((a, b) => Math.max(a, b), 0)
       return Math.random() < biasThreshold
     },
   )

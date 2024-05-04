@@ -29,6 +29,7 @@ import {
   getTenseName,
   getPGNKey,
   hasSetPGN,
+  toLogosLink,
 } from '../util'
 import type { Verb, Root } from '../../lambda/data'
 import type { FilterCondition, Stem, Tense } from '../../lambda/filter'
@@ -427,6 +428,22 @@ function VerbParsing({
           </>
         ) : (
           <HebrewSpan><br /></HebrewSpan>
+        )}
+      </Typography>
+
+      <Typography
+        variant="h6"
+        color='grey.800'
+      >
+        {showAnswer ? (
+          <>
+            <span>Search in: </span>
+            <a href={toLogosLink({ verb, root })}>
+              <img src="/icon-logos.svg" alt="Logos Bible Software" />
+            </a>
+          </>
+        ) : (
+          <br />
         )}
       </Typography>
     </Stack>

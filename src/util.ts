@@ -4,6 +4,7 @@ import type {
   PGN,
   Person,
   Verb,
+  VerbAndRoot,
   VerbNumber,
 } from '../lambda/data'
 import type { RootKey, Stem, Tense } from '../lambda/filter'
@@ -301,4 +302,40 @@ export function isValidPGN(pgn: PGN, parsing?: Parsing, suffix = false) {
 
 export function isValidSuffix(pgn: PGN) {
   return isValidPGN(pgn, undefined, true)
+}
+
+export function toLogosSearch({ verb, root }: VerbAndRoot) {
+  const stemCodes: Record<Stem, string> = {
+    Qal: 'a',
+    Piel: 'b',
+    Hiphil: 'c',
+    Niphal: 'd',
+    Pual: 'e',
+    Hitpael: 'g',
+    Hophal: 'i',
+  }
+  const stem = stemCodes[verb.stem]
+
+  const tenseCodes: Record<Tense, string> = {
+    Qatal: 'P',
+    Yiqtol: 'I',
+    Wayyiqtol: 'W',
+    'Active participle': 'R',
+    'Passive participle': 'S',
+    'Infinitive construct': 'c',
+    'Infinitive absolute': 'a',
+    Imperative: 'M',
+  }
+  const tense = tenseCodes[verb.tense]
+
+  return `lemma.sesb.h:${root.root}@V${stem}${tense}`
+}
+
+export function toLogosLink(word: VerbAndRoot) {
+  const q = encodeURIComponent(toLogosSearch(word))
+  return (
+    `logos4:Search;kind=MorphSearch;q=${q};`
+    + 'syntax=v2;documentlevel=verse;match=nostem;'
+    + 'in=raw:Single$7CResourceId$3DLLS:1.0.204'
+  )
 }

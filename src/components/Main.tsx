@@ -119,6 +119,9 @@ function MainPage() {
           if (e.message?.toLowerCase().includes('no valid verbs')) {
             setError(e.message)
             setCurrentVerb(undefined)
+          } else {
+            setError('Could not get words from server')
+            setCurrentVerb(undefined)
           }
         })
     },
@@ -185,7 +188,7 @@ function MainPage() {
       display="flex"
     >
       <Box position="fixed" top={0} left={0} right={0}>
-        <Fade in={!verbs || verbs.length === 0}>
+        <Fade in={!error && (!verbs || verbs.length === 0)}>
           <LinearProgress variant="query" />
         </Fade>
       </Box>

@@ -25,6 +25,10 @@ import {
   isSimplePart,
   isValidPGN,
   isValidSuffix,
+  getStemName,
+  getTenseName,
+  getPGNKey,
+  hasSetPGN,
 } from '../util'
 import type { Verb, Root } from '../../lambda/data'
 import type { FilterCondition, Stem, Tense } from '../../lambda/filter'
@@ -42,6 +46,7 @@ const HighlightedSpan = styled('span')({
   color: 'blue',
 })
 const HebrewSpan = styled('span')({
+  fontSize: '110%',
   fontFamily: "'Ezra SIL', Roboto, David, sans-serif",
 })
 
@@ -403,19 +408,27 @@ function VerbParsing({
         Practise again later
       </Button>
 
-      {showAnswer && (
-        <>
-          <Typography
-            variant="h6"
-            color='grey.600'
-          >
-            <FadedSpan>{'Root: '}</FadedSpan>
+      <Typography
+        variant="h5"
+        color='grey.800'
+      >
+        {showAnswer ? (
+          <>
             <HebrewSpan>{root.root}</HebrewSpan>
             {' '}
             <FadedSpan>(to {root.gloss}; {root.count} occurrences)</FadedSpan>
-          </Typography>
-        </>
-      )}
+            {'; '}
+            {[
+              getStemName(verb.stem),
+              getTenseName(verb.tense),
+              getPGNKey(verb.pgn),
+              hasSetPGN(verb.suffix) && `+ ${getPGNKey(verb.suffix)} suffix`,
+            ].filter(Boolean).join(' ')}
+          </>
+        ) : (
+          <HebrewSpan><br /></HebrewSpan>
+        )}
+      </Typography>
     </Stack>
   )
 }

@@ -91,8 +91,8 @@ function MainPage() {
   })
 
   const [error, setError] = useState<string>('')
-  const [verbs, setVerbs] = useState<VerbAndRoot[]>()
-  const [currentVerb, setCurrentVerb] = useState<VerbAndRoot>()
+  const [verbs, setVerbs] = useLocalStorage<VerbAndRoot[]>('verbQueue', [])
+  const [currentVerb, setCurrentVerb] = useLocalStorage<VerbAndRoot | undefined>('currentVerb', undefined)
 
   const [streak, setStreak] = useLocalStorage('currentStreak', 0)
   const [bestStreak, setBestStreak] = useLocalStorage('bestStreak', 0)

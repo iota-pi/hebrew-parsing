@@ -7,9 +7,9 @@ from typing import Dict, Set
 from tf.advanced.app import App
 from tf.app import use
 
-MIN_LEX_FREQ = 0
+MIN_LEX_FREQ = 10
 MIN_QAL_QATAL_FREQ = 50
-MAX_VERSE_LENGTH = 15
+MIN_CLAUSE_LEN = 4
 
 VOWELS = (
     '\u05b0\u05b1\u05b2\u05b3\u05b4\u05b5\u05b6\u05b7\u05b8\u05b9\u05ba\u05bb\u05bc'
@@ -178,7 +178,7 @@ class Verb:
     def get_context(self) -> tuple[str, tuple]:
         clause = api.L.u(self.n, otype="clause")[0]
         clause_text = api.T.text(clause)
-        if len(clause_text.split()) < 3:
+        if len(clause_text.split()) < MIN_CLAUSE_LEN:
             verses = api.L.u(clause, otype="verse")
             if len(verses):
                 all_clauses = api.L.d(verses[0], otype="clause")
@@ -240,11 +240,13 @@ class Verb:
         if self.root.lex == "אמר" and self.stem == "qal" and self.tense == "perf":
             return r < 1 / 2
         if self.root.lex == "אמר" and self.stem == "qal" and self.tense == "wayq":
-            return r < 2 / 3
+            return r < 3 / 4
         if (
             self.root.lex == "היה"
             and self.stem == "qal"
         ):
+            if self.tense == "perf" or self.tense == "yqtl":
+                return r < 3 / 4
             return r < 1 / 2
         if (
             self.stem == "qal"

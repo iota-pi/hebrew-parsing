@@ -38,7 +38,7 @@ const baseTenses = (
 ) as FilterCondition['tense']
 
 const minFrequencyOptions = [
-  0,
+  // 0,
   10,
   50,
   100,

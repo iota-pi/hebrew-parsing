@@ -20,7 +20,7 @@ type WordContext = {
   clause: string,
   reference: WordReference,
 }
-type DataParsing = [
+type DataPGN = [
   PersonAbbreviation,
   GenderAbbreviation,
   VerbNumberAbbreviation,
@@ -31,8 +31,8 @@ type DataVerb = [
   StemAbbreviation,
   TenseAbbreviation,
   ...DataWordContext,
-  ...DataParsing,
-  ...DataParsing | [undefined, undefined, undefined],
+  PGNAbbreviation,
+  PGNAbbreviation | undefined,
 ]
 type DataRoot = [number, string, number, string]
 
@@ -125,6 +125,27 @@ type BookAbbreviation = keyof typeof rawBookMapping
 type Book = typeof rawBookMapping[BookAbbreviation]
 const bookMapping = rawBookMapping as Record<BookAbbreviation, string>
 
+const rawPGNMapping = {
+  0: [0, 0, 0],
+  5: [0, 1, 1],
+  9: [0, 1, 2],
+  12: [0, 2, 1],
+  13: [0, 2, 2],
+  8: [3, 0, 2],
+  1: [3, 1, 1],
+  3: [3, 1, 2],
+  6: [3, 2, 1],
+  14: [3, 2, 2],
+  2: [2, 1, 1],
+  7: [2, 1, 2],
+  11: [2, 2, 1],
+  15: [2, 2, 2],
+  4: [1, 0, 1],
+  10: [1, 0, 2],
+}
+type PGNAbbreviation = keyof typeof rawPGNMapping
+const pgnMapping = rawPGNMapping as Record<PGNAbbreviation, DataPGN>
+
 export function processRoots(roots: DataRoot[]) {
   return roots.map(([id, root, count, gloss]) => ({ id, root, count, gloss }))
 }
@@ -142,12 +163,8 @@ export function processVerbs(verbs: DataVerb[]) {
       book,
       chapter,
       verse,
-      person,
-      gender,
-      number,
-      suffixPerson,
-      suffixGender,
-      suffixNumber,
+      pgn,
+      suffix,
     ]) => ({
       verb,
       root,
@@ -157,10 +174,10 @@ export function processVerbs(verbs: DataVerb[]) {
         clause: clauseContext,
         reference: [getBook(book), chapter, verse],
       } as WordContext,
-      pgn: getParsing([person, gender, number]),
+      pgn: getParsing(pgnMapping[pgn]),
       suffix: getParsing(
-        suffixPerson && suffixGender && suffixNumber
-          ? [suffixPerson, suffixGender, suffixNumber]
+        suffix
+          ? pgnMapping[suffix]
           : undefined
       ),
     })
@@ -204,7 +221,7 @@ export function getNumber(code: VerbNumberAbbreviation): VerbNumber {
   throw new Error(`Unknown number code "${code}"`)
 }
 
-export function getParsing(input: DataParsing | null | undefined): PGN {
+export function getParsing(input: DataPGN | null | undefined): PGN {
   const [person = 0, gender = 0, number = 0] = input || []
   return {
     person: person === 0 ? 'N/A' : getPerson(person),

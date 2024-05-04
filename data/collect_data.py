@@ -78,8 +78,24 @@ BOOKS = {
     'Zephaniah': 38,
 }
 
-class UnhandledStemError(KeyError):
-    pass
+PGNS = {
+    (0, 0, 0): 0,
+    (0, 1, 1): 5,
+    (0, 1, 2): 9,
+    (0, 2, 1): 12,
+    (0, 2, 2): 13,
+    (3, 0, 2): 8,
+    (3, 1, 1): 1,
+    (3, 1, 2): 3,
+    (3, 2, 1): 6,
+    (3, 2, 2): 14,
+    (2, 1, 1): 2,
+    (2, 1, 2): 7,
+    (2, 2, 1): 11,
+    (2, 2, 2): 15,
+    (1, 0, 1): 4,
+    (1, 0, 2): 10,
+}
 
 PERSONS = {"p1": 1, "p2": 2, "p3": 3, "unknown": 0, "NA": 0}
 GENDERS = {"m": 1, "f": 2, "unknown": 0, "NA": 0}
@@ -88,6 +104,9 @@ NUMBERS = {"sg": 1, "pl": 2, "unknown": 0, "NA": 0}
 app: App = use("ETCBC/bhsa", silent=True)
 api = app.api
 
+
+class UnhandledStemError(KeyError):
+    pass
 
 class RootManager:
     def __init__(self):
@@ -159,16 +178,19 @@ class Verb:
     def get_context(self) -> tuple[str, tuple]:
         clause = api.L.u(self.n, otype="clause")[0]
         clause_text = api.T.text(clause)
-        if (
-            len(clause_text.split()) == 1
-            and self.stem != "qal"
-            and self.tense != "qatal"
-        ):
-            try:
-                clause = api.L.u(clause, otype="half_verse")[0]
-            except IndexError:
-                clause = api.L.u(clause, otype="sentence")[0]
-            clause_text = api.T.text(clause)
+        if len(clause_text.split()) < 3:
+            verses = api.L.u(clause, otype="verse")
+            if len(verses):
+                all_clauses = api.L.d(verses[0], otype="clause")
+                main_clause_index = all_clauses.index(clause)
+                if main_clause_index > 0:
+                    clause_text = (
+                        api.T.text(all_clauses[main_clause_index - 1])
+                        + " "
+                        + clause_text
+                    )
+                if main_clause_index < len(all_clauses) - 1:
+                    clause_text += " " + api.T.text(all_clauses[main_clause_index + 1])
         clause_text = clause_text.replace(self.verb, "$")
         clause_text = clause_text.replace("׃", "").strip()
 
@@ -187,21 +209,21 @@ class Verb:
             *self.get_context(),
         ]
 
-        pgn = [
+        pgn = PGNS[(
             PERSONS.get(self.person, 0),
             GENDERS.get(self.gender, 0),
             NUMBERS.get(self.number, 0),
-        ]
-        suffix = [
+        )]
+        suffix = PGNS[(
             PERSONS.get(self.pronom_person, 0),
             GENDERS.get(self.pronom_gender, 0),
             NUMBERS.get(self.pronom_number, 0),
-        ]
-        if sum(pgn) + sum(suffix) > 0:
-            result.extend(pgn)
+        )]
+        if pgn + suffix > 0:
+            result.append(pgn)
 
-        if sum(suffix) > 0:
-            result.extend(suffix)
+        if suffix > 0:
+            result.append(suffix)
 
         return result
 

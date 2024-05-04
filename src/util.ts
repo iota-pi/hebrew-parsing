@@ -317,18 +317,31 @@ export function toLogosSearch({ verb, root }: VerbAndRoot) {
   const stem = stemCodes[verb.stem]
 
   const tenseCodes: Record<Tense, string> = {
-    Qatal: 'P',
-    Yiqtol: 'I',
+    Qatal: '[Pp]',
+    Yiqtol: '[Iw]',
     Wayyiqtol: 'W',
     'Active participle': 'R',
     'Passive participle': 'S',
-    'Infinitive construct': 'c',
-    'Infinitive absolute': 'a',
+    'Infinitive construct': 'F',
+    'Infinitive absolute': 'F',
     Imperative: 'M',
   }
   const tense = tenseCodes[verb.tense]
 
-  return `lemma.sesb.h:${root.root}@V${stem}${tense}`
+  const person = '?'
+  const gender = '?'
+  const number = '?'
+  const state = (
+    verb.tense === 'Infinitive construct'
+      ? 'C'
+      : (
+        verb.tense === 'Infinitive absolute'
+          ? 'A'
+          : '?'
+      )
+  )
+
+  return `root:${root.root}@V${stem}${tense}${person}${gender}${number}${state}`
 }
 
 export function toLogosLink(word: VerbAndRoot) {
@@ -336,6 +349,6 @@ export function toLogosLink(word: VerbAndRoot) {
   return (
     `logos4:Search;kind=MorphSearch;q=${q};`
     + 'syntax=v2;documentlevel=verse;match=nostem;'
-    + 'in=raw:Single$7CResourceId$3DLLS:1.0.204'
+    + 'in=raw:Single$7CResourceId$3DLLS:LHB'
   )
 }

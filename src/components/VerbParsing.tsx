@@ -51,12 +51,14 @@ function VerbParsing({
   root: rawRoot,
   onAnswer,
   onNext,
+  onGiveAgain,
 }: {
   filterOptions: FilterCondition,
   verb: Verb,
   root: Root,
   onAnswer: (correct: boolean) => void,
   onNext: () => void,
+  onGiveAgain: () => void,
 }) {
   const [stems, tenses] = useMemo(
     () => {
@@ -271,6 +273,13 @@ function VerbParsing({
     },
     [canHaveSuffixes, mustHaveSuffixes, onNext, stems, tenses],
   )
+  const handleGiveAgain = useCallback(
+    () => {
+      onGiveAgain()
+      handleNext()
+    },
+    [handleNext, onGiveAgain],
+  )
 
   const clauseParts = useMemo(
     () => verb.context.clause.split(CONTEXT_REPLACEMENT_CODE),
@@ -383,6 +392,15 @@ function VerbParsing({
         )}
       >
         {showAnswer ? 'Next' : 'Check'}
+      </Button>
+
+      <Button
+        onClick={handleGiveAgain}
+        color="error"
+        variant="outlined"
+        disabled={!showAnswer}
+      >
+        Practise again later
       </Button>
 
       {showAnswer && (

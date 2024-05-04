@@ -91,6 +91,7 @@ function MainPage() {
   })
 
   const [error, setError] = useState<string>('')
+  const [fetchedCount, setFetchedCount] = useLocalStorage('fetchedCount', 0)
   const [verbs, setVerbs] = useLocalStorage<VerbAndRoot[]>('verbQueue', [])
   const [currentVerb, setCurrentVerb] = useLocalStorage<VerbAndRoot | undefined>('currentVerb', undefined)
 
@@ -108,13 +109,16 @@ function MainPage() {
           filterConditions,
         },
       )
-        .then(newVerbs => setVerbs(
-          verbs => {
-            const existing = verbs ?? []
-            const uniqueNew = newVerbs.filter(v1 => existing.every(v2 => v1.verb.verb !== v2.verb.verb))
-            return [...existing, ...uniqueNew]
-          },
-        ))
+        .then(newVerbs => {
+          setVerbs(
+            verbs => {
+              const existing = verbs ?? []
+              const uniqueNew = newVerbs.filter(v1 => existing.every(v2 => v1.verb.verb !== v2.verb.verb))
+              return [...existing, ...uniqueNew]
+            },
+          )
+          setFetchedCount(c => newVerbs.length)
+        })
         .catch((e: TRPCClientError<AppRouter>) => {
           if (e.message?.toLowerCase().includes('no valid verbs')) {
             setError(e.message)
@@ -125,7 +129,7 @@ function MainPage() {
           }
         })
     },
-    [filterConditions, biasOptions, utils],
+    [biasOptions, filterConditions, utils],
   )
   const debouncedFetchNewWords = useDebounceCallback(
     fetchNewWords,
@@ -150,14 +154,29 @@ function MainPage() {
   const handleNext = useCallback(
     () => {
       if (verbs && verbs.length > 0) {
-        const [, ...newWords] = verbs
-        setVerbs(newWords)
+        setVerbs(v => {
+          const [, ...newWords] = v
+          return newWords
+        })
       }
-      if (!verbs || verbs.length <= 2) {
+
+      if (!verbs || verbs.length === 0 || (verbs.length < fetchedCount / 2)) {
         debouncedFetchNewWords()
       }
     },
-    [verbs, debouncedFetchNewWords],
+    [debouncedFetchNewWords, verbs],
+  )
+  const handleGiveAgain = useCallback(
+    () => {
+      if (currentVerb) {
+        setVerbs(v => [
+          ...v.slice(0, 4),
+          v[0],
+          ...v.slice(4),
+        ])
+      }
+    },
+    [currentVerb, debouncedFetchNewWords, verbs],
   )
   useEffect(
     () => {
@@ -202,6 +221,7 @@ function MainPage() {
               root={currentVerb.root}
               onAnswer={handleAnswer}
               onNext={handleNext}
+              onGiveAgain={handleGiveAgain}
             />
           ) : (
             <Typography

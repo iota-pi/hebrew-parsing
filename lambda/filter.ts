@@ -119,7 +119,12 @@ export function getRootTypes(root: string, stem: Stem) {
   }
 
   const normalisedRoot = root.replace(/[\u05c1\u05c2]/g, '')
-  if ('וי'.includes(normalisedRoot[1]) || normalisedRoot.length === 2) {
+  if (
+    ('וי'.includes(normalisedRoot[1]) || normalisedRoot.length === 2)
+    && root !== 'היה'
+    && root !== 'חיה'
+    && root !== 'צוה'
+  ) {
     rootTypes.push('hollow')
   }
 

@@ -103,7 +103,11 @@ export function getPGNName<K extends keyof PGN>(key: K, value: PGN[K]) {
 }
 export function getPGNKey(pgn: PGN) {
   const p = pgn.person === 'N/A' ? '' : pgn.person.toString()
-  const g = pgn.gender === 'N/A' ? '' : pgn.gender
+  const g = (
+    pgn.gender === 'N/A'
+      ? (pgn.person === 'N/A' ? '' : 'c')
+      : pgn.gender
+  )
   const n = pgn.number === 'N/A' ? '' : pgn.number
   return p + g + n
 }

@@ -15,8 +15,6 @@ locals {
 
 resource "aws_s3_bucket" "app" {
   bucket = local.bucket_name
-
-  tags = local.standard_tags
 }
 
 resource "aws_s3_bucket_cors_configuration" "app_cors" {
@@ -117,8 +115,6 @@ resource "aws_cloudfront_distribution" "s3_distribution" {
     acm_certificate_arn = aws_acm_certificate.hebrew_cert.arn
     ssl_support_method  = "sni-only"
   }
-
-  tags = local.standard_tags
 }
 
 output "app_bucket" {

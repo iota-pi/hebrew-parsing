@@ -1,8 +1,8 @@
 import { TRPCError } from '@trpc/server'
 import { z } from 'zod'
-import { biasOptions, getBiasedVerbs, getRandomValidVerb } from './bias'
-import { VerbAndRoot, roots, verbs } from './data'
-import { filterConditions, getFilterFromConditions, getValidVerbs } from './filter'
+import { biasOptions, getBiasedVerbs, getRandomVerb } from '../src/bias'
+import { VerbAndRoot, roots, verbs } from './loadData'
+import { filterConditions, getFilterFromConditions, getValidVerbs } from '../src/filter'
 import { publicProcedure, router } from './trpc'
 
 const BATCH_SIZE = 10
@@ -30,7 +30,7 @@ export const appRouter = router({
           })
         }
         const result = (new Array(count * 2)).fill(0).map(
-          () => getRandomValidVerb(biasedVerbs, allRoots)
+          () => getRandomVerb(biasedVerbs, allRoots)
         )
         const uniqueResult = result.filter(
           (v1, i) => result.findIndex(v2 => v2.verb.verb === v1.verb.verb) === i

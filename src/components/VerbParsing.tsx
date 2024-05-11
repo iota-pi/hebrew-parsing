@@ -1,24 +1,22 @@
 import {
-  Button,
-  Stack,
-  Typography,
-} from '@mui/material'
-import {
   Fragment,
   useCallback,
   useEffect,
   useMemo,
   useState,
 } from 'react'
+import {
+  Button,
+  Stack,
+  Typography,
+} from '@mui/material'
 import styled from '@emotion/styled'
 import { grey } from '@mui/material/colors'
 import {
   ALL_PARTS,
-  CONTEXT_REPLACEMENT_CODE,
   Parsing,
   ParsingKey,
-  getPartFromVerb,
-  referenceToString,
+  getReferenceString,
   stripAccents,
   ApplicableParts,
   checkPart,
@@ -31,8 +29,8 @@ import {
   hasSetPGN,
   toLogosLink,
 } from '../util'
-import type { Verb, Root } from '../../lambda/data'
-import type { FilterCondition, Stem, Tense } from '../../lambda/filter'
+import type { LinkedOccurrence } from '../loadData'
+import type { FilterCondition, Stem, Tense } from '../filter'
 import ParsingControlGroup from './ParsingControlGroup'
 import PGNGroup from './PGNGroup'
 import SuffixSelection, { Suffix } from './SuffixSelection'
@@ -53,15 +51,13 @@ const HebrewSpan = styled('span')({
 
 function VerbParsing({
   filterOptions,
-  verb: rawVerb,
-  root: rawRoot,
+  occurrence: rawOccurrence,
   onAnswer,
   onNext,
   onGiveAgain,
 }: {
   filterOptions: FilterCondition,
-  verb: Verb,
-  root: Root,
+  occurrence: LinkedOccurrence,
   onAnswer: (correct: boolean) => void,
   onNext: () => void,
   onGiveAgain: () => void,
@@ -87,16 +83,14 @@ function VerbParsing({
   const [suffix, setSuffix] = useState<Suffix>(DEFAULT_SUFFIX)
   const [showAnswer, setShowAnswer] = useState(false)
 
-  const [verb, setVerb] = useState(rawVerb)
-  const [root, setRoot] = useState(rawRoot)
+  const [occurrence, setVerb] = useState(rawOccurrence)
   useEffect(
     () => {
       if (!showAnswer) {
-        setVerb(rawVerb)
-        setRoot(rawRoot)
+        setVerb(rawOccurrence)
       }
     },
-    [showAnswer, rawVerb, rawRoot],
+    [showAnswer, rawOccurrence],
   )
 
   useEffect(
@@ -246,20 +240,20 @@ function VerbParsing({
           continue
         }
 
-        const answer = getPartFromVerb(part, verb)
+        const answer = occurrence.parsing[part]
         if (!checkPart(part, parsing, answer as Parsing[typeof part])) {
           correct = false
           break
         }
       }
-      if (!applicableParts.suffix && isValidSuffix(verb.suffix)) {
+      if (!applicableParts.suffix && isValidSuffix(occurrence.parsing.suffix)) {
         correct = false
       }
 
       onAnswer(correct)
       setShowAnswer(true)
     },
-    [verb, parsing, applicableParts, onAnswer],
+    [occurrence, parsing, applicableParts, onAnswer],
   )
 
   const handleNext = useCallback(
@@ -279,31 +273,35 @@ function VerbParsing({
     },
     [canHaveSuffixes, mustHaveSuffixes, onNext, stems, tenses],
   )
-  const handleGiveAgain = useCallback(
-    () => {
-      onGiveAgain()
-      handleNext()
-    },
-    [handleNext, onGiveAgain],
-  )
 
-  const clauseParts = useMemo(
-    () => verb.context.clause.split(CONTEXT_REPLACEMENT_CODE),
-    [verb.context],
+  const replacementCode = useMemo(
+    () => new RegExp(
+      '\\b('
+      + Array.from(occurrence.verb.verb).join(
+        '[\u05b0-\u05bc\u05c1\u05c2\u05c7-\u05ea]?'
+      )
+      + ')\\b',
+      'g',
+    ),
+    [occurrence.verb],
   )
-  const clauseElement = useMemo(
-    () => clauseParts.map((part, index) => (
+  const verseParts = useMemo(
+    () => occurrence.verse.text.split(replacementCode),
+    [occurrence.verse, replacementCode],
+  )
+  const verseElement = useMemo(
+    () => verseParts.map((part, index) => (
       <Fragment key={index}>
-        {index > 0 && (
+        {stripAccents(part) === occurrence.verb.verb ? (
           <HighlightedSpan>
-            {verb.verb}
+            {part}
           </HighlightedSpan>
+        ) : (
+          part
         )}
-
-        {part}
       </Fragment>
     )),
-    [clauseParts, verb.verb],
+    [verseParts, occurrence.verb],
   )
 
   return (
@@ -315,7 +313,7 @@ function VerbParsing({
         py={2}
       >
         <HighlightedSpan>
-          {stripAccents(verb.verb)}
+          {stripAccents(occurrence.verb.verb)}
         </HighlightedSpan>
       </Typography>
 
@@ -326,7 +324,7 @@ function VerbParsing({
         textAlign={'right'}
       >
         <FadedSpan>
-          {clauseElement}
+          {verseElement}
         </FadedSpan>
       </Typography>
 
@@ -335,7 +333,7 @@ function VerbParsing({
         textAlign={'right'}
         color='grey.600'
       >
-        {referenceToString(verb.context.reference)}
+        {getReferenceString(occurrence.verse)}
       </Typography>
 
       <Stack direction="row" spacing={2} overflow="auto">
@@ -349,7 +347,7 @@ function VerbParsing({
               part={part}
               showAnswer={showAnswer}
               value={parsing[part]}
-              verb={verb}
+              occurrence={occurrence}
             />
           ) : (
             <PGNGroup
@@ -360,7 +358,7 @@ function VerbParsing({
               part={part}
               showAnswer={showAnswer}
               value={parsing[part]}
-              verb={verb}
+              occurrence={occurrence}
             />
           )
         ))}
@@ -372,7 +370,7 @@ function VerbParsing({
               onChange={handleToggleSuffix}
               showAnswer={showAnswer}
               suffix={suffix}
-              verb={verb}
+              parsing={occurrence.parsing}
             />
 
             <PGNGroup
@@ -382,7 +380,7 @@ function VerbParsing({
               part="suffix"
               showAnswer={showAnswer}
               value={parsing.suffix}
-              verb={verb}
+              occurrence={occurrence}
             />
           </>
         )}
@@ -401,7 +399,7 @@ function VerbParsing({
       </Button>
 
       <Button
-        onClick={handleGiveAgain}
+        onClick={onGiveAgain}
         color="error"
         variant="outlined"
         disabled={!showAnswer}
@@ -415,15 +413,19 @@ function VerbParsing({
       >
         {showAnswer ? (
           <>
-            <HebrewSpan>{root.root}</HebrewSpan>
+            <HebrewSpan>{occurrence.root.root}</HebrewSpan>
             {' '}
-            <FadedSpan>(to {root.gloss}; {root.count} occurrences)</FadedSpan>
+            <FadedSpan>
+              (to {occurrence.root.gloss}; {occurrence.root.count} occurrences)
+            </FadedSpan>
             {'; '}
             {[
-              getStemName(verb.stem),
-              getTenseName(verb.tense),
-              getPGNKey(verb.pgn),
-              hasSetPGN(verb.suffix) && `+ ${getPGNKey(verb.suffix)} suffix`,
+              getStemName(occurrence.parsing.stem),
+              getTenseName(occurrence.parsing.tense),
+              getPGNKey(occurrence.parsing.pgn),
+              hasSetPGN(occurrence.parsing.suffix)
+              && `+ ${getPGNKey(occurrence.parsing.suffix)} suffix`,
+              occurrence.parsing.paragogicNun && '+ paragogic nun',
             ].filter(Boolean).join(' ')}
           </>
         ) : (
@@ -438,7 +440,7 @@ function VerbParsing({
         {showAnswer ? (
           <>
             <span>Search in: </span>
-            <a href={toLogosLink({ verb, root })}>
+            <a href={toLogosLink(occurrence)}>
               <img src="/icon-logos.svg" alt="Logos Bible Software" />
             </a>
           </>
@@ -459,7 +461,7 @@ function getInitialApplicableParts(): ApplicableParts {
       Niphal: true,
       Piel: true,
       Pual: true,
-      Hitpael: true,
+      Hithpael: true,
       Hiphil: true,
       Hophal: true,
     },

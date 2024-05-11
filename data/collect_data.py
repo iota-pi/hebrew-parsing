@@ -1,19 +1,16 @@
 #!/usr/bin/env python3
 
+from collections import Counter
 import json
 import random
-from collections import Counter
-from typing import Dict, Set
+import re
+from typing import Any, Dict, Iterator, List, Set
 from tf.advanced.app import App
 from tf.app import use
 
 MIN_LEX_FREQ = 10
 MIN_QAL_QATAL_FREQ = 50
 MIN_CLAUSE_LEN = 4
-
-VOWELS = (
-    '\u05b0\u05b1\u05b2\u05b3\u05b4\u05b5\u05b6\u05b7\u05b8\u05b9\u05ba\u05bb\u05bc'
-)
 
 STEMS = {
     "qal": 1,
@@ -37,64 +34,45 @@ TENSES = {
 }
 
 BOOKS = {
-    '1_Chronicles': 0,
-    '1_Kings': 1,
-    '1_Samuel': 2,
-    '2_Chronicles': 3,
-    '2_Kings': 4,
-    '2_Samuel': 5,
-    'Amos': 6,
-    'Daniel': 7,
-    'Deuteronomy': 8,
-    'Ecclesiastes': 9,
-    'Esther': 10,
-    'Exodus': 11,
-    'Ezekiel': 12,
-    'Ezra': 13,
-    'Genesis': 14,
-    'Habakkuk': 15,
-    'Haggai': 16,
-    'Hosea': 17,
-    'Isaiah': 18,
-    'Jeremiah': 19,
-    'Job': 20,
-    'Joel': 21,
-    'Jonah': 22,
-    'Joshua': 23,
-    'Judges': 24,
-    'Lamentations': 25,
-    'Leviticus': 26,
-    'Malachi': 27,
-    'Micah': 28,
-    'Nahum': 29,
-    'Nehemiah': 30,
-    'Numbers': 31,
-    'Obadiah': 32,
-    'Proverbs': 33,
-    'Psalms': 34,
-    'Ruth': 35,
-    'Song_of_songs': 36,
-    'Zechariah': 37,
-    'Zephaniah': 38,
-}
-
-PGNS = {
-    (0, 0, 0): 0,
-    (0, 1, 1): 5,
-    (0, 1, 2): 9,
-    (0, 2, 1): 12,
-    (0, 2, 2): 13,
-    (3, 0, 2): 8,
-    (3, 1, 1): 1,
-    (3, 1, 2): 3,
-    (3, 2, 1): 6,
-    (3, 2, 2): 14,
-    (2, 1, 1): 2,
-    (2, 1, 2): 7,
-    (2, 2, 1): 11,
-    (2, 2, 2): 15,
-    (1, 0, 1): 4,
-    (1, 0, 2): 10,
+    "1_Chronicles": 0,
+    "1_Kings": 1,
+    "1_Samuel": 2,
+    "2_Chronicles": 3,
+    "2_Kings": 4,
+    "2_Samuel": 5,
+    "Amos": 6,
+    "Daniel": 7,
+    "Deuteronomy": 8,
+    "Ecclesiastes": 9,
+    "Esther": 10,
+    "Exodus": 11,
+    "Ezekiel": 12,
+    "Ezra": 13,
+    "Genesis": 14,
+    "Habakkuk": 15,
+    "Haggai": 16,
+    "Hosea": 17,
+    "Isaiah": 18,
+    "Jeremiah": 19,
+    "Job": 20,
+    "Joel": 21,
+    "Jonah": 22,
+    "Joshua": 23,
+    "Judges": 24,
+    "Lamentations": 25,
+    "Leviticus": 26,
+    "Malachi": 27,
+    "Micah": 28,
+    "Nahum": 29,
+    "Nehemiah": 30,
+    "Numbers": 31,
+    "Obadiah": 32,
+    "Proverbs": 33,
+    "Psalms": 34,
+    "Ruth": 35,
+    "Song_of_songs": 36,
+    "Zechariah": 37,
+    "Zephaniah": 38,
 }
 
 PERSONS = {"p1": 1, "p2": 2, "p3": 3, "unknown": 0, "NA": 0}
@@ -105,197 +83,283 @@ app: App = use("ETCBC/bhsa", silent=True)
 api = app.api
 
 
+def strip_accents(s: str):
+    return re.sub(rf"[^\u05b0-\u05bc\u05c1\u05c2\u05c7-\u05ea ]", "", s)
+
+
+def to_ascii(s: str):
+    hebrew_start = 0x0591
+    ascii_start = 33
+    return ''.join(
+        c if ord(c) < hebrew_start else chr(ascii_start + ord(c) - hebrew_start)
+        for c in s
+    )
+
+
+class HasId:
+    _id: int | None = None
+
+    @property
+    def id(self) -> int:
+        if self._id is None:
+            raise ValueError("id is not set")
+        return self._id
+
+    @id.setter
+    def id(self, value: int):
+        self._id = value
+
+    def merge(self, other: 'HasId') -> 'HasId':
+        return self
+
+class CountByUses[T: HasId]:
+    _data: Dict[str, T]
+    counts: Counter[str, int]
+
+    def __init__(self):
+        self._data = {}
+        self.counts = Counter()
+
+    def add(self, key: str, value: T) -> T:
+        if key not in self._data:
+            self._data[key] = value
+        else:
+            self._data[key].merge(value)
+        self.counts[key] += 1
+        return self._data[key]
+
+    def update_ids(self):
+        for i, (key, _) in enumerate(self.counts.most_common()):
+            self._data[key].id = i
+
+    @property
+    def data(self) -> Iterator[T]:
+        return (self._data[key] for key, _ in self.counts.most_common())
+
+
 class UnhandledStemError(KeyError):
     pass
 
-class RootManager:
-    def __init__(self):
-        self.roots: Dict[str, Root] = {}
-        self.counts: Dict[Root, int] = {}
-        self.order_lookup: Dict[Root, int] = {}
-        self.order_needs_updating = False
 
-    def __len__(self):
-        return len(self.roots)
-
-    def get_root(self, n):
-        root = Root(n)
-        self.roots.setdefault(root.lex, root)
-        self.counts.setdefault(root, 0)
-        self.counts[root] += 1
-        self.order_needs_updating = True
-        return root
-
-    def update_order(self):
-        order = Counter(self.counts).most_common()
-        self.order_lookup = {root: i for i, (root, _) in enumerate(order)}
-        self.order_needs_updating = False
-
-    def get_id(self, root):
-        if self.order_needs_updating:
-            self.update_order()
-        return self.order_lookup[root]
-
-
-class Root:
+class Root(HasId):
     def __init__(self, n):
         self.lex = api.F.lex_utf8.v(n)
         self.freq_lex = api.F.freq_lex.v(n)
         self.gloss = api.F.gloss.v(n)
 
-    def __eq__(self, other):
-        return self.lex == other.lex
-
-    def __hash__(self):
-        return hash(self.lex)
-
-    def to_simple_obj(self, roots: RootManager):
-        return [roots.get_id(self), self.lex, self.freq_lex, self.gloss]
+    def to_simple_obj(self):
+        return [to_ascii(self.lex), self.freq_lex, self.gloss]
 
 
-class Verb:
-    def __init__(self, n, roots: RootManager):
-        self.n = n
+class VerbForm(HasId):
+    def __init__(self, n: int, root: Root):
         self.verb = api.F.g_word_utf8.v(n)
-        self.root = roots.get_root(api.L.u(n, otype="lex")[0])
-        self.stem = api.F.vs.v(n)
-        if self.stem not in STEMS:
-            raise UnhandledStemError()
-        self.tense = api.F.vt.v(n)
-        self.person = api.F.ps.v(n)
-        self.gender = api.F.gn.v(n)
-        self.number = api.F.nu.v(n)
-        self.pronom_person = api.F.prs_ps.v(n)
-        self.pronom_gender = api.F.prs_gn.v(n)
-        self.pronom_number = api.F.prs_nu.v(n)
-        self.reference = api.T.sectionFromNode(n)
-
-        if self.tense == "wayq":
+        self.root = root
+        if api.F.vt.v(n) == "wayq":
             p = api.L.p(n, otype="word")[-1]
             if api.F.sp.v(p) == "conj":
                 self.verb = api.F.g_word_utf8.v(p) + self.verb
+        self.forms_with_accends = set([self.verb])
+        self.verb = strip_accents(self.verb)
 
-    def get_context(self) -> tuple[str, tuple]:
-        clause = api.L.u(self.n, otype="clause")[0]
-        clause_text = api.T.text(clause)
-        if len(clause_text.split()) < MIN_CLAUSE_LEN:
-            verses = api.L.u(clause, otype="verse")
-            if len(verses):
-                all_clauses = api.L.d(verses[0], otype="clause")
-                main_clause_index = all_clauses.index(clause)
-                if main_clause_index > 0:
-                    clause_text = (
-                        api.T.text(all_clauses[main_clause_index - 1])
-                        + " "
-                        + clause_text
-                    )
-                if main_clause_index < len(all_clauses) - 1:
-                    clause_text += " " + api.T.text(all_clauses[main_clause_index + 1])
-        clause_text = clause_text.replace(self.verb, "$")
-        clause_text = clause_text.replace("׃", "").strip()
+    def merge(self, other: 'VerbForm') -> 'VerbForm':
+        self.forms_with_accends.update(other.forms_with_accends)
+        return self
 
-        return (
-            clause_text,
-            BOOKS[self.reference[0]],
-            *self.reference[1:],
-        )
-
-    def to_simple_obj(self, roots):
-        result = [
-            self.verb,
-            roots.get_id(self.root),
-            STEMS[self.stem],
-            TENSES[self.tense],
-            *self.get_context(),
+    def to_simple_obj(self):
+        return [
+            to_ascii(self.verb),
+            self.root.id,
         ]
 
-        pgn = PGNS[(
+
+class VerbParsing(HasId):
+    def __init__(
+        self,
+        stem,
+        tense,
+        person,
+        gender,
+        number,
+        pronom_person,
+        pronom_gender,
+        pronom_number,
+        paragogic_nun,
+    ):
+        self.stem = stem
+        self.tense = tense
+        self.person = person
+        self.gender = gender
+        self.number = number
+        self.pronom_person = pronom_person
+        self.pronom_gender = pronom_gender
+        self.pronom_number = pronom_number
+        self.paragogic_nun = paragogic_nun
+
+    @staticmethod
+    def from_node(n):
+        stem = api.F.vs.v(n)
+        if stem not in STEMS:
+            raise UnhandledStemError()
+        tense = api.F.vt.v(n)
+        person = api.F.ps.v(n)
+        gender = api.F.gn.v(n)
+        number = api.F.nu.v(n)
+        pronom_person = api.F.prs_ps.v(n)
+        pronom_gender = api.F.prs_gn.v(n)
+        pronom_number = api.F.prs_nu.v(n)
+
+        should_end_with_nun = (
+            api.F.ps.v(n) in ("p3", "p2")
+            and api.F.gn.v(n) == "f"
+            and api.F.nu.v(n) == "pl"
+        )
+        paragogic_nun = (
+            api.F.vbe.v(n).endswith("NN")
+            if should_end_with_nun
+            else api.F.vbe.v(n).endswith("N")
+        )
+        return VerbParsing(
+            stem,
+            tense,
+            person,
+            gender,
+            number,
+            pronom_person,
+            pronom_gender,
+            pronom_number,
+            paragogic_nun,
+        )
+
+    def __repr__(self) -> str:
+        return " ".join((
+            self.stem,
+            self.tense,
+            self.person or "",
+            self.gender or "",
+            self.number or "",
+            self.pronom_person or "",
+            self.pronom_gender or "",
+            self.pronom_number or "",
+            'T' if self.paragogic_nun else 'F',
+        ))
+
+    def to_simple_obj(self):
+        result = [
+            STEMS[self.stem],
+            TENSES[self.tense],
+        ]
+
+        pgn = (
             PERSONS.get(self.person, 0),
             GENDERS.get(self.gender, 0),
             NUMBERS.get(self.number, 0),
-        )]
-        suffix = PGNS[(
+        )
+        suffix = (
             PERSONS.get(self.pronom_person, 0),
             GENDERS.get(self.pronom_gender, 0),
             NUMBERS.get(self.pronom_number, 0),
-        )]
-        if pgn + suffix > 0:
-            result.append(pgn)
+        )
 
-        if suffix > 0:
-            result.append(suffix)
+        if pgn or suffix:
+            result.append(pgn)
+            if suffix:
+                result.append(suffix)
+
+        result.append(1 if self.paragogic_nun else 0)
 
         return result
 
-    def has_vowels(self):
-        for vowel in VOWELS:
-            if vowel in self.verb:
-                return True
-        return False
+
+class Verse(HasId):
+    def __init__(self, n: int, verb: VerbForm):
+        self.reference = api.T.sectionFromNode(n)
+        self.text = self.get_text(n, verb)
+
+    def get_text(self, n: int, verb: VerbForm):
+        clause = api.L.u(n, otype="clause")[0]
+        clause_text = api.T.text(clause)
+        if len(clause_text.split()) < MIN_CLAUSE_LEN:
+            chunk = api.L.u(clause, otype="verse")
+            if len(chunk) == 0:
+                chunk = api.L.u(clause, otype="sentence")
+            clause_text = api.T.text(chunk[0])
+
+        clause_text = clause_text.replace("׃", "").replace("  ", " ").strip()
+        return clause_text
+
+    def __repr__(self):
+        return repr(self.reference)
+
+    def to_simple_obj(self):
+        return [
+            BOOKS[self.reference[0]],
+            *self.reference[1:],
+            to_ascii(self.text),
+        ]
+
+
+class VerbOccurrence:
+    def __init__(self, verb: VerbForm, parsing: VerbParsing, verse: Verse):
+        self.verb = verb
+        self.parsing = parsing
+        self.verse = verse
+
+    def to_simple_obj(self):
+        return [
+            self.verb.id,
+            self.parsing.id,
+            self.verse.id,
+        ]
 
     def should_skip(self):
         r = random.random()
-        if len(self.get_context()[0].split()) == 1:
-            return True
-        if self.root.lex == "אמר" and self.stem == "qal" and self.tense == "perf":
+        root = self.verb.root
+        if root.lex == "אמר" and self.parsing.stem == "qal" and self.parsing.tense == "perf":
             return r < 1 / 2
-        if self.root.lex == "אמר" and self.stem == "qal" and self.tense == "wayq":
+        if root.lex == "אמר" and self.parsing.stem == "qal" and self.parsing.tense == "wayq":
             return r < 3 / 4
         if (
-            self.root.lex == "היה"
-            and self.stem == "qal"
+            root.lex == "היה"
+            and self.parsing.stem == "qal"
         ):
-            if self.tense == "perf" or self.tense == "yqtl":
+            if self.parsing.tense == "perf" or self.parsing.tense == "yqtl":
                 return r < 3 / 4
             return r < 1 / 2
         if (
-            self.stem == "qal"
-            and self.tense == "perf"
-            and self.root.freq_lex < MIN_QAL_QATAL_FREQ
+            self.parsing.stem == "qal"
+            and self.parsing.tense == "perf"
+            and root.freq_lex < MIN_QAL_QATAL_FREQ
         ):
             return True
         return False
-
-    def __eq__(self, other):
-        return self.__hash__() == other.__hash__()
-
-    def __hash__(self):
-        return hash(
-            (
-                self.verb,
-                self.root.lex,
-                self.stem,
-                self.tense,
-                self.person,
-                self.gender,
-                self.number,
-                self.pronom_person,
-                self.pronom_gender,
-                self.pronom_number,
-                self.reference,
-            )
-        )
 
 
 class DataManager:
     def __init__(self):
-        self.verbs: Set[Verb] = set()
-        self.roots = RootManager()
-        self.stem_stats = { key: 0 for key in STEMS.keys() }
-        self.tense_stats = { key: 0 for key in TENSES.keys() }
-        self.suffixes = 0
+        self.roots = CountByUses[Root]()
+        self.verbs = CountByUses[VerbForm]()
+        self.parsings = CountByUses[VerbParsing]()
+        self.verses = CountByUses[Verse]()
+        self.occurrences: List[VerbOccurrence] = []
 
     def add_verb(self, n):
-        verb = Verb(n, self.roots)
-        if verb.should_skip():
+        r = Root(api.L.u(n, otype="lex")[0])
+        root = self.roots.add(r.lex, r)
+        v = VerbForm(n, root)
+        verb = self.verbs.add(v.verb, v)
+        p = VerbParsing.from_node(n)
+        parsing = self.parsings.add(str(p), p)
+        v = Verse(n, verb)
+        verse = self.verses.add(str(v), v)
+        occurrence = VerbOccurrence(verb, parsing, verse)
+        if occurrence.should_skip():
             return
-        self.verbs.add(verb)
-        self.stem_stats[verb.stem] += 1
-        self.tense_stats[verb.tense] += 1
-        if PERSONS.get(verb.pronom_person):
-            self.suffixes += 1
+        self.occurrences.append(occurrence)
 
     def should_skip_node(self, n):
+        if api.F.otype.v(n) != "word":
+            return True
         if api.F.language.v(n) != "Hebrew":
             return True
         if api.F.freq_lex.v(n) < MIN_LEX_FREQ:
@@ -318,52 +382,38 @@ class DataManager:
         except UnhandledStemError:
             return
 
-    def get_stats(self):
-        return {
-            "verbs": len(self.verbs),
-            "roots": len(self.roots),
-            "stems": self.stem_stats,
-            "tenses": self.tense_stats,
-            "suffixes": self.suffixes,
-        }
+    def finish(self):
+        self.roots.update_ids()
+        self.verbs.update_ids()
+        self.parsings.update_ids()
+        self.verses.update_ids()
+
+def write_json(data: Any, filename: str):
+    with open(filename, "w", encoding="utf-8") as file_object:
+        json.dump(
+            data,
+            file_object,
+            separators=(",", ":"),
+            ensure_ascii=False,
+            check_circular=False,
+        )
 
 def main():
     data = DataManager()
-
     for n in api.N.walk():
-        if api.F.otype.v(n) != "word":
-            continue
         data.process(n)
+    data.finish()
 
-    with open("verbs.json", "w", encoding="utf-8") as verbsFile:
-        json.dump(
-            [
-                verb.to_simple_obj(data.roots)
-                for verb in data.verbs
-            ],
-            verbsFile,
-            separators=(",", ":"),
-            ensure_ascii=False,
-            check_circular=False,
-        )
-
-    with open("roots.json", "w", encoding="utf-8") as rootsFile:
-        json.dump(
-            [root.to_simple_obj(data.roots) for root in data.roots.roots.values()],
-            rootsFile,
-            separators=(",", ":"),
-            ensure_ascii=False,
-            check_circular=False,
-        )
-
-    with open("stats.json", "w", encoding="utf-8") as statsFile:
-        json.dump(
-            data.get_stats(),
-            statsFile,
-            separators=(",", ":"),
-            ensure_ascii=False,
-            check_circular=False,
-        )
+    write_json(
+        {
+            "verbs": [v.to_simple_obj() for v in data.verbs.data],
+            "occurrences": [o.to_simple_obj() for o in data.occurrences],
+            "parsings": [p.to_simple_obj() for p in data.parsings.data],
+            "verses": [v.to_simple_obj() for v in data.verses.data],
+            "roots": [root.to_simple_obj() for root in data.roots.data],
+        },
+        "../public/data.json",
+    )
 
 
 if __name__ == "__main__":

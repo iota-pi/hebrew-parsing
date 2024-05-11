@@ -2,8 +2,8 @@ import {
   ToggleButtonGroup,
 } from '@mui/material'
 import { useCallback, useMemo } from 'react'
-import { Parsing, PART_MAPPING, checkSimplePart, getPartFromVerb, ApplicableParts, getSimplePartName, SimpleParsingPartKey } from '../util'
-import type { Verb } from '../../lambda/data'
+import { Parsing, PART_MAPPING, checkSimplePart, ApplicableParts, getSimplePartName, SimpleParsingPartKey, getPartFromVerb } from '../util'
+import type { LinkedOccurrence } from '../loadData'
 import ParsingControl from './ParsingControl'
 
 
@@ -14,7 +14,7 @@ function ParsingControlGroup<P extends SimpleParsingPartKey, V extends Parsing[P
   part,
   showAnswer,
   value,
-  verb,
+  occurrence,
 }: {
   applicable: ApplicableParts[P],
   onChange: (newValue: V) => void,
@@ -22,7 +22,7 @@ function ParsingControlGroup<P extends SimpleParsingPartKey, V extends Parsing[P
   part: P,
   showAnswer: boolean,
   value: V,
-  verb: Verb,
+  occurrence: LinkedOccurrence,
 }) {
   const handleToggle = useCallback(
     (event: React.MouseEvent<HTMLElement>, newData: V) => {
@@ -35,8 +35,8 @@ function ParsingControlGroup<P extends SimpleParsingPartKey, V extends Parsing[P
 
   const mapping = PART_MAPPING[part] as V[]
   const correctAnswer = useMemo(
-    () => getPartFromVerb(part, verb) as V,
-    [part, verb],
+    () => getPartFromVerb(part, occurrence.parsing) as V,
+    [part, occurrence],
   )
   const isCorrectSimpleOption = useCallback(
     (option: V | 'N/A') => {

@@ -1,3 +1,4 @@
+import { useCallback, useMemo } from 'react'
 import {
   Stack,
   ToggleButtonGroup,
@@ -17,8 +18,7 @@ import {
   hasSetPGN,
   OptionCorrectness,
 } from '../util'
-import type { NA, PGN, Verb } from '../../lambda/data'
-import { useCallback, useMemo } from 'react'
+import type { LinkedOccurrence, NA, PGN } from '../loadData'
 import ParsingControl from './ParsingControl'
 
 
@@ -29,7 +29,7 @@ function PGNGroup<P extends ParsingKey & ('pgn' | 'suffix')>({
   part,
   showAnswer,
   value,
-  verb,
+  occurrence,
 }: {
   applicable: ApplicableParts[P],
   onChange: (newValue: PGN) => void,
@@ -37,7 +37,7 @@ function PGNGroup<P extends ParsingKey & ('pgn' | 'suffix')>({
   part: P,
   showAnswer: boolean,
   value: PGN,
-  verb: Verb,
+  occurrence: LinkedOccurrence,
 }) {
   const handleChange = useCallback(
     (event: React.MouseEvent<HTMLElement>, newData: PGN) => {
@@ -51,7 +51,7 @@ function PGNGroup<P extends ParsingKey & ('pgn' | 'suffix')>({
   const isValid = part === 'pgn' ? isValidPGN : isValidSuffix
   const applicable: typeof rawApplicable = useMemo(
     () => {
-      if (showAnswer && hasSetPGN(verb.suffix)) {
+      if (showAnswer && hasSetPGN(occurrence.parsing.suffix)) {
         return {
           person: { 1: true, 2: true, 3: true, 'N/A': false },
           gender: { m: true, f: true, c: true, 'N/A': false },
@@ -60,7 +60,7 @@ function PGNGroup<P extends ParsingKey & ('pgn' | 'suffix')>({
       }
       return rawApplicable
     },
-    [rawApplicable, showAnswer, verb.suffix],
+    [rawApplicable, showAnswer, occurrence.parsing.suffix],
   )
 
   const pgnOptions: [PGN[], PGN[]] = useMemo(
@@ -110,15 +110,15 @@ function PGNGroup<P extends ParsingKey & ('pgn' | 'suffix')>({
     [applicable, isValid, parsing, part],
   )
   const correctAnswer = useMemo(
-    () => getPartFromVerb(part, verb) as PGN,
-    [part, verb],
+    () => getPartFromVerb(part, occurrence.parsing) as PGN,
+    [part, occurrence.parsing],
   )
   const isCorrectOption = useCallback(
     (option: PGN): OptionCorrectness => {
-      if (part === 'pgn' && !hasSetPGN(verb.pgn)) {
+      if (part === 'pgn' && !hasSetPGN(occurrence.parsing.pgn)) {
         return { match: false, exact: false }
       }
-      if (part === 'suffix' && !hasSetPGN(verb.suffix)) {
+      if (part === 'suffix' && !hasSetPGN(occurrence.parsing.suffix)) {
         return { match: false, exact: false }
       }
       const projectedParsing: Parsing = {
@@ -127,7 +127,7 @@ function PGNGroup<P extends ParsingKey & ('pgn' | 'suffix')>({
       }
       return checkPGN(projectedParsing, part, correctAnswer)
     },
-    [correctAnswer, parsing, part, verb.pgn, verb.suffix],
+    [correctAnswer, parsing, part, occurrence.parsing.pgn, occurrence.parsing.suffix],
   )
   const isApplicableOption = useCallback(
     (option: PGN) => {
@@ -152,7 +152,7 @@ function PGNGroup<P extends ParsingKey & ('pgn' | 'suffix')>({
       exclusive
       disabled={
         !applicable
-        && (!showAnswer || (part === 'suffix' && !verb.suffix?.person))
+        && (!showAnswer || (part === 'suffix' && !occurrence.parsing.suffix?.person))
       }
     >
       {pgnOptions.map(numberOptions => (

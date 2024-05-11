@@ -7,7 +7,7 @@ import {
   ToggleButtonGroup,
   useMediaQuery,
 } from '@mui/material'
-import type { FilterCondition, RootKey, Stem, Tense } from '../../lambda/filter'
+import type { FilterCondition, RootKey, Stem, Tense } from '../filter'
 import { ChangeEvent, useCallback, useMemo } from 'react'
 import { ALL_STEMS, ALL_TENSES, getRootTypeName, getTenseName } from '../util'
 import FilterSelect from './FilterSelect'

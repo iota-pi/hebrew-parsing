@@ -1,44 +1,38 @@
-import { z } from 'zod'
-import type { RootMap, Verb } from './data'
+import type { LinkedOccurrence, VerbParsing } from './loadData'
 import { RootKey, getRootTypes } from './filter'
 
-export const biasOptions = z.object({
-  biasRoots: z.boolean().default(true),
-  biasStems: z.boolean().default(true),
-  biasTenses: z.boolean().default(true),
-})
-export type BiasOptions = z.infer<typeof biasOptions>
-export type BiasCompatibleKey = keyof Verb & ('stem' | 'tense')
+export type BiasOptions = {
+  biasRoots: boolean,
+  biasStems: boolean,
+  biasTenses: boolean,
+}
+export type BiasCompatibleKey = keyof VerbParsing & ('stem' | 'tense')
 
-export function getRandomValidVerb(
-  validVerbs: Verb[],
-  roots: RootMap,
+export function getRandomVerb(
+  validVerbs: LinkedOccurrence[],
 ) {
-  const verb = validVerbs[Math.floor(Math.random() * validVerbs.length)]
-  const root = roots[verb.root]
-  return { verb, root }
+  return validVerbs[Math.floor(Math.random() * validVerbs.length)]
 }
 
 export function countByKey<K extends BiasCompatibleKey>(
   key: K,
-  verbs: Verb[],
+  verbs: LinkedOccurrence[],
 ) {
   return verbs.reduce(
-    (acc, verb) => {
-      acc[verb[key]] = (acc[verb[key]] || 0) + 1
+    (acc, { parsing }) => {
+      acc[parsing[key]] = (acc[parsing[key]] || 0) + 1
       return acc
     },
-    {} as Record<Verb[K], number>,
+    {} as Record<VerbParsing[K], number>,
   )
 }
 
 export function countByRoot(
-  verbs: Verb[],
-  roots: RootMap,
+  verbs: LinkedOccurrence[],
 ) {
   return verbs.reduce(
-    (acc, verb) => {
-      const rootTypes = getRootTypes(roots[verb.root].root, verb.stem)
+    (acc, { root, parsing }) => {
+      const rootTypes = getRootTypes(root.root, parsing.stem)
       for (const root of rootTypes) {
         acc[root] = (acc[root] || 0) + 1
       }
@@ -50,16 +44,15 @@ export function countByRoot(
 
 export function getBiasedVerbs(
   biasOptions: BiasOptions,
-  verbs: Verb[],
-  roots: RootMap,
+  verbs: LinkedOccurrence[],
 ) {
   let workingVerbs = verbs
   if (biasOptions.biasRoots) {
-    const rootCounts = countByRoot(workingVerbs, roots)
+    const rootCounts = countByRoot(workingVerbs)
     const biasRoots = getBiasFromCounts(rootCounts)
     workingVerbs = applyBias(
       workingVerbs,
-      verb => getRootTypes(roots[verb.root].root, verb.stem),
+      ({ root, parsing }) => getRootTypes(root.root, parsing.stem),
       biasRoots,
     )
   }
@@ -67,13 +60,13 @@ export function getBiasedVerbs(
   if (biasOptions.biasStems) {
     const stemCounts = countByKey('stem', workingVerbs)
     const biasStems = getBiasFromCounts(stemCounts)
-    workingVerbs = applyBias(workingVerbs, verb => verb.stem, biasStems)
+    workingVerbs = applyBias(workingVerbs, ({ parsing }) => parsing.stem, biasStems)
   }
 
   if (biasOptions.biasTenses) {
     const tenseCounts = countByKey('tense', workingVerbs)
     const biasTenses = getBiasFromCounts(tenseCounts)
-    workingVerbs = applyBias(workingVerbs, verb => verb.tense, biasTenses)
+    workingVerbs = applyBias(workingVerbs, ({ parsing }) => parsing.tense, biasTenses)
   }
 
   return workingVerbs
@@ -116,13 +109,13 @@ export function objectMin(
 }
 
 export function applyBias<K extends string, T extends Record<K, number>>(
-  verbs: Verb[],
-  key: (verb: Verb) => K | K[],
+  occurrences: LinkedOccurrence[],
+  key: (occurrence: LinkedOccurrence) => K | K[],
   bias: T,
 ) {
-  return verbs.filter(
-    verb => {
-      const keyResult = key(verb)
+  return occurrences.filter(
+    occurrence => {
+      const keyResult = key(occurrence)
       const biasKeys = Array.isArray(keyResult) ? keyResult : [keyResult]
       const biasThreshold = biasKeys.map(k => bias[k]).reduce((a, b) => Math.max(a, b), 0)
       return Math.random() < biasThreshold

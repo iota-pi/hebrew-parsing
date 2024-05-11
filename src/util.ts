@@ -1,13 +1,14 @@
 import type {
   Gender,
+  LinkedOccurrence,
   NA,
   PGN,
   Person,
-  Verb,
-  VerbAndRoot,
   VerbNumber,
-} from '../lambda/data'
-import type { RootKey, Stem, Tense } from '../lambda/filter'
+  VerbParsing,
+  Verse,
+} from './loadData'
+import type { RootKey, Stem, Tense } from './filter'
 import { ParsingCondition, equivalents } from './paradigms'
 
 export type OptionCorrectness = {
@@ -21,14 +22,13 @@ export type Entries<T> = {
 
 export const ONE_DAY = 1000 * 60 * 60 * 24
 export const ONE_WEEK = ONE_DAY * 7
-export const CONTEXT_REPLACEMENT_CODE = '$'
 
 export const ALL_STEMS: Stem[] = [
   'Qal',
   'Niphal',
   'Piel',
   'Pual',
-  'Hitpael',
+  'Hithpael',
   'Hiphil',
   'Hophal',
 ]
@@ -141,9 +141,9 @@ export function getSimplePartName<P extends SimpleParsingPartKey>(
   return value?.toString() || ''
 }
 
-export function referenceToString(reference: [string, number, number]) {
-  const book = reference[0].replaceAll('_', ' ')
-  return `${book} ${reference[1]}:${reference[2]}`
+export function getReferenceString(reference: Verse) {
+  const book = reference.book.replaceAll('_', ' ')
+  return `${book} ${reference.chapter}:${reference.verse}`
 }
 
 export function stripAccents(s: string) {
@@ -258,15 +258,8 @@ export function checkGender(attempt: Gender, correct?: Gender) {
   return false
 }
 
-export function getPartFromVerb<P extends ParsingKey>(part: P, verb: Verb): Parsing[P] {
-  if (isSimplePart(part)) {
-    return verb[part] as Parsing[P]
-  }
-  if (part === 'pgn') {
-    return verb.pgn as Parsing[P]
-  } else {
-    return verb.suffix as Parsing[P]
-  }
+export function getPartFromVerb<P extends ParsingKey>(part: P, verb: VerbParsing): Parsing[P] {
+  return verb[part] as Parsing[P]
 }
 
 export function hasSetPGN(pgn: PGN) {
@@ -308,17 +301,17 @@ export function isValidSuffix(pgn: PGN) {
   return isValidPGN(pgn, undefined, true)
 }
 
-export function toLogosSearch({ verb, root }: VerbAndRoot) {
+export function toLogosSearch({ parsing, root }: LinkedOccurrence) {
   const stemCodes: Record<Stem, string> = {
-    Qal: 'a',
-    Piel: 'b',
+    Qal: '[aZ]',
+    Piel: '[bCxRyNGzQ]',
     Hiphil: 'c',
     Niphal: 'd',
-    Pual: 'e',
-    Hitpael: 'g',
+    Pual: '[eFAwIKL]',
+    Hithpael: '[gTOBDSEPl]',
     Hophal: 'i',
   }
-  const stem = stemCodes[verb.stem]
+  const stem = stemCodes[parsing.stem]
 
   const tenseCodes: Record<Tense, string> = {
     Qatal: '[Pp]',
@@ -330,16 +323,16 @@ export function toLogosSearch({ verb, root }: VerbAndRoot) {
     'Infinitive absolute': 'F',
     Imperative: 'M',
   }
-  const tense = tenseCodes[verb.tense]
+  const tense = tenseCodes[parsing.tense]
 
   const person = '?'
   const gender = '?'
   const number = '?'
   const state = (
-    verb.tense === 'Infinitive construct'
+    parsing.tense === 'Infinitive construct'
       ? 'C'
       : (
-        verb.tense === 'Infinitive absolute'
+        parsing.tense === 'Infinitive absolute'
           ? 'A'
           : '?'
       )
@@ -348,7 +341,7 @@ export function toLogosSearch({ verb, root }: VerbAndRoot) {
   return `root:${root.root}@V${stem}${tense}${person}${gender}${number}${state}`
 }
 
-export function toLogosLink(word: VerbAndRoot) {
+export function toLogosLink(word: LinkedOccurrence) {
   const q = encodeURIComponent(toLogosSearch(word))
   return (
     `logos4:Search;kind=MorphSearch;q=${q};`

@@ -1,81 +1,81 @@
-import { z } from 'zod'
-import type { Root, RootMap, Verb } from './data'
-import { hasSetPGN } from '../src/util'
+import { getBiasedVerbs, getRandomVerb, type BiasOptions } from './bias'
+import type { LinkedOccurrence, Root, RootMap, Verb } from './loadData'
+import { getLinkedOccurrences } from './loadData'
+import { hasSetPGN } from './util'
 
-export const filterConditions = z.object({
-  'root': z.object({
-    strong: z.boolean(),
-    '1-gutteral': z.boolean(),
-    '1-aleph': z.boolean(),
-    '1-nun': z.boolean(),
-    '1-waw': z.boolean(),
-    '2-gutteral': z.boolean(),
-    '3-heh': z.boolean(),
-    '3-aleph': z.boolean(),
-    hollow: z.boolean(),
-    geminate: z.boolean(),
-  }),
-  'stem': z.object({
-    Qal: z.boolean(),
-    Niphal: z.boolean(),
-    Piel: z.boolean(),
-    Pual: z.boolean(),
-    Hitpael: z.boolean(),
-    Hiphil: z.boolean(),
-    Hophal: z.boolean(),
-  }),
-  'tense': z.object({
-    Qatal: z.boolean(),
-    Yiqtol: z.boolean(),
-    Wayyiqtol: z.boolean(),
-    Imperative: z.boolean(),
-    'Active participle': z.boolean(),
-    'Passive participle': z.boolean(),
-    'Infinitive construct': z.boolean(),
-    'Infinitive absolute': z.boolean(),
-  }),
-  suffixes: z.object({
-    include: z.boolean(),
-    exclusive: z.boolean(),
-  }),
-  minFrequency: z.number(),
-})
-export type FilterCondition = z.infer<typeof filterConditions>
+export type FilterCondition = {
+  'root': {
+    strong: boolean,
+    '1-gutteral': boolean,
+    '1-aleph': boolean,
+    '1-nun': boolean,
+    '1-waw': boolean,
+    '2-gutteral': boolean,
+    '3-heh': boolean,
+    '3-aleph': boolean,
+    hollow: boolean,
+    geminate: boolean,
+  },
+  'stem': {
+    Qal: boolean,
+    Niphal: boolean,
+    Piel: boolean,
+    Pual: boolean,
+    Hithpael: boolean,
+    Hiphil: boolean,
+    Hophal: boolean,
+  },
+  'tense': {
+    Qatal: boolean,
+    Yiqtol: boolean,
+    Wayyiqtol: boolean,
+    Imperative: boolean,
+    'Active participle': boolean,
+    'Passive participle': boolean,
+    'Infinitive construct': boolean,
+    'Infinitive absolute': boolean,
+  },
+  suffixes: {
+    include: boolean,
+    exclusive: boolean,
+  },
+  minFrequency: number,
+}
 export type RootKey = keyof FilterCondition['root']
 export type Stem = keyof FilterCondition['stem']
 export type Tense = keyof FilterCondition['tense']
 
 export function getFilterFromConditions(
   condition: FilterCondition | undefined,
-): ((verb: Verb, root: Root) => boolean) {
-  return (verb: Verb, root: Root) => {
+): ((occurrence: LinkedOccurrence) => boolean) {
+  return ({ root, parsing }) => {
     if (!condition) return true
 
-    if (!checkRoot(root.root, condition.root, verb.stem)) {
+    if (!checkRoot(root.root, condition.root, parsing.stem)) {
       return false
     }
 
-    if (!condition.stem[verb.stem]) {
+    if (!condition.stem[parsing.stem]) {
       return false
     }
 
-    if (!condition.tense[verb.tense]) {
+    if (!condition.tense[parsing.tense]) {
       if (
-        verb.stem === 'Qal'
-        || verb.tense !== 'Passive participle'
+        parsing.stem === 'Qal'
+        || parsing.tense !== 'Passive participle'
         || !condition.tense['Active participle']
       ) {
         return false
       }
     }
 
-    if (!condition.suffixes.include && hasSetPGN(verb.suffix)) {
+    if (!condition.suffixes.include && hasSetPGN(parsing.suffix)) {
       return false
     }
     if (
       condition.suffixes.include
       && condition.suffixes.exclusive
-      && !hasSetPGN(verb.suffix)
+      && !hasSetPGN(parsing.suffix)
     ) {
       return false
     }
@@ -175,10 +175,27 @@ export function replaceSofits(str: string) {
   )
 }
 
-export function getValidVerbs(
-  verbs: Verb[],
-  roots: RootMap,
-  filter: (verb: Verb, root: Root) => boolean,
-) {
-  return verbs.filter(v => filter(v, roots[v.root]))
+function shuffleArray<T>(array: T[]): T[] {
+  for (let i = array.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [array[i], array[j]] = [array[j], array[i]];
+  }
+  return array
+}
+
+export async function getWords({ biasOptions, filterConditions }: {
+  biasOptions: BiasOptions,
+  filterConditions: FilterCondition,
+}) {
+  const occurrencesPromise = getLinkedOccurrences()
+  const filter = getFilterFromConditions(filterConditions)
+  const occurrences = await occurrencesPromise
+  const validVerbs = occurrences.filter(filter)
+  const biasedVerbs = getBiasedVerbs(biasOptions, validVerbs)
+
+  if (biasedVerbs.length === 0) {
+    throw new Error('No valid verbs found')
+  }
+  shuffleArray(biasedVerbs)
+  return biasedVerbs
 }

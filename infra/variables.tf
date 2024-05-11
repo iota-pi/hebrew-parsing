@@ -16,8 +16,3 @@ variable "subdomain" {
 variable "cloudflare_zone_id" {
   type = string
 }
-
-variable "code_bucket" {
-  type    = string
-  default = "crosscode-lambdas"
-}

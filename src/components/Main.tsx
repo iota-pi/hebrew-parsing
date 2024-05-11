@@ -7,16 +7,13 @@ import {
   Typography,
 } from '@mui/material'
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import type { TRPCClientError } from '@trpc/client'
-import { useDebounceCallback, useLocalStorage } from 'usehooks-ts'
-import { trpc } from '../trpc'
+import { useLocalStorage } from 'usehooks-ts'
 import VerbParsing from './VerbParsing'
 import FilterSelection from './FilterSelection'
-import type { BiasOptions } from '../../lambda/bias'
-import type { VerbAndRoot } from '../../lambda/data'
-import type { FilterCondition } from '../../lambda/filter'
-import type { AppRouter } from '../../lambda/router'
+import type { BiasOptions } from '../bias'
+import { getWords, type FilterCondition } from '../filter'
 import type { Entries } from '../util'
+import type { LinkedOccurrence } from '../loadData'
 
 const defaultFilterConditions: FilterCondition = {
   root: {
@@ -36,7 +33,7 @@ const defaultFilterConditions: FilterCondition = {
     Niphal: true,
     Piel: true,
     Pual: true,
-    Hitpael: true,
+    Hithpael: true,
     Hiphil: true,
     Hophal: true,
   },
@@ -58,8 +55,6 @@ const defaultFilterConditions: FilterCondition = {
 }
 
 function MainPage() {
-  const utils = trpc.useUtils()
-
   const [rawFilterConditions, setFilterConditions] = useLocalStorage<FilterCondition>(
     'filterConditions',
     defaultFilterConditions,
@@ -90,50 +85,27 @@ function MainPage() {
     biasRoots: true,
   })
 
-  const [error, setError] = useState<string>('')
-  const [fetchedCount, setFetchedCount] = useLocalStorage('fetchedCount', 0)
-  const [verbs, setVerbs] = useLocalStorage<VerbAndRoot[]>('verbQueue', [])
-  const [currentVerb, setCurrentVerb] = useLocalStorage<VerbAndRoot | undefined>('currentVerb', undefined)
-
   const [streak, setStreak] = useLocalStorage('currentStreak', 0)
   const [bestStreak, setBestStreak] = useLocalStorage('bestStreak', 0)
   const [, setCorrectCount] = useLocalStorage('correctCount', 0)
   const [totalCount, setTotalCount] = useLocalStorage('totalCount', 0)
 
-  const fetchNewWords = useCallback(
+  const [error, setError] = useState<string>('')
+  const [verbs, setVerbs] = useState<LinkedOccurrence[]>([])
+
+  useEffect(
     () => {
       setError('')
-      utils.getWords.fetch(
-        {
-          biasOptions,
-          filterConditions,
-        },
-      )
-        .then(newVerbs => {
-          setVerbs(
-            verbs => {
-              const existing = verbs ?? []
-              const uniqueNew = newVerbs.filter(v1 => existing.every(v2 => v1.verb.verb !== v2.verb.verb))
-              return [...existing, ...uniqueNew]
-            },
-          )
-          setFetchedCount(newVerbs.length)
-        })
-        .catch((e: TRPCClientError<AppRouter>) => {
+      getWords({ biasOptions, filterConditions })
+        .then(setVerbs)
+        .catch((e: Error) => {
           if (e.message?.toLowerCase().includes('no valid verbs')) {
+            setVerbs([])
             setError(e.message)
-            setCurrentVerb(undefined)
-          } else {
-            setError('Could not get words from server')
-            setCurrentVerb(undefined)
           }
         })
     },
-    [biasOptions, filterConditions, setVerbs, setFetchedCount, setCurrentVerb, utils],
-  )
-  const debouncedFetchNewWords = useDebounceCallback(
-    fetchNewWords,
-    500,
+    [biasOptions, filterConditions],
   )
 
   const handleAnswer = useCallback(
@@ -153,41 +125,22 @@ function MainPage() {
   )
   const handleNext = useCallback(
     () => {
-      if (verbs && verbs.length > 0) {
-        setVerbs(v => {
-          const [, ...newWords] = v
-          return newWords
-        })
-      }
-
-      if (!verbs || verbs.length === 0 || (verbs.length < fetchedCount / 2)) {
-        debouncedFetchNewWords()
-      }
+      setVerbs(v => {
+        const [old, ...newWords] = v
+        return [...newWords, old]
+      })
     },
-    [debouncedFetchNewWords, fetchedCount, setVerbs, verbs],
+    [],
   )
   const handleGiveAgain = useCallback(
     () => {
-      if (currentVerb) {
-        setVerbs(v => [
-          ...v.slice(0, 4),
-          v[0],
-          ...v.slice(4),
-        ])
-      }
+      setVerbs(v => [
+        ...v.slice(1, 4),
+        v[0],
+        ...v.slice(4),
+      ])
     },
-    [currentVerb, setVerbs],
-  )
-  useEffect(
-    () => {
-      if ((!verbs || verbs.length === 0) && !error) {
-        handleNext()
-      }
-      if (verbs?.[0]) {
-        setCurrentVerb(verbs[0])
-      }
-    },
-    [error, handleNext, setCurrentVerb, verbs],
+    [],
   )
 
   const onChangeFilter = useCallback(
@@ -207,18 +160,17 @@ function MainPage() {
       display="flex"
     >
       <Box position="fixed" top={0} left={0} right={0}>
-        <Fade in={!error && (!verbs || verbs.length === 0)}>
+        <Fade in={!error && verbs.length === 0}>
           <LinearProgress variant="query" />
         </Fade>
       </Box>
 
       <Box width="100%" maxWidth={1200}>
         <Stack spacing={2}>
-          {currentVerb && !error ? (
+          {verbs[0] && !error ? (
             <VerbParsing
               filterOptions={filterConditions}
-              verb={currentVerb.verb}
-              root={currentVerb.root}
+              occurrence={verbs[0]}
               onAnswer={handleAnswer}
               onNext={handleNext}
               onGiveAgain={handleGiveAgain}

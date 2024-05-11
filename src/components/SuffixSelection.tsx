@@ -4,7 +4,7 @@ import {
 import {
   useCallback,
 } from 'react'
-import type { Verb } from '../../lambda/data'
+import type { VerbParsing } from '../loadData'
 import { hasSetPGN } from '../util'
 import ParsingControl from './ParsingControl'
 
@@ -16,13 +16,13 @@ function SuffixSelection({
   onChange,
   showAnswer,
   suffix,
-  verb,
+  parsing,
 }: {
   disabled: boolean,
   onChange: (suffix: Suffix) => void,
   showAnswer: boolean,
   suffix: Suffix,
-  verb: Verb,
+  parsing: VerbParsing,
 }) {
   const handleToggleSuffix = useCallback(
     (event: React.MouseEvent<HTMLElement>, newData: 'suffix' | 'no-suffix' | null) => {
@@ -32,7 +32,7 @@ function SuffixSelection({
     },
     [onChange],
   )
-  const hasSuffix = hasSetPGN(verb.suffix)
+  const hasSuffix = hasSetPGN(parsing.suffix)
 
   return (
     <ToggleButtonGroup

@@ -338,13 +338,13 @@ export function toLogosSearch({ parsing, root }: LinkedOccurrence) {
       )
   )
 
-  return `root:${root.root}@V${stem}${tense}${person}${gender}${number}${state}`
+  return `root.h:${root.root}@V${stem}${tense}${person}${gender}${number}${state}`
 }
 
 export function toLogosLink(word: LinkedOccurrence) {
   const q = encodeURIComponent(toLogosSearch(word))
   return (
-    `logos4:Search;kind=MorphSearch;q=${q};`
+    `logos4:Search;kind=BibleSearch;q=${q};`
     + 'syntax=v2;documentlevel=verse;match=nostem;'
     + 'in=raw:Single$7CResourceId$3DLLS:LHB'
   )

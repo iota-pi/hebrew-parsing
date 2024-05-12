@@ -7,7 +7,8 @@
   "scripts": {
     "build": "tsc && vite build",
     "upload": "aws s3 cp build/ s3://hebrew-parsing-production/ --recursive --acl public-read || true",
-    "deploy:app": "yarn build && yarn upload",
+    "upload:data": "aws s3 cp public/data.json.br s3://hebrew-parsing-production/data.json --acl public-read --content-encoding br || true",
+    "deploy:app": "yarn build && yarn upload && yarn upload:data",
     "deploy": "yarn deploy:app && cd infra && terraform apply",
     "lint": "yarn run eslint src --ext .ts,.tsx",
     "start": "vite",
@@ -59,7 +60,6 @@
     "@swc/core": "^1.3.102",
     "@swc/jest": "^0.2.29",
     "@typescript-eslint/parser": "^7.4.0",
-    "cross-env": "^7.0.3",
     "tsx": "^4.7.0",
     "vite-plugin-compression": "^0.5.1"
   },

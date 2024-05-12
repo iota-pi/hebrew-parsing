@@ -241,8 +241,7 @@ function VerbParsingComponent({
     () => {
       const withOtherSpellings = occurrences.filter(
         o => (
-          o.verb.verb !== occurrence.verb.verb
-          && o.root.root === occurrence.root.root
+          o.root.root === occurrence.root.root
           && o.parsing.stem === occurrence.parsing.stem
           && o.parsing.tense === occurrence.parsing.tense
           && o.parsing.pgn.person === occurrence.parsing.pgn.person
@@ -537,13 +536,19 @@ function VerbParsingComponent({
                   >
                     {count}
                     {' times: '}
-                    {[
-                      getStemName(p.stem),
-                      getTenseName(p.tense),
-                      getPGNKey(p.pgn),
-                      hasSetPGN(p.suffix) && `+ ${getPGNKey(p.suffix)} suffix`,
-                      p.paragogicNun && '+ paragogic nun',
-                    ].filter(Boolean).join(' ')}
+                    <Typography
+                      color={p === occurrence.parsing ? 'blue' : undefined}
+                      component="span"
+                      variant="inherit"
+                    >
+                      {[
+                        getStemName(p.stem),
+                        getTenseName(p.tense),
+                        getPGNKey(p.pgn),
+                        hasSetPGN(p.suffix) && `+ ${getPGNKey(p.suffix)} suffix`,
+                        p.paragogicNun && '+ paragogic nun',
+                      ].filter(Boolean).join(' ')}
+                    </Typography>
                   </Typography>
                 ))}
               </Stack>
@@ -569,7 +574,13 @@ function VerbParsingComponent({
                     {count}
                     {' times: '}
                     <HebrewSpan>
-                      {spelling}
+                      {spelling === occurrence.verb.verb ? (
+                        <HighlightedSpan>
+                          {spelling}
+                        </HighlightedSpan>
+                      ) : (
+                        spelling
+                      )}
                     </HebrewSpan>
                   </Typography>
                 ))}

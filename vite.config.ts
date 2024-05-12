@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import viteCompression from 'vite-plugin-compression'
 
 export default defineConfig({
   build: {
@@ -7,6 +8,10 @@ export default defineConfig({
   },
   plugins: [
     react(),
+    viteCompression({
+      algorithm: 'brotliCompress',
+      filter: /\.json$/,
+    }),
   ],
   server: {
     port: 3000,

@@ -3,9 +3,9 @@ locals {
   compress    = true
   origin_id   = "app_s3_origin"
 
-  min_ttl     = 0
-  default_ttl = 0
-  max_ttl     = 600
+  min_ttl     = 86400
+  default_ttl = 86400
+  max_ttl     = 604800
 
   allowed_methods = ["GET", "HEAD", "OPTIONS"]
   cached_methods  = ["GET", "HEAD"]
@@ -88,15 +88,7 @@ resource "aws_cloudfront_distribution" "s3_distribution" {
     allowed_methods  = local.allowed_methods
     cached_methods   = local.cached_methods
     target_origin_id = local.origin_id
-
-    forwarded_values {
-      query_string = false
-      headers      = ["Origin"]
-
-      cookies {
-        forward = "none"
-      }
-    }
+    cache_policy_id  = aws_cloudfront_cache_policy.app_cache_policy.id
 
     min_ttl                = local.min_ttl
     default_ttl            = local.default_ttl
@@ -114,6 +106,31 @@ resource "aws_cloudfront_distribution" "s3_distribution" {
   viewer_certificate {
     acm_certificate_arn = aws_acm_certificate.hebrew_cert.arn
     ssl_support_method  = "sni-only"
+  }
+}
+
+resource "aws_cloudfront_cache_policy" "app_cache_policy" {
+  name = "app_cache_policy"
+
+  min_ttl     = local.min_ttl
+  max_ttl     = local.max_ttl
+  default_ttl = local.default_ttl
+
+  parameters_in_cache_key_and_forwarded_to_origin {
+    cookies_config {
+      cookie_behavior = "none"
+    }
+
+    enable_accept_encoding_brotli = true
+    enable_accept_encoding_gzip = true
+
+    headers_config {
+      header_behavior = "none"
+    }
+
+    query_strings_config {
+      query_string_behavior = "none"
+    }
   }
 }
 

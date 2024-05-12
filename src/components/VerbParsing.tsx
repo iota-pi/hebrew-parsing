@@ -369,35 +369,38 @@ function VerbParsingComponent({
 
   return (
     <Stack spacing={2}>
-      <Typography
-        variant="h2"
-        textAlign="center"
-        fontFamily={"'Ezra SIL', Roboto, David, sans-serif"}
-        py={2}
-      >
-        <HighlightedSpan>
-          {stripAccents(occurrence.verb.verb)}
-        </HighlightedSpan>
-      </Typography>
+      <div>
+        <Typography
+          variant="h4"
+          fontFamily={"'Ezra SIL', Roboto, David, sans-serif"}
+          lineHeight={1.5}
+          textAlign={'right'}
+          pt={1}
+        >
+          <FadedSpan>
+            {verseElement}
+          </FadedSpan>
+        </Typography>
 
-      <Typography
-        variant="h4"
-        fontFamily={"'Ezra SIL', Roboto, David, sans-serif"}
-        lineHeight={1.5}
-        textAlign={'right'}
-      >
-        <FadedSpan>
-          {verseElement}
-        </FadedSpan>
-      </Typography>
+        <Typography
+          variant="h6"
+          textAlign={'right'}
+          color='grey.600'
+        >
+          {getReferenceString(occurrence.verse, occurrence.book)}
+        </Typography>
 
-      <Typography
-        variant="h6"
-        textAlign={'right'}
-        color='grey.600'
-      >
-        {getReferenceString(occurrence.verse, occurrence.book)}
-      </Typography>
+        <Typography
+          variant="h2"
+          textAlign="center"
+          fontFamily={"'Ezra SIL', Roboto, David, sans-serif"}
+          pb={2}
+        >
+          <HighlightedSpan>
+            {stripAccents(occurrence.verb.verb)}
+          </HighlightedSpan>
+        </Typography>
+      </div>
 
       <Stack direction="row" spacing={2} overflow="auto">
         {MAIN_PARTS.map(part => (

@@ -10,7 +10,6 @@ from tf.app import use
 
 MIN_LEX_FREQ = 10
 MIN_QAL_QATAL_FREQ = 50
-MIN_CLAUSE_LEN = 4
 
 STEMS = {
     "qal": 1,
@@ -131,6 +130,9 @@ class CountByUses[T: HasId]:
     def update_ids(self):
         for i, (key, _) in enumerate(self.counts.most_common()):
             self._data[key].id = i
+
+    def __len__(self):
+        return len(self.counts)
 
     @property
     def data(self) -> Iterator[T]:
@@ -272,19 +274,15 @@ class VerbParsing(HasId):
 
 
 class Verse(HasId):
-    def __init__(self, n: int, verb: VerbForm):
+    def __init__(self, n: int):
         self.reference = api.T.sectionFromNode(n)
-        self.text = self.get_text(n, verb)
+        self.text = self.get_text(n)
 
-    def get_text(self, n: int, verb: VerbForm):
-        clause = api.L.u(n, otype="clause")[0]
-        clause_text = api.T.text(clause)
-        if len(clause_text.split()) < MIN_CLAUSE_LEN:
-            chunk = api.L.u(clause, otype="verse")
-            if len(chunk) == 0:
-                chunk = api.L.u(clause, otype="sentence")
-            clause_text = api.T.text(chunk[0])
-
+    def get_text(self, n: int):
+        chunk = api.L.u(n, otype="verse")
+        if len(chunk) == 0:
+            chunk = api.L.u(n, otype="sentence")
+        clause_text = api.T.text(chunk[0])
         clause_text = clause_text.replace("׃", "").replace("  ", " ").strip()
         return clause_text
 
@@ -315,20 +313,21 @@ class VerbOccurrence:
     def should_skip(self):
         r = random.random()
         root = self.verb.root
-        if root.lex == "אמר" and self.parsing.stem == "qal" and self.parsing.tense == "perf":
+        parsing = self.parsing
+        if root.lex == "אמר" and parsing.stem == "qal" and parsing.tense == "perf":
             return r < 1 / 2
-        if root.lex == "אמר" and self.parsing.stem == "qal" and self.parsing.tense == "wayq":
+        if root.lex == "אמר" and parsing.stem == "qal" and parsing.tense == "wayq":
             return r < 3 / 4
         if (
             root.lex == "היה"
-            and self.parsing.stem == "qal"
+            and parsing.stem == "qal"
         ):
-            if self.parsing.tense == "perf" or self.parsing.tense == "yqtl":
+            if parsing.tense == "perf" or parsing.tense == "yqtl":
                 return r < 3 / 4
             return r < 1 / 2
         if (
-            self.parsing.stem == "qal"
-            and self.parsing.tense == "perf"
+            parsing.stem == "qal"
+            and parsing.tense == "perf"
             and root.freq_lex < MIN_QAL_QATAL_FREQ
         ):
             return True
@@ -350,7 +349,7 @@ class DataManager:
         verb = self.verbs.add(v.verb, v)
         p = VerbParsing.from_node(n)
         parsing = self.parsings.add(str(p), p)
-        v = Verse(n, verb)
+        v = Verse(n)
         verse = self.verses.add(str(v), v)
         occurrence = VerbOccurrence(verb, parsing, verse)
         if occurrence.should_skip():
@@ -388,6 +387,13 @@ class DataManager:
         self.parsings.update_ids()
         self.verses.update_ids()
 
+    def stats(self):
+        print("Roots", len(self.roots))
+        print("Verbs", len(self.verbs))
+        print("Parsings", len(self.parsings))
+        print("Verses", len(self.verses))
+        print("Occurrences", len(self.occurrences))
+
 def write_json(data: Any, filename: str):
     with open(filename, "w", encoding="utf-8") as file_object:
         json.dump(
@@ -403,6 +409,7 @@ def main():
     for n in api.N.walk():
         data.process(n)
     data.finish()
+    data.stats()
 
     write_json(
         {

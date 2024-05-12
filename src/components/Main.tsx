@@ -11,9 +11,10 @@ import { useLocalStorage } from 'usehooks-ts'
 import VerbParsing from './VerbParsing'
 import FilterSelection from './FilterSelection'
 import type { BiasOptions } from '../bias'
-import { getWords, type FilterCondition } from '../filter'
+import type { FilterCondition } from '../filter'
 import type { Entries } from '../util'
 import type { LinkedOccurrence } from '../loadData'
+import getWords from '../getWords'
 
 const defaultFilterConditions: FilterCondition = {
   root: {

@@ -10,7 +10,7 @@ function shuffleArray<T>(array: T[]): T[] {
   return array
 }
 
-export async function getWords({ biasOptions, filterConditions }: {
+export default async function getWords({ biasOptions, filterConditions }: {
   biasOptions: BiasOptions,
   filterConditions: FilterCondition,
 }) {

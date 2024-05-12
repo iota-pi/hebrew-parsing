@@ -35,11 +35,6 @@ jobs:
         role-to-assume: arn:aws:iam::579194700615:role/GitHubActions_OIDC
         aws-region: ap-southeast-2
 
-    - name: Deploy lambda
-      run: yarn deploy:lambda
-      env:
-        AWS_EC2_METADATA_DISABLED: true
-
     - name: Deploy app
       run: yarn deploy:app
       env:

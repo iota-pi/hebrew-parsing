@@ -1,5 +1,5 @@
 import type { LinkedOccurrence, VerbParsing } from './loadData'
-import { RootKey, getRootTypes } from './filter'
+import type { RootKey } from './filter'
 
 export type BiasOptions = {
   biasRoots: boolean,
@@ -31,10 +31,9 @@ export function countByRoot(
   verbs: LinkedOccurrence[],
 ) {
   return verbs.reduce(
-    (acc, { root, parsing }) => {
-      const rootTypes = getRootTypes(root.root, parsing.stem)
-      for (const root of rootTypes) {
-        acc[root] = (acc[root] || 0) + 1
+    (acc, { root }) => {
+      for (const rootType of root.types) {
+        acc[rootType] = (acc[rootType] || 0) + 1
       }
       return acc
     },
@@ -52,7 +51,7 @@ export function getBiasedVerbs(
     const biasRoots = getBiasFromCounts(rootCounts)
     workingVerbs = applyBias(
       workingVerbs,
-      ({ root, parsing }) => getRootTypes(root.root, parsing.stem),
+      ({ root }) => root.types,
       biasRoots,
     )
   }
@@ -110,13 +109,17 @@ export function objectMin(
 
 export function applyBias<K extends string, T extends Record<K, number>>(
   occurrences: LinkedOccurrence[],
-  key: (occurrence: LinkedOccurrence) => K | K[],
+  key: (occurrence: LinkedOccurrence) => K | Set<K>,
   bias: T,
 ) {
   return occurrences.filter(
     occurrence => {
       const keyResult = key(occurrence)
-      const biasKeys = Array.isArray(keyResult) ? keyResult : [keyResult]
+      const biasKeys = (
+        typeof keyResult === 'string'
+          ? [keyResult]
+          : Array.from(keyResult)
+      )
       const biasThreshold = biasKeys.map(k => bias[k]).reduce((a, b) => Math.max(a, b), 0)
       return Math.random() < biasThreshold
     },

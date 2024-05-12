@@ -1,4 +1,4 @@
-import type { Stem, Tense } from './filter'
+import type { RootKey, Stem, Tense } from './filter'
 
 export type NA = 'N/A'
 export type Person = 1 | 2 | 3 | NA
@@ -94,10 +94,76 @@ export function processRoots(roots: DataRoot[]) {
     root: fromASCIIHebrew(root),
     count,
     gloss,
+    types: getRootTypes(root),
   }))
 }
 export type Root = ReturnType<typeof processRoots>[number]
 export type RootMap = Record<number, Root>
+
+export function getRootTypes(root: string) {
+  const rootTypes = new Set<RootKey>()
+  const r1 = root[0]
+  const r2 = root[1]
+  const r3 = root[2]
+  if ('עהחר'.includes(r1)) {
+    rootTypes.add('1-gutteral')
+  }
+
+  if ('א' === r1) {
+    rootTypes.add('1-aleph')
+  }
+
+  if ('נ' === r1) {
+    rootTypes.add('1-nun')
+  }
+
+  if ('וי'.includes(r1) || root === 'הלך') {
+    rootTypes.add('1-waw')
+  }
+
+  if ('אעהחר'.includes(r2)) {
+    rootTypes.add('2-gutteral')
+  }
+
+  if ('ה' === r3) {
+    rootTypes.add('3-heh')
+  }
+
+  if ('א' === r3) {
+    rootTypes.add('3-aleph')
+  }
+
+  const normalisedRoot = root.replace(/[\u05c1\u05c2]/g, '')
+  if (
+    ('וי'.includes(normalisedRoot[1]) || normalisedRoot.length === 2)
+    && root !== 'היה'
+    && root !== 'חיה'
+    && root !== 'צוה'
+  ) {
+    rootTypes.add('hollow')
+  }
+
+  if (normalisedRoot[1] === replaceSofits(normalisedRoot[2])) {
+    rootTypes.add('geminate')
+  }
+
+  if (rootTypes.size === 0) {
+    rootTypes.add('strong')
+  }
+
+  return rootTypes
+}
+
+export function replaceSofits(str: string) {
+  return (
+    str
+      .replace('ך', 'כ')
+      .replace('ם', 'מ')
+      .replace('ן', 'נ')
+      .replace('ף', 'פ')
+      .replace('ץ', 'צ')
+  )
+}
 
 
 export function processVerses(verses: DataVerse[]) {
@@ -213,23 +279,19 @@ export function getParsing(input: DataPGN | null | undefined): PGN {
   }
 }
 
+const hebrewStart = 0x0591
+const asciiStart = 33
+const hebrewOffset = hebrewStart - asciiStart
 export function fromASCIIHebrew(s: string) {
-  const hebrewStart = 0x0591
-  const asciiStart = 33
   const asArray = Array.from(s)
   return asArray.map(
-    c => String.fromCharCode(
-      c.charCodeAt(0) > 32
-        ? c.charCodeAt(0) - asciiStart + hebrewStart
-        : c.charCodeAt(0)
-    ),
+    c => {
+      const n = c.charCodeAt(0)
+      return String.fromCharCode(
+        n === 32 ? n : n + hebrewOffset
+      )
+    },
   ).join('')
-}
-
-export function toMap(data: any[]) {
-  return Object.fromEntries(
-    data.map((d, i) => [i, d])
-  )
 }
 
 export async function loadData() {

@@ -1,4 +1,4 @@
-import type { LinkedOccurrence } from './loadData'
+import type { LinkedOccurrence, Root } from './loadData'
 import { hasSetPGN } from './util'
 
 export type FilterCondition = {
@@ -46,10 +46,10 @@ export type Tense = keyof FilterCondition['tense']
 export function getFilterFromConditions(
   condition: FilterCondition | undefined,
 ): ((occurrence: LinkedOccurrence) => boolean) {
-  return ({ root, parsing }) => {
-    if (!condition) return true
+  if (!condition) return () => true
 
-    if (!checkRoot(root.root, condition.root, parsing.stem)) {
+  return ({ root, parsing }) => {
+    if (condition.minFrequency > root.count) {
       return false
     }
 
@@ -78,7 +78,7 @@ export function getFilterFromConditions(
       return false
     }
 
-    if (condition.minFrequency > root.count) {
+    if (!checkRoot(root, condition.root, parsing.stem)) {
       return false
     }
 
@@ -86,89 +86,27 @@ export function getFilterFromConditions(
   }
 }
 
-export function getRootTypes(root: string, stem: Stem) {
-  const rootTypes: RootKey[] = []
-  if ('עהחר'.includes(root[0])) {
-    rootTypes.push('1-gutteral')
-  }
-
-  if ('א'.includes(root[0])) {
-    rootTypes.push('1-aleph')
-  }
-
-  if ('נ'.includes(root[0]) || (root === 'לקח' && stem === 'Qal')) {
-    rootTypes.push('1-nun')
-  }
-
-  if ('וי'.includes(root[0]) || root === 'הלך') {
-    rootTypes.push('1-waw')
-  }
-
-  if ('אעהחר'.includes(root[1])) {
-    rootTypes.push('2-gutteral')
-  }
-
-  if ('ה'.includes(root[2])) {
-    rootTypes.push('3-heh')
-  }
-
-  if ('א'.includes(root[2])) {
-    rootTypes.push('3-aleph')
-  }
-
-  const normalisedRoot = root.replace(/[\u05c1\u05c2]/g, '')
-  if (
-    ('וי'.includes(normalisedRoot[1]) || normalisedRoot.length === 2)
-    && root !== 'היה'
-    && root !== 'חיה'
-    && root !== 'צוה'
-  ) {
-    rootTypes.push('hollow')
-  }
-
-  if (isSameLetter(normalisedRoot[1], normalisedRoot[2])) {
-    rootTypes.push('geminate')
-  }
-
-  if (rootTypes.length === 0) {
-    rootTypes.push('strong')
-  }
-
-  return rootTypes
-}
-
 export function checkRoot(
-  root: string,
+  root: Root,
   condition: FilterCondition['root'],
   stem: Stem,
 ) {
-  const rootTypes = getRootTypes(root, stem)
+  const rootTypes = root.types
+
+  if (!condition['1-nun'] && root.root === 'לקח' && stem === 'Qal') {
+    return false
+  }
 
   return !(
-    (rootTypes.includes('strong') && !condition.strong)
-    || (rootTypes.includes('1-gutteral') && !condition['1-gutteral'])
-    || (rootTypes.includes('1-aleph') && !condition['1-aleph'])
-    || (rootTypes.includes('1-nun') && !condition['1-nun'])
-    || (rootTypes.includes('1-waw') && !condition['1-waw'])
-    || (rootTypes.includes('2-gutteral') && !condition['2-gutteral'])
-    || (rootTypes.includes('3-heh') && !condition['3-heh'])
-    || (rootTypes.includes('3-aleph') && !condition['3-aleph'])
-    || (rootTypes.includes('hollow') && !condition.hollow)
-    || (rootTypes.includes('geminate') && !condition.geminate)
-  )
-}
-
-export function isSameLetter(a: string, b: string) {
-  return replaceSofits(a) === replaceSofits(b)
-}
-
-export function replaceSofits(str: string) {
-  return (
-    str
-      .replace(/ך$/, 'כ')
-      .replace(/ם$/, 'מ')
-      .replace(/ן$/, 'נ')
-      .replace(/ף$/, 'פ')
-      .replace(/ץ$/, 'צ')
+    (!condition.strong && rootTypes.has('strong'))
+    || (!condition['1-gutteral'] && rootTypes.has('1-gutteral'))
+    || (!condition['1-aleph'] && rootTypes.has('1-aleph'))
+    || (!condition['1-nun'] && rootTypes.has('1-nun'))
+    || (!condition['1-waw'] && rootTypes.has('1-waw'))
+    || (!condition['2-gutteral'] && rootTypes.has('2-gutteral'))
+    || (!condition['3-heh'] && rootTypes.has('3-heh'))
+    || (!condition['3-aleph'] && rootTypes.has('3-aleph'))
+    || (!condition.hollow && rootTypes.has('hollow'))
+    || (!condition.geminate && rootTypes.has('geminate'))
   )
 }

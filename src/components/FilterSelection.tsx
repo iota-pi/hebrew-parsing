@@ -169,7 +169,7 @@ function FilterSelection({
       <FilterSelect
         value={selectedTenses}
         options={ALL_TENSES}
-        label="Include tenses:"
+        label="Include conjugations:"
         onChange={handleChangeTenses}
         getOptionLabel={getTenseName}
       />

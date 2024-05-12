@@ -1,4 +1,5 @@
-import type { RootKey, Stem, Tense } from './filter'
+import type { Stem, Tense } from './filter'
+import { getRootTypes } from './util'
 
 export type NA = 'N/A'
 export type Person = 1 | 2 | 3 | NA
@@ -99,71 +100,6 @@ export function processRoots(roots: DataRoot[]) {
 }
 export type Root = ReturnType<typeof processRoots>[number]
 export type RootMap = Record<number, Root>
-
-export function getRootTypes(root: string) {
-  const rootTypes = new Set<RootKey>()
-  const r1 = root[0]
-  const r2 = root[1]
-  const r3 = root[2]
-  if ('עהחר'.includes(r1)) {
-    rootTypes.add('1-gutteral')
-  }
-
-  if ('א' === r1) {
-    rootTypes.add('1-aleph')
-  }
-
-  if ('נ' === r1) {
-    rootTypes.add('1-nun')
-  }
-
-  if ('וי'.includes(r1) || root === 'הלך') {
-    rootTypes.add('1-waw')
-  }
-
-  if ('אעהחר'.includes(r2)) {
-    rootTypes.add('2-gutteral')
-  }
-
-  if ('ה' === r3) {
-    rootTypes.add('3-heh')
-  }
-
-  if ('א' === r3) {
-    rootTypes.add('3-aleph')
-  }
-
-  const normalisedRoot = root.replace(/[\u05c1\u05c2]/g, '')
-  if (
-    ('וי'.includes(normalisedRoot[1]) || normalisedRoot.length === 2)
-    && root !== 'היה'
-    && root !== 'חיה'
-    && root !== 'צוה'
-  ) {
-    rootTypes.add('hollow')
-  }
-
-  if (normalisedRoot[1] === replaceSofits(normalisedRoot[2])) {
-    rootTypes.add('geminate')
-  }
-
-  if (rootTypes.size === 0) {
-    rootTypes.add('strong')
-  }
-
-  return rootTypes
-}
-
-export function replaceSofits(str: string) {
-  return (
-    str
-      .replace('ך', 'כ')
-      .replace('ם', 'מ')
-      .replace('ן', 'נ')
-      .replace('ף', 'פ')
-      .replace('ץ', 'צ')
-  )
-}
 
 
 export function processVerses(verses: DataVerse[]) {

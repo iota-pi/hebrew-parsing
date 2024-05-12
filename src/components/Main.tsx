@@ -1,8 +1,6 @@
 import {
   Box,
   Divider,
-  Fade,
-  LinearProgress,
   Stack,
   Typography,
 } from '@mui/material'
@@ -160,12 +158,6 @@ function MainPage() {
       justifyContent="center"
       display="flex"
     >
-      <Box position="fixed" top={0} left={0} right={0}>
-        <Fade in={!error && verbs.length === 0}>
-          <LinearProgress variant="query" />
-        </Fade>
-      </Box>
-
       <Box width="100%" maxWidth={1200}>
         <Stack spacing={2}>
           {verbs[0] && !error ? (

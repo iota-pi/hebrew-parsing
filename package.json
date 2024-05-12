@@ -12,7 +12,7 @@
     "lint": "yarn run eslint src --ext .ts,.tsx",
     "start": "vite",
     "preview": "vite preview",
-    "test": "cross-env NODE_OPTIONS=\"$NODE_OPTIONS --experimental-vm-modules\" jest"
+    "test": "jest"
   },
   "dependencies": {
     "@emotion/react": "^11.4.1",

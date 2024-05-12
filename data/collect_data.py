@@ -8,7 +8,7 @@ from typing import Any, Dict, Iterator, List, Set
 from tf.advanced.app import App
 from tf.app import use
 
-MIN_LEX_FREQ = 10
+MIN_LEX_FREQ = 20
 MIN_QAL_QATAL_FREQ = 50
 
 STEMS = {
@@ -32,48 +32,6 @@ TENSES = {
     "infa": 8,
 }
 
-BOOKS = {
-    "1_Chronicles": 0,
-    "1_Kings": 1,
-    "1_Samuel": 2,
-    "2_Chronicles": 3,
-    "2_Kings": 4,
-    "2_Samuel": 5,
-    "Amos": 6,
-    "Daniel": 7,
-    "Deuteronomy": 8,
-    "Ecclesiastes": 9,
-    "Esther": 10,
-    "Exodus": 11,
-    "Ezekiel": 12,
-    "Ezra": 13,
-    "Genesis": 14,
-    "Habakkuk": 15,
-    "Haggai": 16,
-    "Hosea": 17,
-    "Isaiah": 18,
-    "Jeremiah": 19,
-    "Job": 20,
-    "Joel": 21,
-    "Jonah": 22,
-    "Joshua": 23,
-    "Judges": 24,
-    "Lamentations": 25,
-    "Leviticus": 26,
-    "Malachi": 27,
-    "Micah": 28,
-    "Nahum": 29,
-    "Nehemiah": 30,
-    "Numbers": 31,
-    "Obadiah": 32,
-    "Proverbs": 33,
-    "Psalms": 34,
-    "Ruth": 35,
-    "Song_of_songs": 36,
-    "Zechariah": 37,
-    "Zephaniah": 38,
-}
-
 PERSONS = {"p1": 1, "p2": 2, "p3": 3, "unknown": 0, "NA": 0}
 GENDERS = {"m": 1, "f": 2, "unknown": 0, "NA": 0}
 NUMBERS = {"sg": 1, "pl": 2, "unknown": 0, "NA": 0}
@@ -93,6 +51,10 @@ def to_ascii(s: str):
         c if ord(c) < hebrew_start else chr(ascii_start + ord(c) - hebrew_start)
         for c in s
     )
+
+
+class UnhandledStemError(KeyError):
+    pass
 
 
 class HasId:
@@ -139,8 +101,12 @@ class CountByUses[T: HasId]:
         return (self._data[key] for key, _ in self.counts.most_common())
 
 
-class UnhandledStemError(KeyError):
-    pass
+class Book(HasId):
+    def __init__(self, n):
+        self.book: str = api.T.bookName(n)
+
+    def to_simple_obj(self):
+        return self.book.replace("_", " ")
 
 
 class Root(HasId):
@@ -176,61 +142,27 @@ class VerbForm(HasId):
 
 
 class VerbParsing(HasId):
-    def __init__(
-        self,
-        stem,
-        tense,
-        person,
-        gender,
-        number,
-        pronom_person,
-        pronom_gender,
-        pronom_number,
-        paragogic_nun,
-    ):
-        self.stem = stem
-        self.tense = tense
-        self.person = person
-        self.gender = gender
-        self.number = number
-        self.pronom_person = pronom_person
-        self.pronom_gender = pronom_gender
-        self.pronom_number = pronom_number
-        self.paragogic_nun = paragogic_nun
-
-    @staticmethod
-    def from_node(n):
-        stem = api.F.vs.v(n)
-        if stem not in STEMS:
+    def __init__(self, n: int):
+        self.stem = api.F.vs.v(n)
+        if self.stem not in STEMS:
             raise UnhandledStemError()
-        tense = api.F.vt.v(n)
-        person = api.F.ps.v(n)
-        gender = api.F.gn.v(n)
-        number = api.F.nu.v(n)
-        pronom_person = api.F.prs_ps.v(n)
-        pronom_gender = api.F.prs_gn.v(n)
-        pronom_number = api.F.prs_nu.v(n)
+        self.tense = api.F.vt.v(n)
+        self.person = api.F.ps.v(n)
+        self.gender = api.F.gn.v(n)
+        self.number = api.F.nu.v(n)
+        self.pronom_person = api.F.prs_ps.v(n)
+        self.pronom_gender = api.F.prs_gn.v(n)
+        self.pronom_number = api.F.prs_nu.v(n)
 
         should_end_with_nun = (
             api.F.ps.v(n) in ("p3", "p2")
             and api.F.gn.v(n) == "f"
             and api.F.nu.v(n) == "pl"
         )
-        paragogic_nun = (
+        self.paragogic_nun = (
             api.F.vbe.v(n).endswith("NN")
             if should_end_with_nun
             else api.F.vbe.v(n).endswith("N")
-        )
-        return VerbParsing(
-            stem,
-            tense,
-            person,
-            gender,
-            number,
-            pronom_person,
-            pronom_gender,
-            pronom_number,
-            paragogic_nun,
         )
 
     def __repr__(self) -> str:
@@ -274,9 +206,10 @@ class VerbParsing(HasId):
 
 
 class Verse(HasId):
-    def __init__(self, n: int):
+    def __init__(self, n: int, book: Book):
         self.reference = api.T.sectionFromNode(n)
         self.text = self.get_text(n)
+        self.book = book
 
     def get_text(self, n: int):
         chunk = api.L.u(n, otype="verse")
@@ -291,7 +224,7 @@ class Verse(HasId):
 
     def to_simple_obj(self):
         return [
-            BOOKS[self.reference[0]],
+            self.book.id,
             *self.reference[1:],
             to_ascii(self.text),
         ]
@@ -315,7 +248,7 @@ class VerbOccurrence:
         root = self.verb.root
         parsing = self.parsing
         if root.lex == "אמר" and parsing.stem == "qal" and parsing.tense == "perf":
-            return r < 1 / 2
+            return r < 2 / 3
         if root.lex == "אמר" and parsing.stem == "qal" and parsing.tense == "wayq":
             return r < 3 / 4
         if (
@@ -336,20 +269,23 @@ class VerbOccurrence:
 
 class DataManager:
     def __init__(self):
+        self.books = CountByUses[Book]()
+        self.occurrences: List[VerbOccurrence] = []
+        self.parsings = CountByUses[VerbParsing]()
         self.roots = CountByUses[Root]()
         self.verbs = CountByUses[VerbForm]()
-        self.parsings = CountByUses[VerbParsing]()
         self.verses = CountByUses[Verse]()
-        self.occurrences: List[VerbOccurrence] = []
 
     def add_verb(self, n):
+        b = Book(n)
+        book = self.books.add(b.book, b)
         r = Root(api.L.u(n, otype="lex")[0])
         root = self.roots.add(r.lex, r)
         v = VerbForm(n, root)
         verb = self.verbs.add(v.verb, v)
-        p = VerbParsing.from_node(n)
+        p = VerbParsing(n)
         parsing = self.parsings.add(str(p), p)
-        v = Verse(n)
+        v = Verse(n, book)
         verse = self.verses.add(str(v), v)
         occurrence = VerbOccurrence(verb, parsing, verse)
         if occurrence.should_skip():
@@ -382,9 +318,10 @@ class DataManager:
             return
 
     def finish(self):
+        self.books.update_ids()
+        self.parsings.update_ids()
         self.roots.update_ids()
         self.verbs.update_ids()
-        self.parsings.update_ids()
         self.verses.update_ids()
 
     def stats(self):
@@ -418,6 +355,7 @@ def main():
             "parsings": [p.to_simple_obj() for p in data.parsings.data],
             "verses": [v.to_simple_obj() for v in data.verses.data],
             "roots": [root.to_simple_obj() for root in data.roots.data],
+            "books": [book.to_simple_obj() for book in data.books.data],
         },
         "../public/data.json",
     )

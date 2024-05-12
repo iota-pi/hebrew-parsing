@@ -32,11 +32,12 @@ type DataParsing = [
   0 | 1 | undefined,
 ]
 type DataVerse = [
-  BookAbbreviation,
+  number,
   number,
   number,
   string,
 ]
+type DataBook = string
 type DataRoot = [string, number, string]
 
 const rawStemMapping = {
@@ -83,51 +84,6 @@ const rawNumberMapping = {
 type VerbNumberAbbreviation = keyof typeof rawNumberMapping
 const numberMapping = rawNumberMapping as Record<VerbNumberAbbreviation, VerbNumber>
 
-const rawBookMapping = {
-  0: '1_Chronicles',
-  1: '1_Kings',
-  2: '1_Samuel',
-  3: '2_Chronicles',
-  4: '2_Kings',
-  5: '2_Samuel',
-  6: 'Amos',
-  7: 'Daniel',
-  8: 'Deuteronomy',
-  9: 'Ecclesiastes',
-  10: 'Esther',
-  11: 'Exodus',
-  12: 'Ezekiel',
-  13: 'Ezra',
-  14: 'Genesis',
-  15: 'Habakkuk',
-  16: 'Haggai',
-  17: 'Hosea',
-  18: 'Isaiah',
-  19: 'Jeremiah',
-  20: 'Job',
-  21: 'Joel',
-  22: 'Jonah',
-  23: 'Joshua',
-  24: 'Judges',
-  25: 'Lamentations',
-  26: 'Leviticus',
-  27: 'Malachi',
-  28: 'Micah',
-  29: 'Nahum',
-  30: 'Nehemiah',
-  31: 'Numbers',
-  32: 'Obadiah',
-  33: 'Proverbs',
-  34: 'Psalms',
-  35: 'Ruth',
-  36: 'Song_of_songs',
-  37: 'Zechariah',
-  38: 'Zephaniah',
-}
-type BookAbbreviation = keyof typeof rawBookMapping
-type Book = typeof rawBookMapping[BookAbbreviation]
-const bookMapping = rawBookMapping as Record<BookAbbreviation, string>
-
 
 export function processRoots(roots: DataRoot[]) {
   return roots.map(([
@@ -152,7 +108,7 @@ export function processVerses(verses: DataVerse[]) {
       verse,
       text,
     ]) => ({
-      book: getBook(book),
+      book,
       chapter,
       verse,
       text: fromASCIIHebrew(text),
@@ -205,9 +161,10 @@ export function processOccurrences(occurrences: DataOccurrence[]) {
 }
 export type VerbOccurrence = ReturnType<typeof processOccurrences>[number]
 export type LinkedOccurrence = {
-  verb: Verb,
+  book: string,
   root: Root,
   parsing: VerbParsing,
+  verb: Verb,
   verse: Verse,
 }
 
@@ -256,13 +213,6 @@ export function getParsing(input: DataPGN | null | undefined): PGN {
   }
 }
 
-export function getBook(book: BookAbbreviation) {
-  if (book in bookMapping) {
-    return bookMapping[book]
-  }
-  throw new Error(`Unknown book code "${book}"`)
-}
-
 export function fromASCIIHebrew(s: string) {
   const hebrewStart = 0x0591
   const asciiStart = 33
@@ -285,17 +235,19 @@ export function toMap(data: any[]) {
 export async function loadData() {
   const response = await fetch('data.json')
   const data = await response.json() as {
+    books: DataBook[]
+    occurrences: DataOccurrence[],
+    parsings: DataParsing[],
     roots: DataRoot[],
     verbs: DataVerb[],
-    parsings: DataParsing[],
     verses: DataVerse[],
-    occurrences: DataOccurrence[],
   }
   return {
-    roots: toMap(processRoots(data.roots)),
-    verbs: toMap(processVerbs(data.verbs)),
-    parsings: toMap(processParsings(data.parsings)),
-    verses: toMap(processVerses(data.verses)),
+    books: data.books,
+    roots: processRoots(data.roots),
+    verbs: processVerbs(data.verbs),
+    parsings: processParsings(data.parsings),
+    verses: processVerses(data.verses),
     occurrences: processOccurrences(data.occurrences),
   }
 }
@@ -305,9 +257,10 @@ export async function getLinkedOccurrences() {
   const data = await dataPromise
   return data.occurrences.map(
     ({ verb, parsing, verse }) => ({
-      verb: data.verbs[verb],
-      root: data.roots[data.verbs[verb].root],
+      book: data.books[data.verses[verse].book],
       parsing: data.parsings[parsing],
+      root: data.roots[data.verbs[verb].root],
+      verb: data.verbs[verb],
       verse: data.verses[verse],
     } as LinkedOccurrence)
   )

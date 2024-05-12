@@ -141,8 +141,7 @@ export function getSimplePartName<P extends SimpleParsingPartKey>(
   return value?.toString() || ''
 }
 
-export function getReferenceString(reference: Verse) {
-  const book = reference.book.replaceAll('_', ' ')
+export function getReferenceString(reference: Verse, book: string) {
   return `${book} ${reference.chapter}:${reference.verse}`
 }
 

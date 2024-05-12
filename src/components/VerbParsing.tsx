@@ -276,11 +276,11 @@ function VerbParsing({
 
   const replacementCode = useMemo(
     () => new RegExp(
-      '\\b('
+      '('
       + Array.from(occurrence.verb.verb).join(
-        '[\u05b0-\u05bc\u05c1\u05c2\u05c7-\u05ea]?'
+        '[^\u05b0-\u05bc\u05c1\u05c2\u05c7-\u05ea]?'
       )
-      + ')\\b',
+      + '[^\u05b0-\u05bc\u05c1\u05c2\u05c7-\u05ea]?)',
       'g',
     ),
     [occurrence.verb],
@@ -333,7 +333,7 @@ function VerbParsing({
         textAlign={'right'}
         color='grey.600'
       >
-        {getReferenceString(occurrence.verse)}
+        {getReferenceString(occurrence.verse, occurrence.book)}
       </Typography>
 
       <Stack direction="row" spacing={2} overflow="auto">

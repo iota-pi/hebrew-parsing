@@ -233,6 +233,10 @@ export function checkPGN(
   part: PGNParsingKey,
   correct: PGN,
 ): OptionCorrectness {
+  if (!hasSetPGN(correct)) {
+    return { match: false, exact: false }
+  }
+
   if (fullParsingAttempt.tense === 'Imperative' && part === 'pgn') {
     correct = {
       ...correct,

@@ -6,6 +6,9 @@ import {
   useState,
 } from 'react'
 import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
   Button,
   Stack,
   Typography,
@@ -29,7 +32,7 @@ import {
   hasSetPGN,
   toLogosLink,
 } from '../util'
-import type { LinkedOccurrence } from '../loadData'
+import { VerbParsing, getLinkedOccurrences, type LinkedOccurrence } from '../loadData'
 import type { FilterCondition, Stem, Tense } from '../filter'
 import ParsingControlGroup from './ParsingControlGroup'
 import PGNGroup from './PGNGroup'
@@ -49,7 +52,7 @@ const HebrewSpan = styled('span')({
   fontFamily: "'Ezra SIL', Roboto, David, sans-serif",
 })
 
-function VerbParsing({
+function VerbParsingComponent({
   filterOptions,
   occurrence: rawOccurrence,
   onAnswer,
@@ -62,6 +65,14 @@ function VerbParsing({
   onNext: () => void,
   onGiveAgain: () => void,
 }) {
+  const [occurrences, setOccurrences] = useState<LinkedOccurrence[]>([])
+  useEffect(
+    () => {
+      getLinkedOccurrences().then(setOccurrences)
+    },
+    [],
+  )
+
   const [stems, tenses] = useMemo(
     () => {
       const stems = (
@@ -202,6 +213,59 @@ function VerbParsing({
     [parsing, applicableParts],
   )
 
+  const validParsings = useMemo(
+    () => {
+      const allOccurrences = occurrences.filter(
+        o => o.verb.verb === occurrence.verb.verb
+      )
+      // TODO: run a check to see if this is ever necessary;
+      // if it is then the root should be displayed along with the parsing
+      if (allOccurrences.some(o => o.root.root !== occurrence.root.root)) {
+        console.warn('Root mismatch in other parsings')
+        console.log(allOccurrences.map(o => o.root))
+      }
+
+      const parsings = allOccurrences.map(o => o.parsing)
+      const counts = parsings.reduce(
+        (acc, p) => {
+          acc.set(p, (acc.get(p) || 0) + 1)
+          return acc
+        },
+        new Map<VerbParsing, number>(),
+      )
+      return Array.from(counts.entries()).sort(([, v1], [, v2]) => v2 - v1)
+    },
+    [occurrences, occurrence],
+  )
+  const alternativeSpellings = useMemo(
+    () => {
+      const withOtherSpellings = occurrences.filter(
+        o => (
+          o.verb.verb !== occurrence.verb.verb
+          && o.root.root === occurrence.root.root
+          && o.parsing.stem === occurrence.parsing.stem
+          && o.parsing.tense === occurrence.parsing.tense
+          && o.parsing.pgn.person === occurrence.parsing.pgn.person
+          && o.parsing.pgn.gender === occurrence.parsing.pgn.gender
+          && o.parsing.pgn.number === occurrence.parsing.pgn.number
+          && o.parsing.suffix.person === occurrence.parsing.suffix.person
+          && o.parsing.suffix.gender === occurrence.parsing.suffix.gender
+          && o.parsing.suffix.number === occurrence.parsing.suffix.number
+          && o.parsing.paragogicNun === occurrence.parsing.paragogicNun
+        )
+      )
+      const counts = withOtherSpellings.reduce(
+        (acc, o) => {
+          acc.set(o.verb.verb, (acc.get(o.verb.verb) || 0) + 1)
+          return acc
+        },
+        new Map<string, number>(),
+      )
+      return Array.from(counts.entries()).sort(([, v1], [, v2]) => v2 - v1)
+    },
+    [occurrences, occurrence],
+  )
+
   const handleChange = useCallback(
     <T extends ParsingKey>(part: T) => (
       (newData: Parsing[T]) => {
@@ -280,7 +344,7 @@ function VerbParsing({
       + Array.from(occurrence.verb.verb).join(
         '[^\u05b0-\u05bc\u05c1\u05c2\u05c7-\u05ea]?'
       )
-      + '[^\u05b0-\u05bc\u05c1\u05c2\u05c7-\u05ea]?)',
+      + ')',
       'g',
     ),
     [occurrence.verb],
@@ -348,6 +412,7 @@ function VerbParsing({
               showAnswer={showAnswer}
               value={parsing[part]}
               occurrence={occurrence}
+              correctParsings={validParsings}
             />
           ) : (
             <PGNGroup
@@ -359,6 +424,7 @@ function VerbParsing({
               showAnswer={showAnswer}
               value={parsing[part]}
               occurrence={occurrence}
+              correctParsings={validParsings}
             />
           )
         ))}
@@ -371,6 +437,7 @@ function VerbParsing({
               showAnswer={showAnswer}
               suffix={suffix}
               parsing={occurrence.parsing}
+              correctParsings={validParsings}
             />
 
             <PGNGroup
@@ -381,6 +448,7 @@ function VerbParsing({
               showAnswer={showAnswer}
               value={parsing.suffix}
               occurrence={occurrence}
+              correctParsings={validParsings}
             />
           </>
         )}
@@ -448,11 +516,73 @@ function VerbParsing({
           <br />
         )}
       </Typography>
+
+      {showAnswer && (
+        <>
+          <Accordion>
+            <AccordionSummary disabled={validParsings.length === 1}>
+              <Typography variant="h6">
+                {validParsings.length === 1 ? 'No' : validParsings.length - 1}
+                {' '}
+                other parsings for this word
+              </Typography>
+            </AccordionSummary>
+
+            <AccordionDetails>
+              <Stack spacing={2}>
+                {validParsings.map(([p, count], i) => (
+                  <Typography
+                    key={i}
+                    variant="h5"
+                  >
+                    {count}
+                    {' times: '}
+                    {[
+                      getStemName(p.stem),
+                      getTenseName(p.tense),
+                      getPGNKey(p.pgn),
+                      hasSetPGN(p.suffix) && `+ ${getPGNKey(p.suffix)} suffix`,
+                      p.paragogicNun && '+ paragogic nun',
+                    ].filter(Boolean).join(' ')}
+                  </Typography>
+                ))}
+              </Stack>
+            </AccordionDetails>
+          </Accordion>
+
+          <Accordion>
+            <AccordionSummary disabled={alternativeSpellings.length === 1}>
+              <Typography variant="h6">
+                {alternativeSpellings.length === 1 ? 'No' : alternativeSpellings.length - 1}
+                {' '}
+                other spellings for this word
+              </Typography>
+            </AccordionSummary>
+
+            <AccordionDetails>
+              <Stack spacing={2}>
+                {alternativeSpellings.map(([spelling, count], i) => (
+                  <Typography
+                    key={i}
+                    variant="h5"
+                  >
+                    {count}
+                    {' times: '}
+                    <HebrewSpan>
+                      {spelling}
+                    </HebrewSpan>
+                  </Typography>
+                ))}
+              </Stack>
+            </AccordionDetails>
+          </Accordion>
+        </>
+      )}
     </Stack>
   )
 }
 
-export default VerbParsing
+export default VerbParsingComponent
 
 function getInitialApplicableParts(): ApplicableParts {
   return {

@@ -3,6 +3,7 @@ import {
 } from '@mui/material'
 import {
   useCallback,
+  useMemo,
 } from 'react'
 import type { VerbParsing } from '../loadData'
 import { hasSetPGN } from '../util'
@@ -17,12 +18,14 @@ function SuffixSelection({
   showAnswer,
   suffix,
   parsing,
+  correctParsings,
 }: {
   disabled: boolean,
   onChange: (suffix: Suffix) => void,
   showAnswer: boolean,
   suffix: Suffix,
   parsing: VerbParsing,
+  correctParsings: [VerbParsing, number][],
 }) {
   const handleToggleSuffix = useCallback(
     (event: React.MouseEvent<HTMLElement>, newData: 'suffix' | 'no-suffix' | null) => {
@@ -32,7 +35,20 @@ function SuffixSelection({
     },
     [onChange],
   )
-  const hasSuffix = hasSetPGN(parsing.suffix)
+  const isCorrect = useCallback(
+    (value: boolean) => {
+      if (hasSetPGN(parsing.suffix) === value) {
+        return { match: true, exact: true }
+      }
+      for (const [correctParsing] of correctParsings) {
+        if (hasSetPGN(correctParsing.suffix) === value) {
+          return { match: true, exact: false }
+        }
+      }
+      return { match: false, exact: false }
+    },
+    [parsing.suffix],
+  )
 
   return (
     <ToggleButtonGroup
@@ -43,14 +59,14 @@ function SuffixSelection({
       value={suffix}
     >
       <ParsingControl
-        isCorrect={!hasSuffix}
+        isCorrect={isCorrect(false)}
         option="no-suffix"
         value={suffix}
         label="No Suffix"
         showAnswer={showAnswer}
       />
       <ParsingControl
-        isCorrect={hasSuffix}
+        isCorrect={isCorrect(true)}
         option="suffix"
         value={suffix}
         label="Suffix"

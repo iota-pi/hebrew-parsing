@@ -18,7 +18,7 @@ function ParsingControl<T extends string | number | PGN>({
 }: {
   disabled?: boolean,
   doubleHeight?: boolean,
-  isCorrect: boolean | OptionCorrectness,
+  isCorrect: OptionCorrectness,
   isFirst?: boolean,
   isLast?: boolean,
   option: T,

@@ -78,7 +78,7 @@ export function getFilterFromConditions(
       return false
     }
 
-    if (!checkRoot(root, condition.root, parsing.stem)) {
+    if (!checkRootType(root, condition.root, parsing.stem)) {
       return false
     }
 
@@ -86,7 +86,7 @@ export function getFilterFromConditions(
   }
 }
 
-export function checkRoot(
+export function checkRootType(
   root: Root,
   condition: FilterCondition['root'],
   stem: Stem,

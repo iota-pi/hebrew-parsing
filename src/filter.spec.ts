@@ -1,4 +1,4 @@
-import { FilterCondition, Stem, checkRoot } from './filter'
+import { FilterCondition, Stem, checkRootType } from './filter'
 import type { Root } from './loadData'
 import { getRootTypes } from './util'
 
@@ -9,7 +9,7 @@ const defaultRoot: Root = {
   types: new Set(),
 }
 
-describe('checkRoot', () => {
+describe('checkRootType', () => {
   it('should return true when all conditions are met', () => {
     const stem = 'Qal'
     const root = 'אבג'
@@ -27,7 +27,7 @@ describe('checkRoot', () => {
       geminate: true,
     }
     const rootObj = { ...defaultRoot, root: root, types: getRootTypes(root) }
-    const result = checkRoot(rootObj, condition, stem)
+    const result = checkRootType(rootObj, condition, stem)
     expect(result).toBe(true)
   })
 
@@ -39,9 +39,10 @@ describe('checkRoot', () => {
     ['פלל', { 'geminate': true }, 'Qal', true],
     ['שׁים', { 'hollow': false }, 'Qal', false],
     ['שׁים', { 'hollow': true }, 'Qal', true],
-  ])('checkRoot(%s, %s, %s) = %s', (root, condition, stem, expected) => {
+    ['ראה', { 'strong': true }, 'Qal', false],
+  ])('checkRootType(%s, %s, %s) = %s', (root, condition, stem, expected) => {
     const rootObj = { ...defaultRoot, root: root, types: getRootTypes(root) }
-    const result = checkRoot(rootObj, condition as FilterCondition['root'], stem as Stem)
+    const result = checkRootType(rootObj, condition as FilterCondition['root'], stem as Stem)
     expect(result).toBe(expected)
   })
 })

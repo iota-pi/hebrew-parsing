@@ -18,7 +18,7 @@ import {
   hasSetPGN,
   OptionCorrectness,
 } from '../util'
-import type { LinkedOccurrence, NA, PGN } from '../loadData'
+import type { LinkedOccurrence, NA, PGN, VerbParsing } from '../loadData'
 import ParsingControl from './ParsingControl'
 
 
@@ -30,6 +30,7 @@ function PGNGroup<P extends ParsingKey & ('pgn' | 'suffix')>({
   showAnswer,
   value,
   occurrence,
+  correctParsings,
 }: {
   applicable: ApplicableParts[P],
   onChange: (newValue: PGN) => void,
@@ -38,6 +39,7 @@ function PGNGroup<P extends ParsingKey & ('pgn' | 'suffix')>({
   showAnswer: boolean,
   value: PGN,
   occurrence: LinkedOccurrence,
+  correctParsings: [VerbParsing, number][],
 }) {
   const handleChange = useCallback(
     (event: React.MouseEvent<HTMLElement>, newData: PGN) => {
@@ -115,17 +117,21 @@ function PGNGroup<P extends ParsingKey & ('pgn' | 'suffix')>({
   )
   const isCorrectOption = useCallback(
     (option: PGN): OptionCorrectness => {
-      if (part === 'pgn' && !hasSetPGN(occurrence.parsing.pgn)) {
-        return { match: false, exact: false }
-      }
-      if (part === 'suffix' && !hasSetPGN(occurrence.parsing.suffix)) {
-        return { match: false, exact: false }
-      }
       const projectedParsing: Parsing = {
         ...parsing,
         [part]: option,
       }
-      return checkPGN(projectedParsing, part, correctAnswer)
+      const simpleResult = checkPGN(projectedParsing, part, correctAnswer)
+      if (simpleResult.match) {
+        return simpleResult
+      }
+      for (const [correctParsing] of correctParsings) {
+        const correctResult = checkPGN(correctParsing, part, option)
+        if (correctResult.match) {
+          return { match: true, exact: false }
+        }
+      }
+      return { match: false, exact: false }
     },
     [correctAnswer, parsing, part, occurrence.parsing.pgn, occurrence.parsing.suffix],
   )

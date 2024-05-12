@@ -3,7 +3,7 @@ import {
 } from '@mui/material'
 import { useCallback, useMemo } from 'react'
 import { Parsing, PART_MAPPING, checkSimplePart, ApplicableParts, getSimplePartName, SimpleParsingPartKey, getPartFromVerb } from '../util'
-import type { LinkedOccurrence } from '../loadData'
+import type { LinkedOccurrence, VerbParsing } from '../loadData'
 import ParsingControl from './ParsingControl'
 
 
@@ -15,6 +15,7 @@ function ParsingControlGroup<P extends SimpleParsingPartKey, V extends Parsing[P
   showAnswer,
   value,
   occurrence,
+  correctParsings,
 }: {
   applicable: ApplicableParts[P],
   onChange: (newValue: V) => void,
@@ -23,6 +24,7 @@ function ParsingControlGroup<P extends SimpleParsingPartKey, V extends Parsing[P
   showAnswer: boolean,
   value: V,
   occurrence: LinkedOccurrence,
+  correctParsings: [VerbParsing, number][],
 }) {
   const handleToggle = useCallback(
     (event: React.MouseEvent<HTMLElement>, newData: V) => {
@@ -38,13 +40,22 @@ function ParsingControlGroup<P extends SimpleParsingPartKey, V extends Parsing[P
     () => getPartFromVerb(part, occurrence.parsing) as V,
     [part, occurrence],
   )
-  const isCorrectSimpleOption = useCallback(
+  const isCorrectOption = useCallback(
     (option: V | 'N/A') => {
       const attempt = {
         ...parsing,
         [part]: option,
       }
-      return checkSimplePart<typeof part>(part, attempt, correctAnswer)
+      if (checkSimplePart<typeof part>(part, attempt, correctAnswer)) {
+        return { match: true, exact: true }
+      } else {
+        for (const [correctParsing] of correctParsings) {
+          if (checkSimplePart<typeof part>(part, attempt, correctParsing[part])) {
+            return { match: true, exact: false }
+          }
+        }
+      }
+      return { match: false, exact: false }
     },
     [correctAnswer, parsing, part],
   )
@@ -63,7 +74,7 @@ function ParsingControlGroup<P extends SimpleParsingPartKey, V extends Parsing[P
         <ParsingControl
           key={option}
           disabled={!applicable || !(applicable as Record<typeof option, boolean>)[option]}
-          isCorrect={isCorrectSimpleOption(option) || false}
+          isCorrect={isCorrectOption(option)}
           option={option}
           value={value}
           label={getSimplePartName(part as SimpleParsingPartKey, option)}

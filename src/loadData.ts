@@ -91,12 +91,15 @@ export function processRoots(roots: DataRoot[]) {
     root,
     count,
     gloss,
-  ]) => ({
-    root: fromASCIIHebrew(root),
-    count,
-    gloss,
-    types: getRootTypes(root),
-  }))
+  ]) => {
+    const r = fromASCIIHebrew(root)
+    return {
+      root: r,
+      count,
+      gloss,
+      types: getRootTypes(r),
+    }
+  })
 }
 export type Root = ReturnType<typeof processRoots>[number]
 export type RootMap = Record<number, Root>

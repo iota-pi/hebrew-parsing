@@ -151,9 +151,10 @@ export function stripAccents(s: string) {
 
 export function getRootTypes(root: string) {
   const rootTypes = new Set<RootKey>()
-  const r1 = root[0]
-  const r2 = root[1]
-  const r3 = root[2]
+  const normalisedRoot = root.replace(/[\u05c1\u05c2]/g, '')
+  const r1 = normalisedRoot[0]
+  const r2 = normalisedRoot[1]
+  const r3 = normalisedRoot[2]
   if ('עהחר'.includes(r1)) {
     rootTypes.add('1-gutteral')
   }
@@ -182,9 +183,8 @@ export function getRootTypes(root: string) {
     rootTypes.add('3-aleph')
   }
 
-  const normalisedRoot = root.replace(/[\u05c1\u05c2]/g, '')
   if (
-    ('וי'.includes(normalisedRoot[1]) || normalisedRoot.length === 2)
+    ('וי'.includes(r2) || normalisedRoot.length === 2)
     && root !== 'היה'
     && root !== 'חיה'
     && root !== 'צוה'
@@ -192,7 +192,7 @@ export function getRootTypes(root: string) {
     rootTypes.add('hollow')
   }
 
-  if (normalisedRoot[1] === replaceSofits(normalisedRoot[2])) {
+  if (r2 === replaceSofits(r3)) {
     rootTypes.add('geminate')
   }
 

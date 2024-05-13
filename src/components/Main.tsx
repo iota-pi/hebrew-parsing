@@ -148,7 +148,7 @@ function MainPage() {
       setVerbs([])
       setError('')
     },
-    [setFilterConditions, setVerbs],
+    [setFilterConditions],
   )
 
   return (

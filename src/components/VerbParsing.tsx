@@ -54,7 +54,7 @@ const HebrewSpan = styled('span')({
 
 function VerbParsingComponent({
   filterOptions,
-  occurrence: rawOccurrence,
+  occurrence,
   onAnswer,
   onNext,
   onGiveAgain,
@@ -93,16 +93,6 @@ function VerbParsingComponent({
   const [parsing, setParsing] = useState(getInitialParsing(stems, tenses))
   const [suffix, setSuffix] = useState<Suffix>(DEFAULT_SUFFIX)
   const [showAnswer, setShowAnswer] = useState(false)
-
-  const [occurrence, setVerb] = useState(rawOccurrence)
-  useEffect(
-    () => {
-      if (!showAnswer) {
-        setVerb(rawOccurrence)
-      }
-    },
-    [showAnswer, rawOccurrence],
-  )
 
   useEffect(
     () => {
@@ -319,7 +309,7 @@ function VerbParsingComponent({
     [occurrence, parsing, applicableParts, onAnswer],
   )
 
-  const handleNext = useCallback(
+  const reset = useCallback(
     () => {
       setParsing(getInitialParsing(stems, tenses))
       setSuffix(
@@ -332,9 +322,22 @@ function VerbParsingComponent({
           )
       )
       setShowAnswer(false)
+    },
+    [canHaveSuffixes, mustHaveSuffixes, stems, tenses],
+  )
+  const handleNext = useCallback(
+    () => {
+      reset()
       onNext()
     },
-    [canHaveSuffixes, mustHaveSuffixes, onNext, stems, tenses],
+    [onNext, reset],
+  )
+  const handleGiveAgain = useCallback(
+    () => {
+      reset()
+      onGiveAgain()
+    },
+    [onGiveAgain, reset],
   )
 
   const replacementCode = useMemo(
@@ -469,7 +472,7 @@ function VerbParsingComponent({
       </Button>
 
       <Button
-        onClick={onGiveAgain}
+        onClick={handleGiveAgain}
         color="error"
         variant="outlined"
         disabled={!showAnswer}
@@ -563,7 +566,7 @@ function VerbParsingComponent({
               <Typography variant="h6">
                 {alternativeSpellings.length === 1 ? 'No' : alternativeSpellings.length - 1}
                 {' '}
-                other spellings for this word
+                alternative spellings
               </Typography>
             </AccordionSummary>
 

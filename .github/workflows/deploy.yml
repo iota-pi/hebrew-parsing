@@ -54,4 +54,5 @@ jobs:
     - name: Lint code
       run: |
         yarn lint
+        cd infra
         terraform fmt -check

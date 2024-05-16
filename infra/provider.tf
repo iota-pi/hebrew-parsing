@@ -22,16 +22,16 @@ terraform {
 provider "aws" {
   region = "ap-southeast-2"
 
-  skip_metadata_api_check     = true
-  skip_region_validation      = true
+  skip_metadata_api_check = true
+  skip_region_validation  = true
 }
 
 provider "aws" {
   region = "us-east-1"
   alias  = "us_east_1"
 
-  skip_metadata_api_check     = true
-  skip_region_validation      = true
+  skip_metadata_api_check = true
+  skip_region_validation  = true
 }
 
 provider "cloudflare" {

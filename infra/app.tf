@@ -72,16 +72,16 @@ resource "aws_cloudfront_distribution" "s3_distribution" {
 
   custom_error_response {
     error_caching_min_ttl = local.min_ttl
-    error_code = 404
-    response_code = 200
-    response_page_path = "/index.html"
+    error_code            = 404
+    response_code         = 200
+    response_page_path    = "/index.html"
   }
 
   custom_error_response {
     error_caching_min_ttl = local.min_ttl
-    error_code = 403
-    response_code = 200
-    response_page_path = "/index.html"
+    error_code            = 403
+    response_code         = 200
+    response_page_path    = "/index.html"
   }
 
   default_cache_behavior {
@@ -122,7 +122,7 @@ resource "aws_cloudfront_cache_policy" "hebrew_parsing_cache_policy" {
     }
 
     enable_accept_encoding_brotli = true
-    enable_accept_encoding_gzip = true
+    enable_accept_encoding_gzip   = true
 
     headers_config {
       header_behavior = "none"

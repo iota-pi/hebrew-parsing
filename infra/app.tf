@@ -109,8 +109,8 @@ resource "aws_cloudfront_distribution" "s3_distribution" {
   }
 }
 
-resource "aws_cloudfront_cache_policy" "app_cache_policy" {
-  name = "app_cache_policy"
+resource "aws_cloudfront_cache_policy" "hebrew_parsing_cache_policy" {
+  name = "hebrew_parsing_cache_policy"
 
   min_ttl     = local.min_ttl
   max_ttl     = local.max_ttl

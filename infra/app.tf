@@ -88,7 +88,7 @@ resource "aws_cloudfront_distribution" "s3_distribution" {
     allowed_methods  = local.allowed_methods
     cached_methods   = local.cached_methods
     target_origin_id = local.origin_id
-    cache_policy_id  = aws_cloudfront_cache_policy.app_cache_policy.id
+    cache_policy_id  = aws_cloudfront_cache_policy.hebrew_parsing_cache_policy.id
 
     min_ttl                = local.min_ttl
     default_ttl            = local.default_ttl

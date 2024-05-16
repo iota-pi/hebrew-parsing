@@ -133,7 +133,7 @@ function PGNGroup<P extends ParsingKey & ('pgn' | 'suffix')>({
       }
       return { match: false, exact: false }
     },
-    [correctAnswer, parsing, part, occurrence.parsing.pgn, occurrence.parsing.suffix],
+    [correctAnswer, correctParsings, parsing, part],
   )
   const isApplicableOption = useCallback(
     (option: PGN) => {

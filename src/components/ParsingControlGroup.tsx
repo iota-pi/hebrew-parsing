@@ -57,7 +57,7 @@ function ParsingControlGroup<P extends SimpleParsingPartKey, V extends Parsing[P
       }
       return { match: false, exact: false }
     },
-    [correctAnswer, parsing, part],
+    [correctAnswer, correctParsings, parsing, part],
   )
 
   return (

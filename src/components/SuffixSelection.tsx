@@ -1,10 +1,5 @@
-import {
-  ToggleButtonGroup,
-} from '@mui/material'
-import {
-  useCallback,
-  useMemo,
-} from 'react'
+import { ToggleButtonGroup } from '@mui/material'
+import { useCallback } from 'react'
 import type { VerbParsing } from '../loadData'
 import { hasSetPGN } from '../util'
 import ParsingControl from './ParsingControl'
@@ -47,7 +42,7 @@ function SuffixSelection({
       }
       return { match: false, exact: false }
     },
-    [parsing.suffix],
+    [correctParsings, parsing.suffix],
   )
 
   return (

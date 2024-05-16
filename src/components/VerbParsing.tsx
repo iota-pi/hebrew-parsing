@@ -212,7 +212,6 @@ function VerbParsingComponent({
       // if it is then the root should be displayed along with the parsing
       if (allOccurrences.some(o => o.root.root !== occurrence.root.root)) {
         console.warn('Root mismatch in other parsings')
-        console.log(allOccurrences.map(o => o.root))
       }
 
       const parsings = allOccurrences.map(o => o.parsing)

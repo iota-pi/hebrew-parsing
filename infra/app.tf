@@ -132,6 +132,10 @@ resource "aws_cloudfront_cache_policy" "hebrew_parsing_cache_policy" {
       query_string_behavior = "none"
     }
   }
+
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
 output "app_bucket" {

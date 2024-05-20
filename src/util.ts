@@ -245,10 +245,12 @@ export function checkPGN(
   }
 
   const attempt = fullParsingAttempt[part]
-  const alternatives = [
-    correct,
-    ...getMatchingAlternatives(fullParsingAttempt, correct),
-  ]
+  const alternatives = [correct]
+  if (part === 'pgn') {
+    alternatives.push(
+      ...getMatchingAlternatives(fullParsingAttempt, correct),
+    )
+  }
   for (const alt of alternatives) {
     if (
       (alt.person === 'N/A' || attempt.person === alt.person)

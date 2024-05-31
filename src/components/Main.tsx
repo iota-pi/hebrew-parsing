@@ -199,6 +199,14 @@ function MainPage() {
             filterConditions={filterConditions}
             onChange={onChangeFilter}
           />
+
+          <Typography variant="caption">
+            Data from BHSA
+            {' '}
+            <a href="https://dx.doi.org/10.17026/dans-z6y-skyh">
+              (ETCBC 2021)
+            </a>
+          </Typography>
         </Stack>
       </Box>
     </Box>

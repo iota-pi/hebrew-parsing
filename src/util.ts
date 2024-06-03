@@ -371,7 +371,7 @@ export function isValidSuffix(pgn: PGN) {
   return isValidPGN(pgn, undefined, true)
 }
 
-export function toLogosSearch({ parsing, root }: LinkedOccurrence) {
+export function toLogosSearch({ parsings, root }: LinkedOccurrence) {
   const stemCodes: Record<Stem, string> = {
     Qal: '[aZ]',
     Piel: '[bCxRyNGzQ]',
@@ -381,7 +381,7 @@ export function toLogosSearch({ parsing, root }: LinkedOccurrence) {
     Hithpael: '[gTOBDSEPl]',
     Hophal: 'i',
   }
-  const stem = stemCodes[parsing.stem]
+  const stem = stemCodes[parsings[0].stem]
 
   const tenseCodes: Record<Tense, string> = {
     Qatal: '[Pp]',
@@ -393,16 +393,16 @@ export function toLogosSearch({ parsing, root }: LinkedOccurrence) {
     'Infinitive absolute': 'F',
     Imperative: 'M',
   }
-  const tense = tenseCodes[parsing.tense]
+  const tense = tenseCodes[parsings[0].tense]
 
   const person = '?'
   const gender = '?'
   const number = '?'
   const state = (
-    parsing.tense === 'Infinitive construct'
+    parsings[0].tense === 'Infinitive construct'
       ? 'C'
       : (
-        parsing.tense === 'Infinitive absolute'
+        parsings[0].tense === 'Infinitive absolute'
           ? 'A'
           : '?'
       )

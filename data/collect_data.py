@@ -4,12 +4,22 @@ from collections import Counter
 import json
 import random
 import re
-from typing import Any, Dict, Iterator, List, Set
+from typing import Any, Dict, Iterable, Iterator, List
 from tf.advanced.app import App
 from tf.app import use
 
-MIN_LEX_FREQ = 20
-MIN_QAL_QATAL_FREQ = 50
+INCLUDE_ALL_FOR_STATS = False
+MIN_LEX_FREQ = 0 if INCLUDE_ALL_FOR_STATS else 20
+MIN_QAL_QATAL_FREQ = 0 if INCLUDE_ALL_FOR_STATS else 50
+
+VOWELS = set(
+    "\u05b0\u05b1\u05b2\u05b3\u05b4\u05b5\u05b6\u05b7\u05b8\u05b9\u05ba\u05bb\u05bc"
+)
+
+PARSING_EXCEPTIONS = {
+    112471,  # strange yiqtol 3fp ending (תָה)
+    65032,  # data is messy because of textual variants
+}
 
 STEMS = {
     "qal": 1,
@@ -19,6 +29,16 @@ STEMS = {
     "hit": 5,
     "pual": 6,
     "hof": 7,
+}
+OSM_STEMS = {
+    "q": "qal",
+    "Q": "qal",
+    "N": "nif",
+    "p": "piel",
+    "P": "pual",
+    "h": "hif",
+    "H": "hof",
+    "t": "hit",
 }
 
 TENSES = {
@@ -31,23 +51,67 @@ TENSES = {
     "ptcp": 7,
     "infa": 8,
 }
+OSM_TENSES = {
+    "p": "perf",
+    "q": "perf",
+    "i": "impf",
+    "w": "wayq",
+    "h": "impf",
+    "j": "impf",
+    "v": "impv",
+    "r": "ptca",
+    "s": "ptcp",
+    "a": "infa",
+    "c": "infc",
+}
 
-PERSONS = {"p1": 1, "p2": 2, "p3": 3, "unknown": 0, "NA": 0}
-GENDERS = {"m": 1, "f": 2, "unknown": 0, "NA": 0}
-NUMBERS = {"sg": 1, "pl": 2, "unknown": 0, "NA": 0}
+PERSONS = {"1": 1, "2": 2, "3": 3, "unknown": 0, "NA": 0}
+GENDERS = {"m": 1, "f": 2, "c": 0, "unknown": 0, "NA": 0}
+NUMBERS = {"s": 1, "p": 2, "unknown": 0, "NA": 0}
 
-app: App = use("ETCBC/bhsa", silent=True)
-api = app.api
+
+def map_osm_pgn(pgn: str) -> str:
+    if pgn == "x":
+        return "unknown"
+    return pgn
+
+
+app: App = use("ETCBC/bhsa", mod="ETCBC/bridging/tf", silent=True, loadData=False)
+app.TF.load(" ".join([
+    "freq_lex",
+    "gloss",
+    "g_word_utf8",
+    "g_vbe_utf8",
+    "gn",
+    "language",
+    "lex_utf8",
+    "nu",
+    "osm",
+    "osm_sf",
+    "prs_nu",
+    "prs_gn",
+    "prs_ps",
+    "ps",
+    "sp",
+    "vs",
+    "vt",
+    "vbe",
+]))
+api = app.TF.api
 
 
 def strip_accents(s: str):
     return re.sub(rf"[^\u05b0-\u05bc\u05c1\u05c2\u05c7-\u05ea ]", "", s)
 
 
+def has_vowels(s: str):
+    return any(c in VOWELS for c in s)
+
+
 def to_ascii(s: str):
     hebrew_start = 0x0591
     ascii_start = 33
-    return ''.join(
+    return "".join(
         c if ord(c) < hebrew_start else chr(ascii_start + ord(c) - hebrew_start)
         for c in s
     )
@@ -70,7 +134,7 @@ class HasId:
     def id(self, value: int):
         self._id = value
 
-    def merge(self, other: 'HasId') -> 'HasId':
+    def merge(self, other: "HasId") -> "HasId":
         return self
 
 class CountByUses[T: HasId]:
@@ -80,6 +144,11 @@ class CountByUses[T: HasId]:
     def __init__(self):
         self._data = {}
         self.counts = Counter()
+
+    def get(self, key: str, default: T) -> T:
+        if key not in self._data:
+            return default
+        return self._data[key]
 
     def add(self, key: str, value: T) -> T:
         if key not in self._data:
@@ -130,7 +199,7 @@ class VerbForm(HasId):
         self.forms_with_accends = set([self.verb])
         self.verb = strip_accents(self.verb)
 
-    def merge(self, other: 'VerbForm') -> 'VerbForm':
+    def merge(self, other: "VerbForm") -> "VerbForm":
         self.forms_with_accends.update(other.forms_with_accends)
         return self
 
@@ -142,28 +211,133 @@ class VerbForm(HasId):
 
 
 class VerbParsing(HasId):
-    def __init__(self, n: int):
-        self.stem = api.F.vs.v(n)
-        if self.stem not in STEMS:
-            raise UnhandledStemError()
-        self.tense = api.F.vt.v(n)
-        self.person = api.F.ps.v(n)
-        self.gender = api.F.gn.v(n)
-        self.number = api.F.nu.v(n)
-        self.pronom_person = api.F.prs_ps.v(n)
-        self.pronom_gender = api.F.prs_gn.v(n)
-        self.pronom_number = api.F.prs_nu.v(n)
+    def __init__(self):
+        self.stem = ""
+        self.tense = ""
+        self.person = "NA"
+        self.gender = "NA"
+        self.number = "NA"
+        self.pronom_person = "NA"
+        self.pronom_gender = "NA"
+        self.pronom_number = "NA"
+        self.paragogic_nun = False
+        self.paragogic_heh = False
+        self.cohortative = False
 
+    @staticmethod
+    def from_bhsa(n: int):
+        p = VerbParsing()
+        p.n = n
+        p.stem = api.F.vs.v(n)
+        if p.stem not in STEMS:
+            raise UnhandledStemError()
+        p.tense = api.F.vt.v(n)
+        p.person = api.F.ps.v(n).replace("p", "")
+        p.gender = api.F.gn.v(n)
+        p.number = api.F.nu.v(n).replace("sg", "s").replace("pl", "p")
+        p.pronom_person = api.F.prs_ps.v(n).replace("p", "")
+        p.pronom_gender = api.F.prs_gn.v(n)
+        p.pronom_number = api.F.prs_nu.v(n).replace("sg", "s").replace("pl", "p")
+
+        vbe = strip_accents(api.F.g_vbe_utf8.v(n) or " ")
         should_end_with_nun = (
-            api.F.ps.v(n) in ("p3", "p2")
-            and api.F.gn.v(n) == "f"
-            and api.F.nu.v(n) == "pl"
+            p.person in ("3", "2")
+            and p.gender == "f"
+            and p.number == "p"
         )
-        self.paragogic_nun = (
-            api.F.vbe.v(n).endswith("NN")
+        p.paragogic_nun = (
+            False
             if should_end_with_nun
-            else api.F.vbe.v(n).endswith("N")
+            else vbe[-1] in "נן"
         )
+
+        should_end_with_heh = (
+            (
+                p.tense == "perf"
+                and p.person == "3"
+                and p.gender == "f"
+                and p.number == "s"
+            )
+            or (
+                p.tense == "perf"
+                and p.person == "2"
+                and p.gender == "m"
+                and p.number == "s"
+            )
+            or (
+                p.tense in ("impf", "wayq")
+                and p.person in "23"
+                and p.gender == "f"
+                and p.number == "p"
+            )
+            or (
+                p.tense == "impv"
+                and p.gender == "f"
+                and p.number == "p"
+            )
+            or (
+                p.tense in ("impf", "wayq")
+                and p.person == "1"
+            )
+        )
+        p.paragogic_heh = (
+            vbe.endswith("ה")
+            or (
+                vbe.endswith("ָ")
+                and not vbe[:-1].endswith("ך")
+                and not vbe[:-1].endswith("כ")
+                and not vbe[:-1].endswith("ת")
+                and not vbe[:-1].endswith("תּ")
+            )
+            if not should_end_with_heh and p.pronom_person == "NA"
+            else False
+        )
+        p.cohortative = (
+            p.person == "1"
+            and p.tense in ("impf", "wayq")
+            and vbe.endswith("ה")
+        )
+
+        return p
+
+    @staticmethod
+    def from_osm(n: int):
+        osm = api.F.osm.v(n)
+        osm_sf = api.F.osm_sf.v(n) or ""
+        if osm and len(osm) == 2:
+            osm = osm_sf
+            osm_sf = ""
+        if osm == osm_sf:
+            osm_sf = ""
+        if not osm or osm == "*" or osm[1] != "V":
+            return None
+        if (
+            osm_sf
+            and not osm_sf.startswith("HS")
+            and not osm_sf.startswith("HPp")
+        ):
+            raise RuntimeError(f"Unexpected osm_sf: {osm_sf}")
+
+        p = VerbParsing()
+        p.n = n
+        try:
+            p.stem = OSM_STEMS[osm[2]]
+        except KeyError:
+            return None
+        p.tense = OSM_TENSES[osm[3]]
+        has_person = p.tense not in ("ptca", "ptcp", "infc", "infa")
+        pgn_offset = 1 if has_person else 0
+        p.person = map_osm_pgn(osm[4]) if has_person else "NA"
+        p.gender = map_osm_pgn(osm[4 + pgn_offset]) if len(osm) > 4 else "NA"
+        p.number = map_osm_pgn(osm[5 + pgn_offset]) if len(osm) > 4 else "NA"
+        p.pronom_person = map_osm_pgn(osm_sf[3]) if len(osm_sf) > 3 else "NA"
+        p.pronom_gender = map_osm_pgn(osm_sf[4]) if len(osm_sf) > 3 else "NA"
+        p.pronom_number = map_osm_pgn(osm_sf[5]) if len(osm_sf) > 3 else "NA"
+        p.paragogic_nun = osm_sf[2] == "n" if osm_sf else False
+        p.paragogic_heh = osm_sf[2] in "dh" if osm_sf else False
+        p.cohortative = osm[3] == "h"
+
+        return p
 
     def __repr__(self) -> str:
         return " ".join((
@@ -175,8 +349,28 @@ class VerbParsing(HasId):
             self.pronom_person or "",
             self.pronom_gender or "",
             self.pronom_number or "",
-            'T' if self.paragogic_nun else 'F',
+            "T" if self.paragogic_nun else "F",
+            "T" if self.paragogic_heh else "F",
+            "T" if self.cohortative else "F",
         ))
+
+    def __eq__(self, value: object) -> bool:
+        if not isinstance(value, VerbParsing):
+            return False
+
+        return (
+            self.stem == value.stem
+            and self.tense == value.tense
+            and PERSONS[self.person] == PERSONS[value.person]
+            and GENDERS[self.gender] == GENDERS[value.gender]
+            and NUMBERS[self.number] == NUMBERS[value.number]
+            and PERSONS[self.pronom_person] == PERSONS[value.pronom_person]
+            and GENDERS[self.pronom_gender] == GENDERS[value.pronom_gender]
+            and NUMBERS[self.pronom_number] == NUMBERS[value.pronom_number]
+            and self.paragogic_nun == value.paragogic_nun
+            and self.paragogic_heh == value.paragogic_heh
+            and self.cohortative == value.cohortative
+        )
 
     def to_simple_obj(self):
         result = [
@@ -195,12 +389,12 @@ class VerbParsing(HasId):
             NUMBERS.get(self.pronom_number, 0),
         )
 
-        if pgn or suffix:
-            result.append(pgn)
-            if suffix:
-                result.append(suffix)
+        result.append(pgn)
+        result.append(suffix)
 
         result.append(1 if self.paragogic_nun else 0)
+        result.append(1 if self.paragogic_heh else 0)
+        result.append(1 if self.cohortative else 0)
 
         return result
 
@@ -231,38 +425,44 @@ class Verse(HasId):
 
 
 class VerbOccurrence:
-    def __init__(self, verb: VerbForm, parsing: VerbParsing, verse: Verse):
+    def __init__(self, verb: VerbForm, parsings: Iterable[VerbParsing], verse: Verse):
         self.verb = verb
-        self.parsing = parsing
+        self.parsings = parsings
         self.verse = verse
 
     def to_simple_obj(self):
         return [
             self.verb.id,
-            self.parsing.id,
             self.verse.id,
+            *(p.id for p in self.parsings),
         ]
 
     def should_skip(self):
         r = random.random()
+        if INCLUDE_ALL_FOR_STATS:
+            return False
         root = self.verb.root
-        parsing = self.parsing
-        if root.lex == "אמר" and parsing.stem == "qal" and parsing.tense == "perf":
-            return r < 2 / 3
-        if root.lex == "אמר" and parsing.stem == "qal" and parsing.tense == "wayq":
-            return r < 3 / 4
-        if (
-            root.lex == "היה"
-            and parsing.stem == "qal"
-        ):
-            if parsing.tense == "perf" or parsing.tense == "yqtl":
+        for parsing in self.parsings:
+            if parsing.paragogic_nun or parsing.paragogic_heh:
+                continue
+            if root.lex == "אמר" and parsing.stem == "qal" and parsing.tense == "perf":
+                return r < 2 / 3
+            if root.lex == "אמר" and parsing.stem == "qal" and parsing.tense == "wayq":
                 return r < 3 / 4
-            return r < 1 / 2
-        if (
-            parsing.stem == "qal"
-            and parsing.tense == "perf"
-            and root.freq_lex < MIN_QAL_QATAL_FREQ
-        ):
+            if (
+                root.lex == "היה"
+                and parsing.stem == "qal"
+            ):
+                if parsing.tense == "perf" or parsing.tense == "yqtl":
+                    return r < 3 / 4
+                return r < 1 / 2
+            if root.freq_lex < MIN_LEX_FREQ or (
+                parsing.stem == "qal"
+                and parsing.tense == "perf"
+                and root.freq_lex < MIN_QAL_QATAL_FREQ
+            ):
+                return True
+        if not has_vowels(self.verb.verb):
             return True
         return False
 
@@ -278,28 +478,45 @@ class DataManager:
 
     def add_verb(self, n):
         b = Book(n)
-        book = self.books.add(b.book, b)
+        book = self.books.get(b.book, b)
+
         r = Root(api.L.u(n, otype="lex")[0])
-        root = self.roots.add(r.lex, r)
+        root = self.roots.get(r.lex, r)
+
         v = VerbForm(n, root)
-        verb = self.verbs.add(v.verb, v)
-        p = VerbParsing(n)
-        parsing = self.parsings.add(str(p), p)
+        verb = self.verbs.get(v.verb, v)
+
         v = Verse(n, book)
-        verse = self.verses.add(str(v), v)
-        occurrence = VerbOccurrence(verb, parsing, verse)
+        verse = self.verses.get(str(v), v)
+
+        p_bhs = VerbParsing.from_bhsa(n)
+        p_osm = VerbParsing.from_osm(n)
+        parsings = [
+            self.parsings.get(str(p_bhs), p_bhs)
+        ]
+        if p_osm and p_osm != p_bhs:
+            parsings.append(self.parsings.get(str(p_osm), p_osm))
+
+        occurrence = VerbOccurrence(verb, parsings, verse)
         if occurrence.should_skip():
             return
+
         self.occurrences.append(occurrence)
+        self.books.add(book.book, book)
+        self.roots.add(root.lex, root)
+        self.verbs.add(verb.verb, verb)
+        self.verses.add(str(verse), verse)
+        for parsing in parsings:
+            self.parsings.add(str(parsing), parsing)
 
     def should_skip_node(self, n):
         if api.F.otype.v(n) != "word":
             return True
         if api.F.language.v(n) != "Hebrew":
             return True
-        if api.F.freq_lex.v(n) < MIN_LEX_FREQ:
-            return True
         if api.F.sp.v(n) != "verb":
+            return True
+        if n in PARSING_EXCEPTIONS:
             return True
 
         # Contains maqef
@@ -330,6 +547,38 @@ class DataManager:
         print("Parsings", len(self.parsings))
         print("Verses", len(self.verses))
         print("Occurrences", len(self.occurrences))
+        print(
+            "OSM parsings in use",
+            len([o for o in self.occurrences if len(o.parsings) > 1])
+        )
+        for i, p in enumerate(("BHS", "OSM")):
+            print(
+                f"Paragogic nuns ({p})",
+                sum(
+                    o.parsings[i].paragogic_nun
+                    if i < len(o.parsings)
+                    else False
+                    for o in self.occurrences
+                )
+            )
+            print(
+                f"Paragogic hehs ({p})",
+                sum(
+                    o.parsings[i].paragogic_heh
+                    if i < len(o.parsings)
+                    else False
+                    for o in self.occurrences
+                )
+            )
+            print(
+                f"Cohortatives ({p})",
+                sum(
+                    o.parsings[i].cohortative
+                    if i < len(o.parsings)
+                    else False
+                    for o in self.occurrences
+                )
+            )
 
 def write_json(data: Any, filename: str):
     with open(filename, "w", encoding="utf-8") as file_object:
@@ -347,6 +596,11 @@ def main():
         data.process(n)
     data.finish()
     data.stats()
+
+    # for o in data.occurrences:
+    #     if o.parsing.paragogic_heh and not o.parsing.cohortative:
+    #         r = o.verse.reference
+    #         print(f"{r[0]} {r[1]}:{r[2]}".replace("_", " "))
 
     write_json(
         {

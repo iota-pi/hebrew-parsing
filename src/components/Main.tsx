@@ -84,9 +84,6 @@ function MainPage() {
     biasRoots: true,
   })
 
-  const [streak, setStreak] = useLocalStorage('currentStreak', 0)
-  const [bestStreak, setBestStreak] = useLocalStorage('bestStreak', 0)
-  const [, setCorrectCount] = useLocalStorage('correctCount', 0)
   const [totalCount, setTotalCount] = useLocalStorage('totalCount', 0)
 
   const [error, setError] = useState<string>('')
@@ -108,19 +105,10 @@ function MainPage() {
   )
 
   const handleAnswer = useCallback(
-    (correct: boolean) => {
+    () => {
       setTotalCount(c => c + 1)
-      if (correct) {
-        setCorrectCount(c => c + 1)
-        setStreak(s => s + 1)
-        if (streak + 1 > bestStreak) {
-          setBestStreak(streak + 1)
-        }
-      } else {
-        setStreak(0)
-      }
     },
-    [streak, bestStreak, setBestStreak, setCorrectCount, setStreak, setTotalCount],
+    [setTotalCount],
   )
   const handleNext = useCallback(
     () => {
@@ -202,9 +190,15 @@ function MainPage() {
 
           <Typography variant="caption">
             Data from BHSA
-            {' '}
+            {' ('}
             <a href="https://dx.doi.org/10.17026/dans-z6y-skyh">
-              (ETCBC 2021)
+              ETCBC 2021
+            </a>
+            {') '}
+            and
+            {' '}
+            <a href="https://hb.openscriptures.org/">
+              Open Scriptures Hebrew Bible Project
             </a>
           </Typography>
         </Stack>

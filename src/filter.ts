@@ -48,37 +48,46 @@ export function getFilterFromConditions(
 ): ((occurrence: LinkedOccurrence) => boolean) {
   if (!condition) return () => true
 
-  return ({ root, parsing }) => {
+  return ({ root, parsings }) => {
+    if (parsings.length === 1) {
+      return false
+    }
+
     if (condition.minFrequency > root.count) {
       return false
     }
 
-    if (!condition.stem[parsing.stem]) {
+    if (!parsings.some(p => condition.stem[p.stem])) {
       return false
     }
 
-    if (!condition.tense[parsing.tense]) {
+    if (!parsings.some(p => condition.tense[p.tense])) {
       if (
-        parsing.stem === 'Qal'
-        || parsing.tense !== 'Passive participle'
-        || !condition.tense['Active participle']
+        parsings.some(p => (
+          p.stem === 'Qal'
+          || p.tense !== 'Passive participle'
+          || !condition.tense['Active participle']
+        ))
       ) {
         return false
       }
     }
 
-    if (!condition.suffixes.include && hasSetPGN(parsing.suffix)) {
+    if (
+      !condition.suffixes.include
+      && parsings.every(p => hasSetPGN(p.suffix))
+    ) {
       return false
     }
     if (
       condition.suffixes.include
       && condition.suffixes.exclusive
-      && !hasSetPGN(parsing.suffix)
+      && !parsings.some(p => hasSetPGN(p.suffix))
     ) {
       return false
     }
 
-    if (!checkRootType(root, condition.root, parsing.stem)) {
+    if (!checkRootType(root, condition.root, parsings[0].stem)) {
       return false
     }
 

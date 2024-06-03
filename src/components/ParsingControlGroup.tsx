@@ -36,8 +36,8 @@ function ParsingControlGroup<P extends SimpleParsingPartKey, V extends Parsing[P
   )
 
   const mapping = PART_MAPPING[part] as V[]
-  const correctAnswer = useMemo(
-    () => getPartFromVerb(part, occurrence.parsing) as V,
+  const correctAnswers = useMemo(
+    () => occurrence.parsings.map(p => getPartFromVerb(part, p) as V),
     [part, occurrence],
   )
   const isCorrectOption = useCallback(
@@ -46,18 +46,21 @@ function ParsingControlGroup<P extends SimpleParsingPartKey, V extends Parsing[P
         ...parsing,
         [part]: option,
       }
-      if (checkSimplePart<typeof part>(part, attempt, correctAnswer)) {
-        return { match: true, exact: true }
-      } else {
-        for (const [correctParsing] of correctParsings) {
-          if (checkSimplePart<typeof part>(part, attempt, correctParsing[part])) {
-            return { match: true, exact: false }
-          }
+
+      for (const correctAnswer of correctAnswers) {
+        if (checkSimplePart<typeof part>(part, attempt, correctAnswer)) {
+          return { match: true, exact: true }
+        }
+      }
+
+      for (const [correctParsing] of correctParsings) {
+        if (checkSimplePart<typeof part>(part, attempt, correctParsing[part])) {
+          return { match: true, exact: false }
         }
       }
       return { match: false, exact: false }
     },
-    [correctAnswer, correctParsings, parsing, part],
+    [correctAnswers, correctParsings, parsing, part],
   )
 
   return (

@@ -53,7 +53,7 @@ function PGNGroup<P extends ParsingKey & ('pgn' | 'suffix')>({
   const isValid = part === 'pgn' ? isValidPGN : isValidSuffix
   const applicable: typeof rawApplicable = useMemo(
     () => {
-      if (showAnswer && hasSetPGN(occurrence.parsing.suffix)) {
+      if (showAnswer && occurrence.parsings.some(p => hasSetPGN(p.suffix))) {
         return {
           person: { 1: true, 2: true, 3: true, 'N/A': false },
           gender: { m: true, f: true, c: true, 'N/A': false },
@@ -62,7 +62,7 @@ function PGNGroup<P extends ParsingKey & ('pgn' | 'suffix')>({
       }
       return rawApplicable
     },
-    [rawApplicable, showAnswer, occurrence.parsing.suffix],
+    [rawApplicable, showAnswer, occurrence.parsings],
   )
 
   const pgnOptions: [PGN[], PGN[]] = useMemo(
@@ -111,9 +111,9 @@ function PGNGroup<P extends ParsingKey & ('pgn' | 'suffix')>({
     },
     [applicable, isValid, parsing, part],
   )
-  const correctAnswer = useMemo(
-    () => getPartFromVerb(part, occurrence.parsing) as PGN,
-    [part, occurrence.parsing],
+  const correctAnswers = useMemo(
+    () => occurrence.parsings.map(p => getPartFromVerb(part, p) as PGN),
+    [part, occurrence.parsings],
   )
   const isCorrectOption = useCallback(
     (option: PGN): OptionCorrectness => {
@@ -121,10 +121,14 @@ function PGNGroup<P extends ParsingKey & ('pgn' | 'suffix')>({
         ...parsing,
         [part]: option,
       }
-      const simpleResult = checkPGN(projectedParsing, part, correctAnswer)
-      if (simpleResult.match) {
-        return simpleResult
+
+      for (const answer of correctAnswers) {
+        const simpleResult = checkPGN(projectedParsing, part, answer)
+        if (simpleResult.match) {
+          return simpleResult
+        }
       }
+
       for (const [correctParsing] of correctParsings) {
         const correctResult = checkPGN(correctParsing, part, option)
         if (correctResult.match) {
@@ -133,7 +137,7 @@ function PGNGroup<P extends ParsingKey & ('pgn' | 'suffix')>({
       }
       return { match: false, exact: false }
     },
-    [correctAnswer, correctParsings, parsing, part],
+    [correctAnswers, correctParsings, parsing, part],
   )
   const isApplicableOption = useCallback(
     (option: PGN) => {
@@ -158,7 +162,7 @@ function PGNGroup<P extends ParsingKey & ('pgn' | 'suffix')>({
       exclusive
       disabled={
         !applicable
-        && (!showAnswer || (part === 'suffix' && !occurrence.parsing.suffix?.person))
+        && (!showAnswer || (part === 'suffix' && !occurrence.parsings.some(p => p.suffix?.person)))
       }
     >
       {pgnOptions.map(numberOptions => (

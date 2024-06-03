@@ -19,8 +19,10 @@ export function countByKey<K extends BiasCompatibleKey>(
   verbs: LinkedOccurrence[],
 ) {
   return verbs.reduce(
-    (acc, { parsing }) => {
-      acc[parsing[key]] = (acc[parsing[key]] || 0) + 1
+    (acc, { parsings }) => {
+      for (const parsing of parsings) {
+        acc[parsing[key]] = (acc[parsing[key]] || 0) + 1
+      }
       return acc
     },
     {} as Record<VerbParsing[K], number>,
@@ -59,13 +61,21 @@ export function getBiasedVerbs(
   if (biasOptions.biasStems) {
     const stemCounts = countByKey('stem', workingVerbs)
     const biasStems = getBiasFromCounts(stemCounts)
-    workingVerbs = applyBias(workingVerbs, ({ parsing }) => parsing.stem, biasStems)
+    workingVerbs = applyBias(
+      workingVerbs,
+      ({ parsings }) => parsings.map(p => p.stem),
+      biasStems,
+    )
   }
 
   if (biasOptions.biasTenses) {
     const tenseCounts = countByKey('tense', workingVerbs)
     const biasTenses = getBiasFromCounts(tenseCounts)
-    workingVerbs = applyBias(workingVerbs, ({ parsing }) => parsing.tense, biasTenses)
+    workingVerbs = applyBias(
+      workingVerbs,
+      ({ parsings }) => parsings.map(p => p.tense),
+      biasTenses,
+    )
   }
 
   return workingVerbs
@@ -109,7 +119,7 @@ export function objectMin(
 
 export function applyBias<K extends string, T extends Record<K, number>>(
   occurrences: LinkedOccurrence[],
-  key: (occurrence: LinkedOccurrence) => K | Set<K>,
+  key: (occurrence: LinkedOccurrence) => K | Iterable<K>,
   bias: T,
 ) {
   return occurrences.filter(

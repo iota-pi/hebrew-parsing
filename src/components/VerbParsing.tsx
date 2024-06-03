@@ -22,7 +22,6 @@ import {
   getReferenceString,
   stripAccents,
   ApplicableParts,
-  checkPart,
   isSimplePart,
   isValidPGN,
   isValidSuffix,
@@ -40,6 +39,7 @@ import SuffixSelection, { Suffix } from './SuffixSelection'
 
 const MAIN_PARTS = ALL_PARTS.filter(part => part !== 'suffix')
 const DEFAULT_SUFFIX: Suffix = 'no-suffix'
+const PARSING_SOURCE_NAMES = ['BHS', 'OSM']
 
 const FadedSpan = styled('span')({
   color: grey[800],
@@ -61,7 +61,7 @@ function VerbParsingComponent({
 }: {
   filterOptions: FilterCondition,
   occurrence: LinkedOccurrence,
-  onAnswer: (correct: boolean) => void,
+  onAnswer: () => void,
   onNext: () => void,
   onGiveAgain: () => void,
 }) {
@@ -214,7 +214,7 @@ function VerbParsingComponent({
         console.warn('Root mismatch in other parsings')
       }
 
-      const parsings = allOccurrences.map(o => o.parsing)
+      const parsings = allOccurrences.flatMap(o => o.parsings)
       const counts = parsings.reduce(
         (acc, p) => {
           acc.set(p, (acc.get(p) || 0) + 1)
@@ -231,15 +231,19 @@ function VerbParsingComponent({
       const withOtherSpellings = occurrences.filter(
         o => (
           o.root.root === occurrence.root.root
-          && o.parsing.stem === occurrence.parsing.stem
-          && o.parsing.tense === occurrence.parsing.tense
-          && o.parsing.pgn.person === occurrence.parsing.pgn.person
-          && o.parsing.pgn.gender === occurrence.parsing.pgn.gender
-          && o.parsing.pgn.number === occurrence.parsing.pgn.number
-          && o.parsing.suffix.person === occurrence.parsing.suffix.person
-          && o.parsing.suffix.gender === occurrence.parsing.suffix.gender
-          && o.parsing.suffix.number === occurrence.parsing.suffix.number
-          && o.parsing.paragogicNun === occurrence.parsing.paragogicNun
+          && o.parsings.some(p => (
+            occurrence.parsings.some(p2 => (
+              p.stem === p2.stem
+              && p.tense === p2.tense
+              && p.pgn.person === p2.pgn.person
+              && p.pgn.gender === p2.pgn.gender
+              && p.pgn.number === p2.pgn.number
+              && p.suffix.person === p2.suffix.person
+              && p.suffix.gender === p2.suffix.gender
+              && p.suffix.number === p2.suffix.number
+              && p.paragogicNun === p2.paragogicNun
+            ))
+          ))
         )
       )
       const counts = withOtherSpellings.reduce(
@@ -286,26 +290,10 @@ function VerbParsingComponent({
 
   const checkAnswer = useCallback(
     () => {
-      let correct = true
-      for (const part of ALL_PARTS) {
-        if (!applicableParts[part]) {
-          continue
-        }
-
-        const answer = occurrence.parsing[part]
-        if (!checkPart(part, parsing, answer as Parsing[typeof part])) {
-          correct = false
-          break
-        }
-      }
-      if (!applicableParts.suffix && isValidSuffix(occurrence.parsing.suffix)) {
-        correct = false
-      }
-
-      onAnswer(correct)
+      onAnswer()
       setShowAnswer(true)
     },
-    [occurrence, parsing, applicableParts, onAnswer],
+    [onAnswer],
   )
 
   const reset = useCallback(
@@ -440,7 +428,7 @@ function VerbParsingComponent({
               onChange={handleToggleSuffix}
               showAnswer={showAnswer}
               suffix={suffix}
-              parsing={occurrence.parsing}
+              occurrence={occurrence}
               correctParsings={validParsings}
             />
 
@@ -490,15 +478,28 @@ function VerbParsingComponent({
             <FadedSpan>
               (to {occurrence.root.gloss}; {occurrence.root.count} occurrences)
             </FadedSpan>
-            {'; '}
-            {[
-              getStemName(occurrence.parsing.stem),
-              getTenseName(occurrence.parsing.tense),
-              getPGNKey(occurrence.parsing.pgn),
-              hasSetPGN(occurrence.parsing.suffix)
-              && `+ ${getPGNKey(occurrence.parsing.suffix)} suffix`,
-              occurrence.parsing.paragogicNun && '+ paragogic nun',
-            ].filter(Boolean).join(' ')}
+
+            {occurrence.parsings.map((p, i) => (
+              <Fragment key={`parsing-${i}`}>
+                <br />
+                <span>
+                  {PARSING_SOURCE_NAMES[i]}:
+                  {' '}
+
+                  {[
+                    getStemName(p.stem),
+                    getTenseName(p.tense),
+                    getPGNKey(p.pgn),
+                    hasSetPGN(p.suffix)
+                    && `+ ${getPGNKey(p.suffix)} suffix`,
+                    p.paragogicNun && '+ paragogic nun',
+                    p.paragogicHeh && !p.cohortative && '+ paragogic heh',
+                    p.cohortative && !p.paragogicHeh && '+ cohortative',
+                    p.cohortative && p.paragogicHeh && '+ cohortative/paragogic heh',
+                  ].filter(Boolean).join(' ')}
+                </span>
+              </Fragment>
+            ))}
           </>
         ) : (
           <HebrewSpan><br /></HebrewSpan>
@@ -542,7 +543,7 @@ function VerbParsingComponent({
                     {count}
                     {' times: '}
                     <Typography
-                      color={p === occurrence.parsing ? 'blue' : undefined}
+                      color={occurrence.parsings.includes(p) ? 'blue' : undefined}
                       component="span"
                       variant="inherit"
                     >

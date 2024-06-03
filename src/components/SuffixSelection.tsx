@@ -1,6 +1,6 @@
 import { ToggleButtonGroup } from '@mui/material'
 import { useCallback } from 'react'
-import type { VerbParsing } from '../loadData'
+import type { LinkedOccurrence, VerbParsing } from '../loadData'
 import { hasSetPGN } from '../util'
 import ParsingControl from './ParsingControl'
 
@@ -12,14 +12,14 @@ function SuffixSelection({
   onChange,
   showAnswer,
   suffix,
-  parsing,
+  occurrence,
   correctParsings,
 }: {
   disabled: boolean,
   onChange: (suffix: Suffix) => void,
   showAnswer: boolean,
   suffix: Suffix,
-  parsing: VerbParsing,
+  occurrence: LinkedOccurrence,
   correctParsings: [VerbParsing, number][],
 }) {
   const handleToggleSuffix = useCallback(
@@ -32,8 +32,10 @@ function SuffixSelection({
   )
   const isCorrect = useCallback(
     (value: boolean) => {
-      if (hasSetPGN(parsing.suffix) === value) {
-        return { match: true, exact: true }
+      for (const parsing of occurrence.parsings) {
+        if (hasSetPGN(parsing.suffix) === value) {
+          return { match: true, exact: true }
+        }
       }
       for (const [correctParsing] of correctParsings) {
         if (hasSetPGN(correctParsing.suffix) === value) {
@@ -42,7 +44,7 @@ function SuffixSelection({
       }
       return { match: false, exact: false }
     },
-    [correctParsings, parsing.suffix],
+    [correctParsings, occurrence.parsings],
   )
 
   return (

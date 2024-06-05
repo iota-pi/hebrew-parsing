@@ -33,6 +33,7 @@ type DataParsing = [
   0 | 1,
   0 | 1,
   0 | 1,
+  0 | 1,
 ]
 type DataVerse = [
   number,
@@ -149,6 +150,7 @@ export function processParsings(parsings: DataParsing[]) {
       paragogicNun: data[4] === 1,
       paragogicHeh: data[5] === 1,
       cohortative: data[6] === 1,
+      energicNun: data[7] === 1,
     })
   )
 }

@@ -371,6 +371,22 @@ export function isValidSuffix(pgn: PGN) {
   return isValidPGN(pgn, undefined, true)
 }
 
+export function parsingToString(parsing: VerbParsing) {
+  return (
+    [
+      getStemName(parsing.stem),
+      getTenseName(parsing.tense),
+      getPGNKey(parsing.pgn),
+      hasSetPGN(parsing.suffix)
+      && `+ ${getPGNKey(parsing.suffix)} suffix`,
+      parsing.energicNun && '+ energic nun',
+      parsing.paragogicNun && '+ paragogic nun',
+      parsing.paragogicHeh && '+ paragogic heh',
+      parsing.cohortative && '+ cohortative heh',
+    ].filter(Boolean).join(' ')
+  )
+}
+
 export function toLogosSearch({ parsings, root }: LinkedOccurrence) {
   const stemCodes: Record<Stem, string> = {
     Qal: '[aZ]',

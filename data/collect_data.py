@@ -19,6 +19,7 @@ VOWELS = set(
 PARSING_EXCEPTIONS = {
     112471,  # strange yiqtol 3fp ending (תָה)
     65032,  # data is messy because of textual variants
+    16340,  # incorrect parsing (should have 3fs suffix but tagged as 3fp)
 }
 
 STEMS = {
@@ -220,6 +221,7 @@ class VerbParsing(HasId):
         self.pronom_person = "NA"
         self.pronom_gender = "NA"
         self.pronom_number = "NA"
+        self.energic_nun = False
         self.paragogic_nun = False
         self.paragogic_heh = False
         self.cohortative = False
@@ -240,6 +242,9 @@ class VerbParsing(HasId):
         p.pronom_number = api.F.prs_nu.v(n).replace("sg", "s").replace("pl", "p")
 
         vbe = strip_accents(api.F.g_vbe_utf8.v(n) or " ")
+        word = strip_accents(api.F.g_word_utf8.v(n) or " ")
+        root = api.F.lex_utf8.v(n)
+
         should_end_with_nun = (
             p.person in ("3", "2")
             and p.gender == "f"
@@ -298,6 +303,42 @@ class VerbParsing(HasId):
             and vbe.endswith("ה")
         )
 
+        p.energic_nun = (
+            (
+                p.pronom_person == "3"
+                and p.pronom_gender == "m"
+                and p.pronom_number == "s"
+                and (
+                    word.endswith("נּוּ")
+                    or word.endswith("נְהוּ")
+                )
+            )
+            or (
+                p.pronom_person == "2"
+                and p.pronom_gender == "m"
+                and p.pronom_number == "s"
+                and (
+                    word.endswith("ךָּ")
+                    or word.endswith("כָּה")
+                )
+            ) or (
+                p.pronom_person == "1"
+                and p.pronom_number == "s"
+                and (
+                    word.endswith("נִּי")
+                    or (
+                        word.endswith("נְנִי")
+                        and not root.endswith("נן")
+                    )
+                )
+            ) or (
+                p.pronom_person == "3"
+                and p.pronom_gender == "f"
+                and p.pronom_number == "s"
+                and word.endswith("נָּה")
+            )
+        )
+
         return p
 
     @staticmethod
@@ -352,6 +393,7 @@ class VerbParsing(HasId):
             "T" if self.paragogic_nun else "F",
             "T" if self.paragogic_heh else "F",
             "T" if self.cohortative else "F",
+            "T" if self.energic_nun else "F",
         ))
 
     def __eq__(self, value: object) -> bool:
@@ -370,6 +412,7 @@ class VerbParsing(HasId):
             and self.paragogic_nun == value.paragogic_nun
             and self.paragogic_heh == value.paragogic_heh
             and self.cohortative == value.cohortative
+            and self.energic_nun == value.energic_nun
         )
 
     def to_simple_obj(self):
@@ -395,6 +438,7 @@ class VerbParsing(HasId):
         result.append(1 if self.paragogic_nun else 0)
         result.append(1 if self.paragogic_heh else 0)
         result.append(1 if self.cohortative else 0)
+        result.append(1 if self.energic_nun else 0)
 
         return result
 
@@ -553,6 +597,15 @@ class DataManager:
         )
         for i, p in enumerate(("BHS", "OSM")):
             print(
+                f"Energic nuns ({p})",
+                sum(
+                    o.parsings[i].energic_nun
+                    if i < len(o.parsings)
+                    else False
+                    for o in self.occurrences
+                )
+            )
+            print(
                 f"Paragogic nuns ({p})",
                 sum(
                     o.parsings[i].paragogic_nun
@@ -596,11 +649,6 @@ def main():
         data.process(n)
     data.finish()
     data.stats()
-
-    # for o in data.occurrences:
-    #     if o.parsing.paragogic_heh and not o.parsing.cohortative:
-    #         r = o.verse.reference
-    #         print(f"{r[0]} {r[1]}:{r[2]}".replace("_", " "))
 
     write_json(
         {

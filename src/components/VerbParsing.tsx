@@ -30,6 +30,7 @@ import {
   getPGNKey,
   hasSetPGN,
   toLogosLink,
+  parsingToString,
 } from '../util'
 import { VerbParsing, getLinkedOccurrences, type LinkedOccurrence } from '../loadData'
 import type { FilterCondition, Stem, Tense } from '../filter'
@@ -241,7 +242,6 @@ function VerbParsingComponent({
               && p.suffix.person === p2.suffix.person
               && p.suffix.gender === p2.suffix.gender
               && p.suffix.number === p2.suffix.number
-              && p.paragogicNun === p2.paragogicNun
             ))
           ))
         )
@@ -486,17 +486,7 @@ function VerbParsingComponent({
                   {PARSING_SOURCE_NAMES[i]}:
                   {' '}
 
-                  {[
-                    getStemName(p.stem),
-                    getTenseName(p.tense),
-                    getPGNKey(p.pgn),
-                    hasSetPGN(p.suffix)
-                    && `+ ${getPGNKey(p.suffix)} suffix`,
-                    p.paragogicNun && '+ paragogic nun',
-                    p.paragogicHeh && !p.cohortative && '+ paragogic heh',
-                    p.cohortative && !p.paragogicHeh && '+ cohortative',
-                    p.cohortative && p.paragogicHeh && '+ cohortative/paragogic heh',
-                  ].filter(Boolean).join(' ')}
+                  {parsingToString(p)}
                 </span>
               </Fragment>
             ))}
@@ -547,13 +537,7 @@ function VerbParsingComponent({
                       component="span"
                       variant="inherit"
                     >
-                      {[
-                        getStemName(p.stem),
-                        getTenseName(p.tense),
-                        getPGNKey(p.pgn),
-                        hasSetPGN(p.suffix) && `+ ${getPGNKey(p.suffix)} suffix`,
-                        p.paragogicNun && '+ paragogic nun',
-                      ].filter(Boolean).join(' ')}
+                      {parsingToString(p)}
                     </Typography>
                   </Typography>
                 ))}

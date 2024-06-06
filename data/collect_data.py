@@ -74,6 +74,8 @@ NUMBERS = {"s": 1, "p": 2, "unknown": 0, "NA": 0}
 def map_osm_pgn(pgn: str) -> str:
     if pgn == "x":
         return "unknown"
+    if pgn == "c":
+        return "NA"
     return pgn
 
 
@@ -384,12 +386,12 @@ class VerbParsing(HasId):
         return " ".join((
             self.stem,
             self.tense,
-            self.person or "",
-            self.gender or "",
-            self.number or "",
-            self.pronom_person or "",
-            self.pronom_gender or "",
-            self.pronom_number or "",
+            self.person.replace("unknown", "NA"),
+            self.gender.replace("unknown", "NA"),
+            self.number.replace("unknown", "NA"),
+            self.pronom_person.replace("unknown", "NA"),
+            self.pronom_gender.replace("unknown", "NA"),
+            self.pronom_number.replace("unknown", "NA"),
             "T" if self.paragogic_nun else "F",
             "T" if self.paragogic_heh else "F",
             "T" if self.cohortative else "F",

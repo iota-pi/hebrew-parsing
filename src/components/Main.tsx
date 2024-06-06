@@ -50,6 +50,12 @@ const defaultFilterConditions: FilterCondition = {
     include: true,
     exclusive: false,
   },
+  extras: {
+    cohortatives: true,
+    energicNuns: true,
+    paragogicHehs: true,
+    paragogicNuns: true,
+  },
   minFrequency: 50,
 }
 

@@ -37,6 +37,23 @@ const baseTenses = (
   Object.fromEntries(ALL_TENSES.map(tense => [tense, false]))
 ) as FilterCondition['tense']
 
+const EXTRAS_KEYS: (keyof FilterCondition['extras'])[] = [
+  'cohortatives',
+  'paragogicHehs',
+  'paragogicNuns',
+  'energicNuns',
+]
+
+function getExtrasLabel(key: keyof FilterCondition['extras']) {
+  const labels: Record<keyof FilterCondition['extras'], string> = {
+    cohortatives: 'Cohortatives',
+    paragogicHehs: 'Paragogic hehs',
+    paragogicNuns: 'Paragogic nuns',
+    energicNuns: 'Energic nuns',
+  }
+  return labels[key]
+}
+
 const minFrequencyOptions = [
   // 0,
   10,
@@ -133,6 +150,19 @@ function FilterSelection({
     [filterConditions, onChange],
   )
 
+  const handleChangeExtras = useCallback(
+    (event: React.MouseEvent, value: keyof FilterCondition['extras']) => {
+      onChange({
+        ...filterConditions,
+        extras: {
+          ...filterConditions.extras,
+          [value]: !filterConditions.extras[value],
+        },
+      })
+    },
+    [filterConditions, onChange],
+  )
+
   const handleChangeFrequency = useCallback(
     (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
       onChange({
@@ -193,6 +223,19 @@ function FilterSelection({
         >
           {xs ? 'Only with' : 'Always include'} suffixes
         </ToggleButton>
+      </ToggleButtonGroup>
+
+      <ToggleButtonGroup fullWidth>
+        {EXTRAS_KEYS.map(key => (
+          <ToggleButton
+            key={key}
+            onChange={handleChangeExtras}
+            selected={filterConditions.extras[key]}
+            value={key}
+          >
+            {getExtrasLabel(key)}
+          </ToggleButton>
+        ))}
       </ToggleButtonGroup>
 
       <TextField

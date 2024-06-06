@@ -37,6 +37,12 @@ export type FilterCondition = {
     include: boolean,
     exclusive: boolean,
   },
+  extras: {
+    cohortatives: boolean,
+    energicNuns: boolean,
+    paragogicHehs: boolean,
+    paragogicNuns: boolean,
+  },
   minFrequency: number,
 }
 export type RootKey = keyof FilterCondition['root']
@@ -84,6 +90,19 @@ export function getFilterFromConditions(
       && condition.suffixes.exclusive
       && !parsings.some(p => hasSetPGN(p.suffix))
     ) {
+      return false
+    }
+
+    if (!condition.extras.cohortatives && parsings.some(p => p.cohortative)) {
+      return false
+    }
+    if (!condition.extras.energicNuns && parsings.some(p => p.energicNun)) {
+      return false
+    }
+    if (!condition.extras.paragogicHehs && parsings.some(p => p.paragogicHeh)) {
+      return false
+    }
+    if (!condition.extras.paragogicNuns && parsings.some(p => p.paragogicNun)) {
       return false
     }
 

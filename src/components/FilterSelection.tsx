@@ -44,11 +44,14 @@ const EXTRAS_KEYS: (keyof FilterCondition['extras'])[] = [
   'energicNuns',
 ]
 
-function getExtrasLabel(key: keyof FilterCondition['extras']) {
+function getExtrasLabel(
+  key: keyof FilterCondition['extras'],
+  xs: boolean,
+) {
   const labels: Record<keyof FilterCondition['extras'], string> = {
-    cohortatives: 'Cohortatives',
-    paragogicHehs: 'Paragogic hehs',
-    paragogicNuns: 'Paragogic nuns',
+    cohortatives: xs ? 'Cohort.' : 'Cohortatives',
+    paragogicHehs: xs ? 'Para-gogic hehs' : 'Paragogic hehs',
+    paragogicNuns: xs ? 'Para-gogic nuns' : 'Paragogic nuns',
     energicNuns: 'Energic nuns',
   }
   return labels[key]
@@ -233,7 +236,7 @@ function FilterSelection({
             selected={filterConditions.extras[key]}
             value={key}
           >
-            {getExtrasLabel(key)}
+            {getExtrasLabel(key, xs)}
           </ToggleButton>
         ))}
       </ToggleButtonGroup>

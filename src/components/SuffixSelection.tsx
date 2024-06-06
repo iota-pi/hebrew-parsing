@@ -20,7 +20,7 @@ function SuffixSelection({
   showAnswer: boolean,
   suffix: Suffix,
   occurrence: LinkedOccurrence,
-  correctParsings: [VerbParsing, number][],
+  correctParsings: VerbParsing[],
 }) {
   const handleToggleSuffix = useCallback(
     (event: React.MouseEvent<HTMLElement>, newData: 'suffix' | 'no-suffix' | null) => {
@@ -37,7 +37,7 @@ function SuffixSelection({
           return { match: true, exact: true }
         }
       }
-      for (const [correctParsing] of correctParsings) {
+      for (const correctParsing of correctParsings) {
         if (hasSetPGN(correctParsing.suffix) === value) {
           return { match: true, exact: false }
         }

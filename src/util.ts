@@ -214,6 +214,29 @@ export function replaceSofits(str: string) {
   )
 }
 
+export function isSimilarRoot(a: string, b: string) {
+  const aTypes = getRootTypes(a)
+  const bTypes = getRootTypes(b)
+  return (
+    aTypes.size === bTypes.size
+    && Array.from(aTypes).every(t => bTypes.has(t))
+  )
+}
+
+export function extractVowels(verb: string) {
+  const vowels = "\u05b0\u05b1\u05b2\u05b3\u05b4\u05b5\u05b6\u05b7\u05b8\u05b9\u05ba\u05bb\u05bc"
+  const dagesh = "\u05bc"
+
+  const verbVowels = verb.replace(new RegExp(`[^${vowels}${dagesh}]`, 'g'), '')
+
+  // Ignore initial dagesh
+  if (verbVowels.charAt(0) === dagesh) {
+    return verbVowels.slice(1)
+  }
+
+  return verbVowels
+}
+
 export function checkSimplePart<T extends SimpleParsingPartKey>(
   part: T,
   fullParsingAttempt: Parsing,
@@ -395,7 +418,10 @@ export function getAllValidParsings(occurrence: LinkedOccurrence, occurrences: L
     console.warn('Root mismatch in other parsings')
   }
 
-  const parsings = allOccurrences.flatMap(o => o.parsings)
+  return allOccurrences.flatMap(o => o.parsings)
+}
+
+export function countParsings(parsings: VerbParsing[]) {
   const counts = parsings.reduce(
     (acc, p) => {
       acc.set(p, (acc.get(p) || 0) + 1)

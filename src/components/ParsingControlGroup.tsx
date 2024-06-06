@@ -24,7 +24,7 @@ function ParsingControlGroup<P extends SimpleParsingPartKey, V extends Parsing[P
   showAnswer: boolean,
   value: V,
   occurrence: LinkedOccurrence,
-  correctParsings: [VerbParsing, number][],
+  correctParsings: VerbParsing[],
 }) {
   const handleToggle = useCallback(
     (event: React.MouseEvent<HTMLElement>, newData: V) => {
@@ -53,7 +53,7 @@ function ParsingControlGroup<P extends SimpleParsingPartKey, V extends Parsing[P
         }
       }
 
-      for (const [correctParsing] of correctParsings) {
+      for (const correctParsing of correctParsings) {
         if (checkSimplePart<typeof part>(part, attempt, correctParsing[part])) {
           return { match: true, exact: false }
         }

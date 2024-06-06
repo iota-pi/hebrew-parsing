@@ -6,7 +6,7 @@ import {
 } from '@mui/material'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useLocalStorage } from 'usehooks-ts'
-import VerbParsing from './VerbParsing'
+import ParseVerb from './ParseVerb'
 import FilterSelection from './FilterSelection'
 import type { BiasOptions } from '../bias'
 import type { FilterCondition } from '../filter'
@@ -149,7 +149,7 @@ function MainPage() {
       <Box width="100%" maxWidth={1200}>
         <Stack spacing={2}>
           {verbs[0] && !error ? (
-            <VerbParsing
+            <ParseVerb
               filterOptions={filterConditions}
               occurrence={verbs[0]}
               onAnswer={handleAnswer}

@@ -16,8 +16,6 @@ import {
   ALL_PARTS,
   Parsing,
   ParsingKey,
-  getReferenceString,
-  stripAccents,
   ApplicableParts,
   isSimplePart,
   isValidPGN,
@@ -32,6 +30,7 @@ import ParsingControlGroup from './ParsingControlGroup'
 import PGNGroup from './PGNGroup'
 import SuffixSelection, { Suffix } from './SuffixSelection'
 import SimilarWords from './SimilarWords'
+import VerbDisplay from './VerbDisplay'
 
 const MAIN_PARTS = ALL_PARTS.filter(part => part !== 'suffix')
 const DEFAULT_SUFFIX: Suffix = 'no-suffix'
@@ -39,9 +38,6 @@ const PARSING_SOURCE_NAMES = ['BHS', 'OSM']
 
 const FadedSpan = styled('span')({
   color: grey[800],
-})
-const HighlightedSpan = styled('span')({
-  color: 'blue',
 })
 const HebrewSpan = styled('span')({
   fontSize: '110%',
@@ -273,70 +269,9 @@ function ParseVerb({
     [onGiveAgain, reset],
   )
 
-  const replacementCode = useMemo(
-    () => new RegExp(
-      '('
-      + Array.from(occurrence.verb.verb).join(
-        '[^\u05b0-\u05bc\u05c1\u05c2\u05c7-\u05ea]?'
-      )
-      + ')',
-      'g',
-    ),
-    [occurrence.verb],
-  )
-  const verseParts = useMemo(
-    () => occurrence.verse.text.split(replacementCode),
-    [occurrence.verse, replacementCode],
-  )
-  const verseElement = useMemo(
-    () => verseParts.map((part, index) => (
-      <Fragment key={index}>
-        {stripAccents(part) === occurrence.verb.verb ? (
-          <HighlightedSpan>
-            {part}
-          </HighlightedSpan>
-        ) : (
-          part
-        )}
-      </Fragment>
-    )),
-    [verseParts, occurrence.verb],
-  )
-
   return (
     <Stack spacing={2}>
-      <div>
-        <Typography
-          variant="h4"
-          fontFamily={"'Ezra SIL', Roboto, David, sans-serif"}
-          lineHeight={1.5}
-          textAlign={'right'}
-          pt={1}
-        >
-          <FadedSpan>
-            {verseElement}
-          </FadedSpan>
-        </Typography>
-
-        <Typography
-          variant="h6"
-          textAlign={'right'}
-          color='grey.600'
-        >
-          {getReferenceString(occurrence.verse, occurrence.book)}
-        </Typography>
-
-        <Typography
-          variant="h2"
-          textAlign="center"
-          fontFamily={"'Ezra SIL', Roboto, David, sans-serif"}
-          pb={2}
-        >
-          <HighlightedSpan>
-            {stripAccents(occurrence.verb.verb)}
-          </HighlightedSpan>
-        </Typography>
-      </div>
+      <VerbDisplay occurrence={occurrence} />
 
       <Stack direction="row" spacing={2} overflow="auto">
         {MAIN_PARTS.map(part => (
@@ -413,12 +348,12 @@ function ParseVerb({
         Practise again later
       </Button>
 
-      <Typography
-        variant="h5"
-        color='grey.800'
-      >
-        {showAnswer ? (
-          <>
+      {showAnswer && (
+        <>
+          <Typography
+            variant="h5"
+            color='grey.800'
+          >
             <HebrewSpan>{occurrence.root.root}</HebrewSpan>
             {' '}
             <FadedSpan>
@@ -429,37 +364,29 @@ function ParseVerb({
               <Fragment key={`parsing-${i}`}>
                 <br />
                 <span>
-                  {PARSING_SOURCE_NAMES[i]}:
+                  <FadedSpan>
+                    {PARSING_SOURCE_NAMES[i]}:
+                  </FadedSpan>
                   {' '}
 
                   {parsingToString(p)}
                 </span>
               </Fragment>
             ))}
-          </>
-        ) : (
-          <HebrewSpan><br /></HebrewSpan>
-        )}
-      </Typography>
+          </Typography>
 
-      <Typography
-        variant="h6"
-        color='grey.800'
-      >
-        {showAnswer ? (
-          <>
+          <Typography
+            variant="h6"
+            color='grey.800'
+          >
             <span>Search in: </span>
             <a href={toLogosLink(occurrence)}>
               <img src="/icon-logos.svg" alt="Logos Bible Software" />
             </a>
-          </>
-        ) : (
-          <br />
-        )}
-      </Typography>
+          </Typography>
 
-      {showAnswer || true && (
-        <SimilarWords occurrence={occurrence} />
+          <SimilarWords occurrence={occurrence} />
+        </>
       )}
     </Stack>
   )

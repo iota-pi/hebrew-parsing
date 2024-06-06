@@ -39,7 +39,7 @@ function PGNGroup<P extends ParsingKey & ('pgn' | 'suffix')>({
   showAnswer: boolean,
   value: PGN,
   occurrence: LinkedOccurrence,
-  correctParsings: [VerbParsing, number][],
+  correctParsings: VerbParsing[],
 }) {
   const handleChange = useCallback(
     (event: React.MouseEvent<HTMLElement>, newData: PGN) => {
@@ -129,7 +129,7 @@ function PGNGroup<P extends ParsingKey & ('pgn' | 'suffix')>({
         }
       }
 
-      for (const [correctParsing] of correctParsings) {
+      for (const correctParsing of correctParsings) {
         const correctResult = checkPGN(correctParsing, part, option)
         if (correctResult.match) {
           return { match: true, exact: false }

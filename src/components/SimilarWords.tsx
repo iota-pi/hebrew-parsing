@@ -1,4 +1,5 @@
 import {
+  Fragment,
   useEffect,
   useMemo,
   useState,
@@ -12,11 +13,17 @@ import {
 } from '@mui/material'
 import styled from '@emotion/styled'
 import {
+  countParsings,
+  extractVowels,
   getAllValidParsings,
+  isSimilarRoot,
   parsingToString,
   removeInitialDagesh,
 } from '../util'
 import { getLinkedOccurrences, type LinkedOccurrence } from '../loadData'
+
+
+const MIN_SIMILAR_WORD_PARSINGS_COUNT = 5
 
 const HighlightedSpan = styled('span')({
   color: 'blue',
@@ -42,6 +49,10 @@ function SimilarWords({
   const validParsings = useMemo(
     () => getAllValidParsings(occurrence, occurrences),
     [occurrences, occurrence],
+  )
+  const parsingsWithCounts = useMemo(
+    () => countParsings(validParsings),
+    [validParsings],
   )
   const alternativeSpellings = useMemo(
     () => {
@@ -72,15 +83,37 @@ function SimilarWords({
       )
       return Array.from(counts.entries()).sort(([, v1], [, v2]) => v2 - v1)
     },
-    [occurrences, occurrence],
+    [occurrence, occurrences],
+  )
+  const similarWords = useMemo(
+    () => occurrences.filter(
+      o => (
+        o.root.root !== occurrence.root.root
+        && isSimilarRoot(o.root.root, occurrence.root.root)
+        && extractVowels(o.verb.verb) === extractVowels(occurrence.verb.verb)
+      ),
+    ),
+    [occurrence, occurrences],
+  )
+  const alternativeParsingsInSimilarWords = useMemo(
+    () => (
+      countParsings(
+        similarWords.flatMap(o => o.parsings).filter(p => (
+          !validParsings.includes(p)
+        ))
+      ).filter(
+        ([, count]) => count > MIN_SIMILAR_WORD_PARSINGS_COUNT
+      )
+    ),
+    [similarWords, validParsings],
   )
 
   return (
-    <>
+    <Fragment>
       <Accordion>
-        <AccordionSummary disabled={validParsings.length === 1}>
+        <AccordionSummary disabled={parsingsWithCounts.length === 1}>
           <Typography variant="h6">
-            {validParsings.length === 1 ? 'No other' : validParsings.length}
+            {parsingsWithCounts.length === 1 ? 'No other' : parsingsWithCounts.length}
             {' '}
             parsings for this word
           </Typography>
@@ -88,7 +121,7 @@ function SimilarWords({
 
         <AccordionDetails>
           <Stack spacing={2}>
-            {validParsings.map(([p, count], i) => (
+            {parsingsWithCounts.map(([p, count], i) => (
               <Typography
                 key={i}
                 variant="h5"
@@ -140,7 +173,42 @@ function SimilarWords({
           </Stack>
         </AccordionDetails>
       </Accordion>
-    </>
+
+      <Accordion>
+        <AccordionSummary disabled={alternativeParsingsInSimilarWords.length === 0}>
+          <Typography variant="h6">
+            {
+              alternativeParsingsInSimilarWords.length === 0
+                ? 'No'
+                : alternativeParsingsInSimilarWords.length
+            }
+            {' '}
+            alternative parsings in different words with similar vowel patterns
+          </Typography>
+        </AccordionSummary>
+
+        <AccordionDetails>
+          <Stack spacing={2}>
+            {alternativeParsingsInSimilarWords.map(([p, count], i) => (
+              <Typography
+                key={i}
+                variant="h5"
+              >
+                {count}
+                {'x '}
+
+                <Typography
+                  component="span"
+                  variant="inherit"
+                >
+                  {parsingToString(p)}
+                </Typography>
+              </Typography>
+            ))}
+          </Stack>
+        </AccordionDetails>
+      </Accordion>
+    </Fragment>
   )
 }
 

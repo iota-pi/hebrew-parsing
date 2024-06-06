@@ -371,6 +371,41 @@ export function isValidSuffix(pgn: PGN) {
   return isValidPGN(pgn, undefined, true)
 }
 
+export function removeInitialDagesh(s: string) {
+  if (s.charAt(1) === 'ו') {
+    // Don't remove dagesh in shureq if it is the second letter of the word
+    return s
+  }
+  return s.slice(0, 3).replace(/\u05bc/g, '') + s.slice(3)
+}
+
+export function hasSameSpelling(a: LinkedOccurrence, b: LinkedOccurrence) {
+  const v1 = removeInitialDagesh(a.verb.verb)
+  const v2 = removeInitialDagesh(b.verb.verb)
+  return v1 === v2
+}
+
+export function getAllValidParsings(occurrence: LinkedOccurrence, occurrences: LinkedOccurrence[]) {
+  const allOccurrences = occurrences.filter(
+    o => hasSameSpelling(o, occurrence)
+  )
+  // TODO: run a check to see if this is ever necessary;
+  // if it is then the root should be displayed along with the parsing
+  if (allOccurrences.some(o => o.root.root !== occurrence.root.root)) {
+    console.warn('Root mismatch in other parsings')
+  }
+
+  const parsings = allOccurrences.flatMap(o => o.parsings)
+  const counts = parsings.reduce(
+    (acc, p) => {
+      acc.set(p, (acc.get(p) || 0) + 1)
+      return acc
+    },
+    new Map<VerbParsing, number>(),
+  )
+  return Array.from(counts.entries()).sort(([, v1], [, v2]) => v2 - v1)
+}
+
 export function parsingToString(parsing: VerbParsing) {
   return (
     [

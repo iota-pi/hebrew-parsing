@@ -6,9 +6,6 @@ import {
   useState,
 } from 'react'
 import {
-  Accordion,
-  AccordionDetails,
-  AccordionSummary,
   Button,
   Stack,
   Typography,
@@ -25,18 +22,16 @@ import {
   isSimplePart,
   isValidPGN,
   isValidSuffix,
-  getStemName,
-  getTenseName,
-  getPGNKey,
-  hasSetPGN,
   toLogosLink,
   parsingToString,
+  getAllValidParsings,
 } from '../util'
-import { VerbParsing, getLinkedOccurrences, type LinkedOccurrence } from '../loadData'
+import { getLinkedOccurrences, type LinkedOccurrence } from '../loadData'
 import type { FilterCondition, Stem, Tense } from '../filter'
 import ParsingControlGroup from './ParsingControlGroup'
 import PGNGroup from './PGNGroup'
 import SuffixSelection, { Suffix } from './SuffixSelection'
+import SimilarWords from './SimilarWords'
 
 const MAIN_PARTS = ALL_PARTS.filter(part => part !== 'suffix')
 const DEFAULT_SUFFIX: Suffix = 'no-suffix'
@@ -53,7 +48,7 @@ const HebrewSpan = styled('span')({
   fontFamily: "'Ezra SIL', Roboto, David, sans-serif",
 })
 
-function VerbParsingComponent({
+function ParseVerb({
   filterOptions,
   occurrence,
   onAnswer,
@@ -205,56 +200,7 @@ function VerbParsingComponent({
   )
 
   const validParsings = useMemo(
-    () => {
-      const allOccurrences = occurrences.filter(
-        o => o.verb.verb === occurrence.verb.verb
-      )
-      // TODO: run a check to see if this is ever necessary;
-      // if it is then the root should be displayed along with the parsing
-      if (allOccurrences.some(o => o.root.root !== occurrence.root.root)) {
-        console.warn('Root mismatch in other parsings')
-      }
-
-      const parsings = allOccurrences.flatMap(o => o.parsings)
-      const counts = parsings.reduce(
-        (acc, p) => {
-          acc.set(p, (acc.get(p) || 0) + 1)
-          return acc
-        },
-        new Map<VerbParsing, number>(),
-      )
-      return Array.from(counts.entries()).sort(([, v1], [, v2]) => v2 - v1)
-    },
-    [occurrences, occurrence],
-  )
-  const alternativeSpellings = useMemo(
-    () => {
-      const withOtherSpellings = occurrences.filter(
-        o => (
-          o.root.root === occurrence.root.root
-          && o.parsings.some(p => (
-            occurrence.parsings.some(p2 => (
-              p.stem === p2.stem
-              && p.tense === p2.tense
-              && p.pgn.person === p2.pgn.person
-              && p.pgn.gender === p2.pgn.gender
-              && p.pgn.number === p2.pgn.number
-              && p.suffix.person === p2.suffix.person
-              && p.suffix.gender === p2.suffix.gender
-              && p.suffix.number === p2.suffix.number
-            ))
-          ))
-        )
-      )
-      const counts = withOtherSpellings.reduce(
-        (acc, o) => {
-          acc.set(o.verb.verb, (acc.get(o.verb.verb) || 0) + 1)
-          return acc
-        },
-        new Map<string, number>(),
-      )
-      return Array.from(counts.entries()).sort(([, v1], [, v2]) => v2 - v1)
-    },
+    () => getAllValidParsings(occurrence, occurrences),
     [occurrences, occurrence],
   )
 
@@ -512,78 +458,14 @@ function VerbParsingComponent({
         )}
       </Typography>
 
-      {showAnswer && (
-        <>
-          <Accordion>
-            <AccordionSummary disabled={validParsings.length === 1}>
-              <Typography variant="h6">
-                {validParsings.length === 1 ? 'No' : validParsings.length - 1}
-                {' '}
-                other parsings for this word
-              </Typography>
-            </AccordionSummary>
-
-            <AccordionDetails>
-              <Stack spacing={2}>
-                {validParsings.map(([p, count], i) => (
-                  <Typography
-                    key={i}
-                    variant="h5"
-                  >
-                    {count}
-                    {' times: '}
-                    <Typography
-                      color={occurrence.parsings.includes(p) ? 'blue' : undefined}
-                      component="span"
-                      variant="inherit"
-                    >
-                      {parsingToString(p)}
-                    </Typography>
-                  </Typography>
-                ))}
-              </Stack>
-            </AccordionDetails>
-          </Accordion>
-
-          <Accordion>
-            <AccordionSummary disabled={alternativeSpellings.length === 1}>
-              <Typography variant="h6">
-                {alternativeSpellings.length === 1 ? 'No' : alternativeSpellings.length - 1}
-                {' '}
-                alternative spellings
-              </Typography>
-            </AccordionSummary>
-
-            <AccordionDetails>
-              <Stack spacing={2}>
-                {alternativeSpellings.map(([spelling, count], i) => (
-                  <Typography
-                    key={i}
-                    variant="h5"
-                  >
-                    {count}
-                    {' times: '}
-                    <HebrewSpan>
-                      {spelling === occurrence.verb.verb ? (
-                        <HighlightedSpan>
-                          {spelling}
-                        </HighlightedSpan>
-                      ) : (
-                        spelling
-                      )}
-                    </HebrewSpan>
-                  </Typography>
-                ))}
-              </Stack>
-            </AccordionDetails>
-          </Accordion>
-        </>
+      {showAnswer || true && (
+        <SimilarWords occurrence={occurrence} />
       )}
     </Stack>
   )
 }
 
-export default VerbParsingComponent
+export default ParseVerb
 
 function getInitialApplicableParts(): ApplicableParts {
   return {

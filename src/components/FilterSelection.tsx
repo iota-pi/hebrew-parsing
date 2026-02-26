@@ -1,12 +1,19 @@
 import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
+  Icon,
   MenuItem,
   Stack,
   TextField,
   Theme,
   ToggleButton,
   ToggleButtonGroup,
+  Typography,
   useMediaQuery,
 } from '@mui/material'
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
+import FilterIcon from '@mui/icons-material/FilterAlt'
 import type { FilterCondition, RootKey, Stem, Tense } from '../filter'
 import { ChangeEvent, useCallback, useMemo } from 'react'
 import { ALL_STEMS, ALL_TENSES, getRootTypeName, getTenseName } from '../util'
@@ -179,88 +186,99 @@ function FilterSelection({
   const xs = useMediaQuery<Theme>(theme => theme.breakpoints.only('xs'))
 
   return (
-    <Stack spacing={2}>
-      <FilterSelect
-        value={selectedRoots}
-        options={allRoots}
-        label="Include roots:"
-        onChange={handleChangeRoots}
-        getOptionLabel={root => (
-          root === '1-waw'
-            ? '1-waw / 1-yod'
-            : getRootTypeName(root)
-        )}
-      />
-
-      <FilterSelect
-        value={selectedStems}
-        options={ALL_STEMS}
-        label="Include stems:"
-        onChange={handleChangeStems}
-      />
-
-      <FilterSelect
-        value={selectedTenses}
-        options={ALL_TENSES}
-        label="Include conjugations:"
-        onChange={handleChangeTenses}
-        getOptionLabel={getTenseName}
-      />
-
-      <ToggleButtonGroup fullWidth>
-        <ToggleButton
-          value="include"
-          selected={filterConditions.suffixes.include}
-          onChange={handleChangeSuffixes}
-        >
-          Include suffixes
-        </ToggleButton>
-        <ToggleButton
-          value="exclusive"
-          selected={
-            filterConditions.suffixes.include
-            && filterConditions.suffixes.exclusive
-          }
-          onChange={handleChangeSuffixes}
-          disabled={!filterConditions.suffixes.include}
-        >
-          {xs ? 'Only with' : 'Always include'} suffixes
-        </ToggleButton>
-      </ToggleButtonGroup>
-
-      <ToggleButtonGroup fullWidth>
-        {EXTRAS_KEYS.map(key => (
-          <ToggleButton
-            key={key}
-            onChange={handleChangeExtras}
-            selected={filterConditions.extras[key]}
-            value={key}
-          >
-            {getExtrasLabel(key, xs)}
-          </ToggleButton>
-        ))}
-      </ToggleButtonGroup>
-
-      <TextField
-        label="Include roots which occur:"
-        select
-        value={filterConditions.minFrequency.toString()}
-        onChange={handleChangeFrequency}
+    <Accordion defaultExpanded={false}>
+      <AccordionSummary
+        expandIcon={<ExpandMoreIcon />}
+        color="primary"
       >
-        {minFrequencyOptions.map(frequency => (
-          <MenuItem
-            key={frequency}
-            value={frequency.toString()}
-          >
-            {frequency === 0 ? (
-              'At least once'
-            ) : (
-              `${frequency}+ times`
+        <FilterIcon />
+        <Typography>Filters</Typography>
+      </AccordionSummary>
+      <AccordionDetails>
+        <Stack spacing={2}>
+          <FilterSelect
+            value={selectedRoots}
+            options={allRoots}
+            label="Include roots:"
+            onChange={handleChangeRoots}
+            getOptionLabel={root => (
+              root === '1-waw'
+                ? '1-waw / 1-yod'
+                : getRootTypeName(root)
             )}
-          </MenuItem>
-        ))}
-      </TextField>
-    </Stack>
+          />
+
+          <FilterSelect
+            value={selectedStems}
+            options={ALL_STEMS}
+            label="Include stems:"
+            onChange={handleChangeStems}
+          />
+
+          <FilterSelect
+            value={selectedTenses}
+            options={ALL_TENSES}
+            label="Include conjugations:"
+            onChange={handleChangeTenses}
+            getOptionLabel={getTenseName}
+          />
+
+          <ToggleButtonGroup fullWidth>
+            <ToggleButton
+              value="include"
+              selected={filterConditions.suffixes.include}
+              onChange={handleChangeSuffixes}
+            >
+              Include suffixes
+            </ToggleButton>
+            <ToggleButton
+              value="exclusive"
+              selected={
+                filterConditions.suffixes.include
+                && filterConditions.suffixes.exclusive
+              }
+              onChange={handleChangeSuffixes}
+              disabled={!filterConditions.suffixes.include}
+            >
+              {xs ? 'Only with' : 'Always include'} suffixes
+            </ToggleButton>
+          </ToggleButtonGroup>
+
+          <ToggleButtonGroup fullWidth>
+            {EXTRAS_KEYS.map(key => (
+              <ToggleButton
+                key={key}
+                onChange={handleChangeExtras}
+                selected={filterConditions.extras[key]}
+                value={key}
+              >
+                {getExtrasLabel(key, xs)}
+              </ToggleButton>
+            ))}
+          </ToggleButtonGroup>
+
+          <TextField
+            label="Include roots which occur:"
+            select
+            value={filterConditions.minFrequency.toString()}
+            onChange={handleChangeFrequency}
+          >
+            {minFrequencyOptions.map(frequency => (
+              <MenuItem
+                key={frequency}
+                value={frequency.toString()}
+              >
+                {frequency === 0 ? (
+                  'At least once'
+                ) : (
+                  `${frequency}+ times`
+                )}
+              </MenuItem>
+            ))}
+          </TextField>
+        </Stack>
+      </AccordionDetails>
+    </Accordion>
   )
 }
 

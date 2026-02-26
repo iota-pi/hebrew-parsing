@@ -183,14 +183,6 @@ function MainPage() {
 
           <Divider />
 
-          <Typography
-            variant="h4"
-            textAlign="left"
-            pt={2}
-          >
-            Filter Options
-          </Typography>
-
           <FilterSelection
             filterConditions={filterConditions}
             onChange={onChangeFilter}

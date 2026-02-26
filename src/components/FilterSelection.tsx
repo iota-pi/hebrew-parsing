@@ -191,9 +191,10 @@ function FilterSelection({
         expandIcon={<ExpandMoreIcon />}
         color="primary"
       >
-        <FilterIcon />
+        <FilterIcon sx={{ mr: 1 }} />
         <Typography>Filters</Typography>
       </AccordionSummary>
+
       <AccordionDetails>
         <Stack spacing={2}>
           <FilterSelect

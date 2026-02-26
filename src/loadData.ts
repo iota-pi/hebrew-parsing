@@ -78,7 +78,7 @@ const rawGenderMapping = {
   3: 'c',
 } as const
 type GenderAbbreviation = keyof typeof rawGenderMapping
-const genderMapping = rawGenderMapping as  Record<GenderAbbreviation, Gender>
+const genderMapping = rawGenderMapping as Record<GenderAbbreviation, Gender>
 
 const rawNumberMapping = {
   0: 'N/A',

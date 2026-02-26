@@ -368,6 +368,8 @@ class VerbParsing(HasId):
         except KeyError:
             return None
         p.tense = OSM_TENSES[osm[3]]
+        if p.tense == "ptcp" and p.stem != "qal":
+            p.tense = "ptca"
         has_person = p.tense not in ("ptca", "ptcp", "infc", "infa")
         pgn_offset = 1 if has_person else 0
         p.person = map_osm_pgn(osm[4]) if has_person else "NA"

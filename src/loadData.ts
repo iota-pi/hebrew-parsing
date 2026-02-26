@@ -236,7 +236,7 @@ export function fromASCIIHebrew(s: string) {
 }
 
 export async function loadData() {
-  const response = await fetch('data.json')
+  const response = await fetch('hebrew.json')
   const data = await response.json() as {
     books: DataBook[]
     occurrences: DataOccurrence[],

@@ -663,7 +663,7 @@ def main():
             "roots": [root.to_simple_obj() for root in data.roots.data],
             "books": [book.to_simple_obj() for book in data.books.data],
         },
-        "../public/data.json",
+        "../public/hebrew.json",
     )
 
 

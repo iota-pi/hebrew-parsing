@@ -6,10 +6,8 @@
   "type": "module",
   "scripts": {
     "build": "tsc && vite build",
-    "upload": "aws s3 cp build/ s3://hebrew-parsing-production/ --recursive --acl public-read || true",
-    "upload:data": "aws s3 cp public/data.json.br s3://hebrew-parsing-production/data.json --acl public-read --content-encoding br || true",
-    "deploy:app": "yarn build && yarn upload && yarn upload:data",
-    "deploy": "yarn deploy:app && cd infra && terraform apply",
+    "deploy": "npx sst deploy --stage production",
+    "dev": "sst dev vite",
     "lint": "yarn run eslint src --ext .ts,.tsx",
     "start": "vite",
     "preview": "vite preview",

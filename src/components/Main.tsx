@@ -97,9 +97,11 @@ function MainPage() {
 
   useEffect(
     () => {
-      setError('')
       getWords({ biasOptions, filterConditions })
-        .then(setVerbs)
+        .then(words => {
+          setError('')
+          setVerbs(words)
+        })
         .catch((e: Error) => {
           if (e.message?.toLowerCase().includes('no valid verbs')) {
             setVerbs([])

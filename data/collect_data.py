@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 
-from collections import Counter
 import json
+import os
 import random
 import re
+
+from collections import Counter
+from cfabric import Fabric
 from typing import Any, Dict, Iterable, Iterator, List
-from tf.advanced.app import App
-from tf.app import use
 
 INCLUDE_ALL_FOR_STATS = False
 MIN_LEX_FREQ = 0 if INCLUDE_ALL_FOR_STATS else 20
@@ -79,8 +80,14 @@ def map_osm_pgn(pgn: str) -> str:
     return pgn
 
 
-app: App = use("ETCBC/bhsa", mod="ETCBC/bridging/tf", silent=True, loadData=False)
-app.TF.load(" ".join([
+bhsa_path = os.path.expanduser("~/text-fabric-data/github/ETCBC/bhsa/tf/2021")
+bridging_path = os.path.expanduser("~/text-fabric-data/github/ETCBC/bridging/tf/2021")
+
+CF = Fabric(
+    locations=[bhsa_path, bridging_path],
+    silent=True,
+)
+api = CF.load(" ".join([
     "freq_lex",
     "gloss",
     "g_word_utf8",
@@ -100,7 +107,6 @@ app.TF.load(" ".join([
     "vt",
     "vbe",
 ]))
-api = app.TF.api
 
 
 def strip_accents(s: str):

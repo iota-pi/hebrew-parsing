@@ -2,7 +2,6 @@ import {
   Accordion,
   AccordionDetails,
   AccordionSummary,
-  Icon,
   MenuItem,
   Stack,
   TextField,

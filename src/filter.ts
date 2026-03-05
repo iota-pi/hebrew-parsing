@@ -38,6 +38,8 @@ export type FilterCondition = {
     'Passive participle': boolean,
     'Infinitive construct': boolean,
     'Infinitive absolute': boolean,
+    'Infinitive': boolean,
+    'Participle': boolean,
   },
   suffixes: {
     include: boolean,

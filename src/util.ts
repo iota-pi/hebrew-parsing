@@ -43,7 +43,13 @@ export const ALL_STEMS: Stem[] = isAramaic ? [
   'Hiphil',
   'Hophal',
 ]
-export const ALL_TENSES: Tense[] = [
+export const ALL_TENSES: Tense[] = isAramaic ? [
+  'Qatal',
+  'Yiqtol',
+  'Imperative',
+  'Participle',
+  'Infinitive',
+] : [
   'Qatal',
   'Yiqtol',
   'Wayyiqtol',
@@ -485,6 +491,8 @@ export function toLogosSearch({ parsings, root }: LinkedOccurrence) {
     'Passive participle': 'S',
     'Infinitive construct': 'F',
     'Infinitive absolute': 'F',
+    'Infinitive': 'F',
+    'Participle': 'R',
     Imperative: 'M',
   }
   const tense = tenseCodes[parsings[0].tense]

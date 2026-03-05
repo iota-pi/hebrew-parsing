@@ -15,7 +15,7 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import FilterIcon from '@mui/icons-material/FilterAlt'
 import type { FilterCondition, RootKey, Stem, Tense } from '../filter'
 import { ChangeEvent, useCallback, useMemo } from 'react'
-import { ALL_STEMS, ALL_TENSES, getRootTypeName, getTenseName } from '../util'
+import { ALL_STEMS, ALL_TENSES, getRootTypeName, getTenseName, isAramaic } from '../util'
 import FilterSelect from './FilterSelect'
 import { useDebounceCallback } from 'usehooks-ts'
 
@@ -43,7 +43,9 @@ const baseTenses = (
   Object.fromEntries(ALL_TENSES.map(tense => [tense, false]))
 ) as FilterCondition['tense']
 
-const EXTRAS_KEYS: (keyof FilterCondition['extras'])[] = [
+const EXTRAS_KEYS: (keyof FilterCondition['extras'])[] = isAramaic ? [
+  'energicNuns',
+] : [
   'cohortatives',
   'paragogicHehs',
   'paragogicNuns',
@@ -63,8 +65,12 @@ function getExtrasLabel(
   return labels[key]
 }
 
-const minFrequencyOptions = [
-  // 0,
+const minFrequencyOptions = isAramaic ? [
+  5,
+  10,
+  30,
+  50,
+] : [
   10,
   50,
   100,
@@ -209,14 +215,14 @@ function FilterSelection({
           />
 
           <FilterSelect
-            value={selectedStems}
+            value={selectedStems.filter(stem => ALL_STEMS.includes(stem))}
             options={ALL_STEMS}
             label="Include stems:"
             onChange={handleChangeStems}
           />
 
           <FilterSelect
-            value={selectedTenses}
+            value={selectedTenses.filter(tense => ALL_TENSES.includes(tense))}
             options={ALL_TENSES}
             label="Include conjugations:"
             onChange={handleChangeTenses}

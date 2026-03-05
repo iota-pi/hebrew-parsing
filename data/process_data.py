@@ -26,6 +26,7 @@ MIN_QAL_QATAL_FREQ = 0 if INCLUDE_ALL_FOR_STATS else 50
 REPORT_UNHANDLED_STEMS = False
 REPORT_STEM_ORDER = False
 REPORT_OSM_PARSINGS = True
+REPORT_TENSE_STATS = True
 
 VOWELS = set(
     "\u05b0\u05b1\u05b2\u05b3\u05b4\u05b5\u05b6\u05b7\u05b8\u05b9\u05ba\u05bb\u05bc"
@@ -643,11 +644,21 @@ class DataManager:
             for stem in stem_counts.most_common():
                 print(stem)
 
+        if REPORT_TENSE_STATS:
+            tense_counts = Counter()
+            for o in self.occurrences:
+                for p in o.parsings:
+                    tense_counts[p.tense] += 1
+            print("Tense counts:")
+            for tense, count in tense_counts.most_common():
+                print(f"{tense}: {count}")
+
         if REPORT_OSM_PARSINGS:
             print(
                 "OSM parsings in use",
                 len([o for o in self.occurrences if len(o.parsings) > 1])
             )
+
         for i, p in enumerate(("BHS", "OSM")):
             print(
                 f"Energic nuns ({p})",
@@ -660,7 +671,7 @@ class DataManager:
             )
             if self.language == Language.ARAMAIC:
                 for o in self.occurrences:
-                    if o.parsings[i].energic_nun:
+                    if i < len(o.parsings) and o.parsings[i].energic_nun:
                         print(o.verse, o.verb.verb)
             print(
                 f"Paragogic nuns ({p})",

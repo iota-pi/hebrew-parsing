@@ -5,6 +5,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "aramaic": "VITE_SITE_TITLE=Aramaic VITE_LANGUAGE=aramaic vite",
     "build": "tsc && vite build",
     "deploy": "npx sst deploy --stage production",
     "dev": "sst dev vite",

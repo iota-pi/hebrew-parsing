@@ -77,7 +77,14 @@ const rawTenseMapping = {
   8: 'Infinitive absolute',
 } as const
 type TenseAbbreviation = keyof typeof rawTenseMapping
+const rawAramaicTenseMapping = {
+  'Infinitive construct': 'Infinitive',
+  'Infinitive absolute': 'Infinitive',
+  'Active participle': 'Participle',
+  'Passive participle': 'Participle',
+} as const
 const tenseMapping = rawTenseMapping as Record<TenseAbbreviation, Tense>
+const aramaicTenseMapping = rawAramaicTenseMapping as Record<Tense, Tense>
 
 type PersonAbbreviation = Exclude<Person, 'N/A'> | 0
 
@@ -195,7 +202,11 @@ export function getStem(code: StemAbbreviation) {
 
 export function getTense(code: TenseAbbreviation) {
   if (code in tenseMapping) {
-    return tenseMapping[code as keyof typeof tenseMapping]
+    const tense = tenseMapping[code as keyof typeof tenseMapping]
+    if (isAramaic) {
+      return aramaicTenseMapping[tense] || tense
+    }
+    return tense
   }
   throw new Error(`Unknown tense code "${code}"`)
 }

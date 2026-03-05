@@ -130,6 +130,7 @@ function ParseVerb({
       if (
         parsing.tense === 'Infinitive construct'
         || parsing.tense === 'Infinitive absolute'
+        || parsing.tense === 'Infinitive'
       ) {
         parts.pgn.person = false
         parts.pgn.gender = false
@@ -420,6 +421,8 @@ function getInitialApplicableParts(): ApplicableParts {
       'Passive participle': true,
       'Infinitive construct': true,
       'Infinitive absolute': true,
+      'Infinitive': true,
+      'Participle': true,
     },
     pgn: {
       person: {

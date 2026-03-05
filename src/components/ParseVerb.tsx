@@ -34,7 +34,7 @@ import VerbDisplay from './VerbDisplay'
 
 const MAIN_PARTS = ALL_PARTS.filter(part => part !== 'suffix')
 const DEFAULT_SUFFIX: Suffix = 'no-suffix'
-const PARSING_SOURCE_NAMES = ['BHS', 'OSM']
+const PARSING_SOURCE_NAMES = ['BHS', 'OS']
 
 const FadedSpan = styled('span')({
   color: grey[800],

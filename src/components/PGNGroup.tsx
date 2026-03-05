@@ -76,6 +76,7 @@ function PGNGroup<P extends ParsingKey & ('pgn' | 'suffix')>({
         parsing.tense === 'Imperative'
         || parsing.tense === 'Active participle'
         || parsing.tense === 'Passive participle'
+        || parsing.tense === 'Participle'
       )
       const possiblePersons = (
         applicable.person === false || hasNoPerson

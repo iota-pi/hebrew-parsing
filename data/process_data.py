@@ -9,6 +9,7 @@ from enum import Enum
 from typing import Any, Dict, Iterable, Iterator, List
 
 from load_data import load_data
+from osm_patches import PATCHES
 
 
 class Language(str, Enum):
@@ -408,6 +409,16 @@ class VerbParsing(HasId):
         p.paragogic_nun = osm_sf[2] == "n" if osm_sf else False
         p.paragogic_heh = osm_sf[2] in "dh" if osm_sf else False
         p.cohortative = osm[3] == "h"
+
+        if PATCHES.get(n):
+            p.stem = PATCHES[n].get("stem", p.stem)
+            p.tense = PATCHES[n].get("tense", p.tense)
+            p.number = PATCHES[n].get("number", p.number)
+            p.gender = PATCHES[n].get("gender", p.gender)
+            p.person = PATCHES[n].get("person", p.person)
+            p.pronom_person = PATCHES[n].get("pronom_person", p.pronom_person)
+            p.pronom_gender = PATCHES[n].get("pronom_gender", p.pronom_gender)
+            p.pronom_number = PATCHES[n].get("pronom_number", p.pronom_number)
 
         return p
 

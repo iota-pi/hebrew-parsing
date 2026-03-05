@@ -15,22 +15,45 @@ export default $config({
   },
   async run() {
     const isProd = $app.stage === "production";
-    const domain = isProd ? "hebrew.cross-code.org" : undefined;
+    const hebrewDomain = isProd ? "hebrew.cross-code.org" : undefined;
+    const aramaicDomain = isProd ? "aramaic.cross-code.org" : undefined;
 
-    const site = new sst.aws.StaticSite("HebrewParsing", {
+    const hebrewSite = new sst.aws.StaticSite("HebrewParsing", {
       build: {
-        command: "yarn build",
-        output: "build",
+        command: "VITE_SITE_TITLE=Hebrew VITE_LANGUAGE=hebrew VITE_OUT_DIR=build-hebrew yarn build",
+        output: "build-hebrew",
       },
-      domain: domain
+      domain: hebrewDomain
         ? {
-          name: domain,
+          name: hebrewDomain,
           dns: sst.cloudflare.dns(),
         }
         : undefined,
       errorPage: "redirect_to_index_page",
     });
 
-    return { url: site.url };
+    const aramaicSite = new sst.aws.StaticSite("AramaicParsing", {
+      build: {
+        command: "yarn build",
+        output: "build-aramaic",
+      },
+      domain: aramaicDomain
+        ? {
+          name: aramaicDomain,
+          dns: sst.cloudflare.dns(),
+        }
+        : undefined,
+      errorPage: "redirect_to_index_page",
+      environment: {
+        VITE_SITE_TITLE: "Aramaic",
+        VITE_LANGUAGE: "aramaic",
+        VITE_OUT_DIR: "build-aramaic",
+      },
+    });
+
+    return {
+      hebrewUrl: hebrewSite.url,
+      aramaicUrl: aramaicSite.url,
+    };
   },
 });

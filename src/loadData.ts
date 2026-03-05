@@ -236,7 +236,8 @@ export function fromASCIIHebrew(s: string) {
 }
 
 export async function loadData() {
-  const response = await fetch('hebrew.json')
+  const lang = import.meta.env.VITE_LANGUAGE || 'hebrew'
+  const response = await fetch(`${lang}.json`)
   const data = await response.json() as {
     books: DataBook[]
     occurrences: DataOccurrence[],

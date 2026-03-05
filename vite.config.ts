@@ -5,7 +5,7 @@ import viteCompression from 'vite-plugin-compression'
 
 export default defineConfig({
   build: {
-    outDir: 'build',
+    outDir: process.env.VITE_OUT_DIR || 'build',
   },
   plugins: [
     react(),

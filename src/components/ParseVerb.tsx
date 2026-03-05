@@ -404,6 +404,12 @@ function getInitialApplicableParts(): ApplicableParts {
       Hithpael: true,
       Hiphil: true,
       Hophal: true,
+      Peal: true,
+      Haphel: true,
+      Pael: true,
+      Hithpaal: true,
+      Hithpeel: true,
+      Peil: true,
     },
     tense: {
       Qatal: true,

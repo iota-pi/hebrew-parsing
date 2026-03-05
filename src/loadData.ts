@@ -44,7 +44,17 @@ type DataVerse = [
 type DataBook = string
 type DataRoot = [string, number, string]
 
-const rawStemMapping = {
+const isAramaic = import.meta.env.VITE_LANGUAGE === 'aramaic'
+
+const rawStemMapping = isAramaic ? {
+  1: 'Peal',
+  2: 'Haphel',
+  3: 'Pael',
+  4: 'Hithpaal',
+  5: 'Hithpeel',
+  6: 'Peil',
+  7: 'Hophal',
+} as const : {
   1: 'Qal',
   2: 'Hiphil',
   3: 'Piel',

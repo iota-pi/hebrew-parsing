@@ -35,6 +35,12 @@ const defaultFilterConditions: FilterCondition = {
     Hithpael: true,
     Hiphil: true,
     Hophal: true,
+    Peal: true,
+    Haphel: true,
+    Pael: true,
+    Hithpaal: true,
+    Hithpeel: true,
+    Peil: true,
   },
   tense: {
     Qatal: true,

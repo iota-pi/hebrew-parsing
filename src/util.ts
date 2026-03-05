@@ -23,7 +23,18 @@ export type Entries<T> = {
 export const ONE_DAY = 1000 * 60 * 60 * 24
 export const ONE_WEEK = ONE_DAY * 7
 
-export const ALL_STEMS: Stem[] = [
+export const LANGUAGE = import.meta.env.VITE_LANGUAGE || 'hebrew'
+export const isAramaic = LANGUAGE === 'aramaic'
+
+export const ALL_STEMS: Stem[] = isAramaic ? [
+  'Peal',
+  'Haphel',
+  'Pael',
+  'Hithpaal',
+  'Hithpeel',
+  'Peil',
+  'Hophal',
+] : [
   'Qal',
   'Niphal',
   'Piel',
@@ -457,6 +468,12 @@ export function toLogosSearch({ parsings, root }: LinkedOccurrence) {
     Pual: '[eFAwIKL]',
     Hithpael: '[gTOBDSEPl]',
     Hophal: 'i',
+    Peal: 'a',
+    Haphel: 'c',
+    Pael: 'b',
+    Hithpaal: 'g',
+    Hithpeel: 'g',
+    Peil: 'e',
   }
   const stem = stemCodes[parsings[0].stem]
 
@@ -485,7 +502,9 @@ export function toLogosSearch({ parsings, root }: LinkedOccurrence) {
       )
   )
 
-  return `root.h:${root.root}@V${stem}${tense}${person}${gender}${number}${state}`
+  const langCode = LANGUAGE.charAt(0)
+  const prefix = `root.${langCode}:${root.root}@`
+  return `${prefix}V${stem}${tense}${person}${gender}${number}${state}`
 }
 
 export function toLogosLink(word: LinkedOccurrence) {

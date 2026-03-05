@@ -22,6 +22,12 @@ export type FilterCondition = {
     Hithpael: boolean,
     Hiphil: boolean,
     Hophal: boolean,
+    Peal: boolean,
+    Haphel: boolean,
+    Pael: boolean,
+    Hithpaal: boolean,
+    Hithpeel: boolean,
+    Peil: boolean,
   },
   'tense': {
     Qatal: boolean,

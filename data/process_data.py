@@ -511,7 +511,8 @@ class Verse(HasId):
 
 
 class VerbOccurrence:
-    def __init__(self, verb: VerbForm, parsings: Iterable[VerbParsing], verse: Verse):
+    def __init__(self, n: int, verb: VerbForm, parsings: Iterable[VerbParsing], verse: Verse):
+        self.n = n
         self.verb = verb
         self.parsings = parsings
         self.verse = verse
@@ -520,6 +521,7 @@ class VerbOccurrence:
         return [
             self.verb.id,
             self.verse.id,
+            self.n,
             *(p.id for p in self.parsings),
         ]
 
@@ -589,7 +591,7 @@ class DataManager:
         if p_osm and p_osm != p_bhs:
             parsings.append(self.parsings.get(str(p_osm), p_osm))
 
-        occurrence = VerbOccurrence(verb, parsings, verse)
+        occurrence = VerbOccurrence(n, verb, parsings, verse)
         if occurrence.should_skip(self.language):
             return
 

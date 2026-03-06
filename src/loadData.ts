@@ -20,11 +20,7 @@ type DataVerb = [
   string,
   number,
 ]
-type DataOccurrence = [
-  number,
-  number,
-  number,
-]
+type DataOccurrence = number[]
 type DataParsing = [
   StemAbbreviation,
   TenseAbbreviation,
@@ -179,7 +175,8 @@ export function processOccurrences(occurrences: DataOccurrence[]) {
     data => ({
       verb: data[0],
       verse: data[1],
-      parsings: data.slice(2),
+      node: data[2],
+      parsings: data.slice(3),
     })
   )
 }
@@ -190,6 +187,7 @@ export type LinkedOccurrence = {
   parsings: VerbParsing[],
   verb: Verb,
   verse: Verse,
+  node: number,
 }
 
 
@@ -281,12 +279,13 @@ const dataPromise = loadData()
 export async function getLinkedOccurrences() {
   const data = await dataPromise
   return data.occurrences.map(
-    ({ verb, parsings, verse }) => ({
+    ({ verb, parsings, verse, node }) => ({
       book: data.books[data.verses[verse].book],
       parsings: parsings.map(p => data.parsings[p]),
       root: data.roots[data.verbs[verb].root],
       verb: data.verbs[verb],
       verse: data.verses[verse],
+      node,
     } as LinkedOccurrence)
   )
 }

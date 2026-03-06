@@ -272,6 +272,7 @@ function ParseVerb({
 
   return (
     <Stack spacing={2}>
+      <input type="hidden" name="nodeId" value={occurrence.node} />
       <VerbDisplay occurrence={occurrence} />
 
       <Stack direction="row" spacing={2} overflow="auto">

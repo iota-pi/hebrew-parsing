@@ -384,6 +384,7 @@ export function isValidPGN(pgn: PGN, parsing?: Parsing, suffix = false) {
   if (
     parsing?.tense !== 'Infinitive construct'
     && parsing?.tense !== 'Infinitive absolute'
+    && parsing?.tense !== 'Infinitive'
     && !hasSetPGN(pgn)
   ) {
     return false

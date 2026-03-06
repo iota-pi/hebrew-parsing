@@ -63,10 +63,6 @@ export function getFilterFromConditions(
   if (!condition) return () => true
 
   return ({ root, parsings }) => {
-    if (parsings.length === 1) {
-      return false
-    }
-
     if (condition.minFrequency > root.count) {
       return false
     }

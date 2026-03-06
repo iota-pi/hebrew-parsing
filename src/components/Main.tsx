@@ -51,6 +51,8 @@ const defaultFilterConditions: FilterCondition = {
     "Passive participle": true,
     "Infinitive construct": true,
     "Infinitive absolute": true,
+    Infinitive: true,
+    Participle: true,
   },
   suffixes: {
     include: true,

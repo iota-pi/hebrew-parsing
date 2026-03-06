@@ -20,7 +20,7 @@ export default $config({
 
     const hebrewSite = new sst.aws.StaticSite("HebrewParsing", {
       build: {
-        command: "VITE_SITE_TITLE=Hebrew VITE_LANGUAGE=hebrew VITE_OUT_DIR=build-hebrew yarn build",
+        command: "yarn build",
         output: "build-hebrew",
       },
       domain: hebrewDomain
@@ -30,6 +30,11 @@ export default $config({
         }
         : undefined,
       errorPage: "redirect_to_index_page",
+      environment: {
+        VITE_SITE_TITLE: "Hebrew",
+        VITE_LANGUAGE: "hebrew",
+        VITE_OUT_DIR: "build-hebrew",
+      },
     });
 
     const aramaicSite = new sst.aws.StaticSite("AramaicParsing", {

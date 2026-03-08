@@ -138,8 +138,16 @@ export function getStemName(s: Stem) {
 }
 
 export function getTenseName(t: Tense) {
+  let tenseName: string = t
+  if (isAramaic) {
+    tenseName = (
+      tenseName
+        .replace('Qatal', 'Ketab')
+        .replace('Yiqtol', 'Yiqtub')
+    )
+  }
   return (
-    t
+    tenseName
       .replace('Infinitive ', 'Inf. ')
       .replace('Active p', 'P')
   )

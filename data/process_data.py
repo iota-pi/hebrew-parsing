@@ -9,7 +9,7 @@ from enum import Enum
 from typing import Any, Dict, Iterable, Iterator, List
 
 from load_data import load_data
-from osm_patches import PATCHES
+from ignore_nodes import IGNORE_NODES, IGNORE_OSM_NODES
 
 
 class Language(str, Enum):
@@ -33,11 +33,6 @@ VOWELS = set(
     "\u05b0\u05b1\u05b2\u05b3\u05b4\u05b5\u05b6\u05b7\u05b8\u05b9\u05ba\u05bb\u05bc"
 )
 
-PARSING_EXCEPTIONS = {
-    112471,  # strange yiqtol 3fp ending (תָה)
-    65032,  # data is messy because of textual variants
-    16340,  # incorrect parsing (should have 3fs suffix but tagged as 3fp)
-}
 
 STEMS = {
     # Hebrew
@@ -597,7 +592,10 @@ class DataManager:
         verse = self.verses.get(str(v), v)
 
         p_bhs = VerbParsing.from_bhsa(n, self.language)
-        p_osm = VerbParsing.from_osm(n, self.language)
+        if n not in IGNORE_OSM_NODES:
+            p_osm = VerbParsing.from_osm(n, self.language)
+        else:
+            p_osm = None
         parsings = [
             self.parsings.get(str(p_bhs), p_bhs)
         ]
@@ -623,7 +621,7 @@ class DataManager:
             return True
         if api.F.sp.v(n) != "verb":
             return True
-        if n in PARSING_EXCEPTIONS:
+        if n in IGNORE_NODES:
             return True
 
         # Contains maqef

@@ -1,5 +1,5 @@
 import type { Stem, Tense } from './filter'
-import { getRootTypes } from './util'
+import { getRootTypes, isAramaic } from './util'
 
 export type NA = 'N/A'
 export type Person = 1 | 2 | 3 | NA
@@ -40,9 +40,8 @@ type DataVerse = [
 type DataBook = string
 type DataRoot = [string, number, string]
 
-const isAramaic = import.meta.env.VITE_LANGUAGE === 'aramaic'
 
-const rawStemMapping = isAramaic ? {
+const rawStemMapping = isAramaic() ? {
   1: 'Peal',
   2: 'Haphel',
   3: 'Pael',
@@ -201,7 +200,7 @@ export function getStem(code: StemAbbreviation) {
 export function getTense(code: TenseAbbreviation) {
   if (code in tenseMapping) {
     const tense = tenseMapping[code as keyof typeof tenseMapping]
-    if (isAramaic) {
+    if (isAramaic()) {
       return aramaicTenseMapping[tense] || tense
     }
     return tense

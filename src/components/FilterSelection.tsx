@@ -43,7 +43,7 @@ const baseTenses = (
   Object.fromEntries(ALL_TENSES.map(tense => [tense, false]))
 ) as FilterCondition['tense']
 
-const EXTRAS_KEYS: (keyof FilterCondition['extras'])[] = isAramaic ? [
+const EXTRAS_KEYS: (keyof FilterCondition['extras'])[] = isAramaic() ? [
   'energicNuns',
 ] : [
   'cohortatives',
@@ -65,7 +65,7 @@ function getExtrasLabel(
   return labels[key]
 }
 
-const minFrequencyOptions = isAramaic ? [
+const minFrequencyOptions = isAramaic() ? [
   5,
   10,
   30,

@@ -24,9 +24,9 @@ export const ONE_DAY = 1000 * 60 * 60 * 24
 export const ONE_WEEK = ONE_DAY * 7
 
 export const LANGUAGE = import.meta.env.VITE_LANGUAGE || 'hebrew'
-export const isAramaic = LANGUAGE === 'aramaic'
+export const isAramaic = () => LANGUAGE === 'aramaic'
 
-export const ALL_STEMS: Stem[] = isAramaic ? [
+export const ALL_STEMS: Stem[] = isAramaic() ? [
   'Peal',
   'Haphel',
   'Pael',
@@ -43,7 +43,7 @@ export const ALL_STEMS: Stem[] = isAramaic ? [
   'Hiphil',
   'Hophal',
 ]
-export const ALL_TENSES: Tense[] = isAramaic ? [
+export const ALL_TENSES: Tense[] = isAramaic() ? [
   'Qatal',
   'Yiqtol',
   'Imperative',
@@ -139,7 +139,7 @@ export function getStemName(s: Stem) {
 
 export function getTenseName(t: Tense) {
   let tenseName: string = t
-  if (isAramaic) {
+  if (isAramaic()) {
     tenseName = (
       tenseName
         .replace('Qatal', 'Ketab')

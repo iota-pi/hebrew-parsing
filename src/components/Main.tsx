@@ -10,7 +10,7 @@ import ParseVerb from './ParseVerb'
 import FilterSelection from './FilterSelection'
 import type { BiasOptions } from '../bias'
 import type { FilterCondition } from '../filter'
-import type { Entries } from '../util'
+import { isAramaic, type Entries } from '../util'
 import type { LinkedOccurrence } from '../loadData'
 import getWords from '../getWords'
 
@@ -64,7 +64,7 @@ const defaultFilterConditions: FilterCondition = {
     paragogicHehs: true,
     paragogicNuns: true,
   },
-  minFrequency: 50,
+  minFrequency: isAramaic() ? 10 : 50,
 }
 
 function MainPage() {

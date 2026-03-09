@@ -401,7 +401,7 @@ export function isValidPGN(pgn: PGN, parsing?: Parsing, suffix = false) {
     return false
   }
 
-  const has3cp = parsing?.tense === 'Qatal'
+  const has3cp = !isAramaic() && parsing?.tense === 'Qatal'
   if (
     pgn.gender === 'c'
     && pgn.person !== 1
